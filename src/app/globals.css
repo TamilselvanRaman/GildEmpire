@@ -2,28 +2,25 @@
 
 @layer base {
   :root {
-    /* Audited Sovereign Theme - White Major & Blue Secondary */
-    --primary: #ffffff;           /* Pure Crisp White Major Surface */
-    --secondary: #2f6fed;         /* Sovereign Vibrant Royal Blue */
-    --secondary-hover: #2259ca;
-    --tertiary: #1e9e64;          /* Sovereign Trust Green */
-    --tertiary-hover: #178352;
-    --navy-text: #0b1e39;         /* Dark Sovereign Slate Navy Text */
-    --neutral-dark: #1a1f2b;      /* Dark Charcoal Slate */
+    /* InfinityGram Official Prospectus Theme Palette */
+    --primary-teal: #0D3B43;      /* Primary Dark Teal / Deep Cyan */
+    --secondary-gold: #E1A238;    /* Secondary Metallic Gold */
+    --accent-cyan: #00C2B8;       /* Accent / Highlight Bright Aqua */
+    --soft-gold: #F2C868;         /* Secondary Accent Soft Amber Gold */
+    --dark-navy: #081E26;         /* Neutral Dark Midnight Navy */
+    --neutral-white: #FFFFFF;     /* Neutral Light Pure White */
     
-    --accent-gold: #d97706;       /* Reserved for 1 Gram Gold Rewards */
-    --accent-gold-light: #fef3c7;
-    --accent-gold-border: #f59e0b;
-
-    --background: #ffffff;        /* Pure Crisp White Background */
-    --card: #ffffff;
-    --card-subtle: #f8fafc;
-    --border: #e2e8f0;
+    --primary: #0D3B43;
+    --secondary: #E1A238;
+    --accent: #00C2B8;
+    --background: #081E26;
+    --card: #0D3B43;
+    --border: #E1A238;
     
-    --text-main: #0b1e39;
-    --text-muted: #5a6b82;
+    --text-main: #FFFFFF;
+    --text-muted: #F2C868;
     --danger: #e11d48;
-    --warning: #d97706;
+    --warning: #E1A238;
   }
 
   html {
@@ -31,8 +28,8 @@
   }
 
   body {
-    background-color: #ffffff;
-    color: var(--text-main);
+    background-color: #081E26;
+    color: #FFFFFF;
     font-family: var(--font-jakarta), 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
@@ -41,7 +38,7 @@
 
   h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.025em;
-    color: #0b1e39;
+    color: #FFFFFF;
   }
 
   .font-mono {
@@ -50,90 +47,61 @@
   }
 }
 
-/* Audited Sovereign White Major Utilities */
-.sovereign-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  box-shadow: 0 4px 14px -2px rgba(11, 30, 57, 0.04), 0 2px 4px -1px rgba(11, 30, 57, 0.02);
+/* InfinityGram Theme Utilities */
+.infinity-card {
+  background-color: #0D3B43;
+  border: 1px solid rgba(225, 162, 56, 0.4);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(8, 30, 38, 0.6), 0 0 20px rgba(0, 194, 184, 0.15);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.sovereign-card:hover {
-  border-color: #cbd5e1;
+.infinity-card:hover {
+  border-color: #E1A238;
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px -4px rgba(11, 30, 57, 0.08), 0 4px 8px -2px rgba(11, 30, 57, 0.03);
+  box-shadow: 0 16px 40px rgba(8, 30, 38, 0.8), 0 0 25px rgba(0, 194, 184, 0.25);
 }
 
-.sovereign-card-blue {
-  background: linear-gradient(135deg, #ffffff 0%, #f0f6ff 100%);
-  border: 1px solid #bfdbfe;
-  border-radius: 16px;
-}
-
-.btn-sovereign-blue {
-  background-color: #2f6fed;
-  color: #ffffff;
-  font-weight: 700;
+.btn-infinity-cyan {
+  background: linear-gradient(135deg, #00C2B8 0%, #009890 100%);
+  color: #081E26;
+  font-weight: 800;
   border-radius: 12px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.btn-sovereign-blue:hover {
-  background-color: #2259ca;
+.btn-infinity-cyan:hover {
+  filter: brightness(1.1);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(47, 111, 237, 0.35);
+  box-shadow: 0 6px 20px rgba(0, 194, 184, 0.45);
 }
 
-.btn-sovereign-outline {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #0b1e39;
-  font-weight: 700;
+.btn-infinity-gold {
+  background: linear-gradient(135deg, #F2C868 0%, #E1A238 100%);
+  color: #081E26;
+  font-weight: 800;
   border-radius: 12px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.btn-sovereign-outline:hover {
-  background-color: #f8fafc;
-  border-color: #2f6fed;
-  color: #2f6fed;
+.btn-infinity-gold:hover {
+  filter: brightness(1.1);
   transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(225, 162, 56, 0.45);
 }
 
-.btn-sovereign-dark {
-  background-color: #0b1e39;
-  color: #ffffff;
-  font-weight: 700;
-  border-radius: 12px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.btn-sovereign-dark:hover {
-  background-color: #1a2e4a;
-  transform: translateY(-1px);
-}
-
-.badge-green {
-  background-color: #e8f7f0;
-  color: #1e9e64;
-  border: 1px solid #b3e6ce;
+.badge-infinity-cyan {
+  background-color: rgba(0, 194, 184, 0.15);
+  color: #00C2B8;
+  border: 1px solid rgba(0, 194, 184, 0.4);
   font-weight: 700;
   border-radius: 8px;
 }
 
-.badge-blue {
-  background-color: #eff6ff;
-  color: #2f6fed;
-  border: 1px solid #bfdbfe;
-  font-weight: 700;
-  border-radius: 8px;
-}
-
-.badge-gold {
-  background-color: #fef3c7;
-  color: #92400e;
-  border: 1px solid #f59e0b;
+.badge-infinity-gold {
+  background-color: rgba(225, 162, 56, 0.15);
+  color: #F2C868;
+  border: 1px solid rgba(225, 162, 56, 0.4);
   font-weight: 700;
   border-radius: 8px;
 }
@@ -156,3 +124,33 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Smooth Right-to-Left Sway/Shake Animation for Glass Bowl */
+@keyframes bowl-shake-smooth {
+  0%, 100% {
+    transform: translateX(0px) rotate(0deg);
+  }
+  15% {
+    transform: translateX(-18px) rotate(-3.5deg);
+  }
+  30% {
+    transform: translateX(18px) rotate(3.5deg);
+  }
+  45% {
+    transform: translateX(-12px) rotate(-2.5deg);
+  }
+  60% {
+    transform: translateX(12px) rotate(2.5deg);
+  }
+  75% {
+    transform: translateX(-6px) rotate(-1deg);
+  }
+  90% {
+    transform: translateX(6px) rotate(1deg);
+  }
+}
+
+.animate-bowl-shake-smooth {
+  animation: bowl-shake-smooth 0.85s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+}
+

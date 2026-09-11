@@ -42,8 +42,8 @@ export const AdminSettingsPage = () => {
   const [spinTime, setSpinTime] = useState(settings.autoDailySpinTime);
 
   // Tab 2: Website & Branding Controls
-  const [platformTitle, setPlatformTitle] = useState('GildEmpire Sovereign Audit Engine');
-  const [supportEmail, setSupportEmail] = useState('support@gildempire.in');
+  const [platformTitle, setPlatformTitle] = useState('InfinityGram Sovereign Audit Engine');
+  const [supportEmail, setSupportEmail] = useState('support@infinitygram.in');
   const [supportPhone, setSupportPhone] = useState('+91 98765 43210');
   const [announcementBanner, setAnnouncementBanner] = useState('🎉 Batch A Day 2 Live - 1 Gram 24K Gold Awarded Daily to Enrolled Members!');
   const [currencySymbol, setCurrencySymbol] = useState('₹ INR (Indian Rupee)');
@@ -88,8 +88,8 @@ export const AdminSettingsPage = () => {
     setGoldGrams(1);
     setDepositAmount(10000);
     setSpinTime('07:00 IST');
-    setPlatformTitle('GildEmpire Sovereign Audit Engine');
-    setSupportEmail('support@gildempire.in');
+    setPlatformTitle('InfinityGram Sovereign Audit Engine');
+    setSupportEmail('support@infinitygram.in');
     setSupportPhone('+91 98765 43210');
     setRequireDepositVerify(true);
     setAllowManualSpin(true);

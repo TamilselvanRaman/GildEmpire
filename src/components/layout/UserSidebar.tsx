@@ -14,7 +14,8 @@ import {
   LogOut,
   ShieldCheck,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Infinity as InfinityIcon
 } from 'lucide-react';
 
 export const UserSidebar = () => {
@@ -32,34 +33,28 @@ export const UserSidebar = () => {
   ];
 
   return (
-    <aside className="w-68 bg-[#0B1E39] text-white min-h-screen border-r border-[#1A2E4A] flex flex-col justify-between p-5 hidden md:flex sticky top-0 shrink-0 select-none">
+    <aside className="w-68 bg-[#081E26] text-white min-h-screen border-r border-[#0D3B43] flex flex-col justify-between p-5 hidden md:flex sticky top-0 shrink-0 select-none">
       
       <div className="space-y-6">
         
-        {/* Sleek Corporate Brand Header */}
+        {/* Sleek InfinityGram Corporate Brand Header Image & Name */}
         <div 
           onClick={() => setCurrentView('public-landing')}
-          className="flex items-center space-x-3.5 px-2 py-3 cursor-pointer group rounded-2xl hover:bg-[#102747]/60 transition-all duration-300"
+          className="flex items-center space-x-2.5 p-3 cursor-pointer group rounded-2xl bg-[#0D3B43]/40 hover:bg-[#0D3B43] border border-[#E1A238]/20 transition-all duration-300 select-none"
         >
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center text-amber-950 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform shrink-0">
-            <Award className="w-6 h-6 stroke-[2.5]" />
-          </div>
-          <div className="overflow-hidden">
-            <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-black text-white tracking-tight leading-tight group-hover:text-amber-300 transition-colors">
-                GildEmpire
-              </h3>
-              <span className="text-[9px] font-black text-amber-400 bg-amber-400/10 border border-amber-400/30 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
-                50 Gold
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Sovereign Portal</p>
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="InfinityGram Official Logo" 
+            className="h-7 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(0,194,184,0.4)] group-hover:scale-105 transition-transform" 
+          />
+          <span className="text-lg font-black tracking-tight text-white group-hover:text-[#00C2B8] transition-colors flex items-center">
+            Infinity<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C2B8] to-[#a855f7]">Gram</span>
+          </span>
         </div>
 
         {/* Corporate Menu Navigation */}
         <div className="pt-2">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 mb-3">Main Navigation</p>
+          <p className="text-[10px] font-mono font-black text-[#F2C868] uppercase tracking-widest px-3 mb-3">Main Navigation</p>
           <nav className="space-y-1.5">
             {menuItems.map(item => {
               const Icon = item.icon;
@@ -74,13 +69,13 @@ export const UserSidebar = () => {
                   onClick={() => setCurrentView(item.id as ViewMode)}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-extrabold transition-all relative group cursor-pointer ${
                     isActive 
-                      ? 'bg-gradient-to-r from-[#2F6FED] to-blue-600 text-white shadow-lg shadow-blue-500/30 border border-blue-400/40' 
-                      : 'text-slate-300 hover:bg-[#102747] hover:text-white border border-transparent'
+                      ? 'bg-gradient-to-r from-[#00C2B8] to-[#009890] text-[#081E26] shadow-lg shadow-[#00C2B8]/25 font-black border border-[#00C2B8]' 
+                      : 'text-slate-200 hover:bg-[#0D3B43] hover:text-white border border-transparent'
                   }`}
                 >
                   <div className="flex items-center space-x-3.5 min-w-0 pr-2">
                     <Icon className={`w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110 ${
-                      isActive ? 'text-white' : item.highlight ? 'text-amber-400' : 'text-slate-400 group-hover:text-white'
+                      isActive ? 'text-[#081E26]' : item.highlight ? 'text-[#E1A238]' : 'text-slate-400 group-hover:text-white'
                     }`} />
                     <span className="tracking-tight truncate">{item.label}</span>
                   </div>
@@ -88,8 +83,8 @@ export const UserSidebar = () => {
                   {item.badge && (
                     <span className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap ${
                       isActive 
-                        ? 'bg-white/20 text-white' 
-                        : 'bg-[#102747] text-amber-300 border border-amber-400/20'
+                        ? 'bg-[#081E26]/30 text-[#081E26]' 
+                        : 'bg-[#0D3B43] text-[#F2C868] border border-[#E1A238]/30'
                     }`}>
                       {item.badge}
                     </span>
@@ -102,9 +97,9 @@ export const UserSidebar = () => {
       </div>
 
       {/* Trust Badge & Logout */}
-      <div className="pt-4 border-t border-[#1A2E4A] space-y-3">
-        <div className="flex items-center space-x-2 px-3 py-1 text-[11px] text-slate-400 font-medium">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#1E9E64] shrink-0" />
+      <div className="pt-4 border-t border-[#0D3B43] space-y-3">
+        <div className="flex items-center space-x-2 px-3 py-1 text-[11px] text-[#00C2B8] font-medium">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#00C2B8] shrink-0" />
           <span className="truncate">256-Bit Encrypted Portal</span>
         </div>
 
@@ -120,5 +115,6 @@ export const UserSidebar = () => {
     </aside>
   );
 };
+
 
 

@@ -98,7 +98,7 @@ export const AuthExtensionsPage: React.FC<Props> = ({ mode = 'verify-email' }) =
           <div className="w-10 h-10 rounded-2xl bg-[#2F6FED] text-white flex items-center justify-center font-black shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform">
             <ShieldCheck className="w-6 h-6" />
           </div>
-          <span className="text-xl font-black text-[#0B1E39] font-mono tracking-tight">GildEmpire</span>
+          <span className="text-xl font-black text-[#0B1E39] font-mono tracking-tight">InfinityGram</span>
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export const AuthExtensionsPage: React.FC<Props> = ({ mode = 'verify-email' }) =
                 </div>
                 <h2 className="text-xl font-black text-[#0B1E39]">Verify Your Email Address</h2>
                 <p className="text-xs text-slate-500 font-medium">
-                  We sent a 6-digit authentication code to <span className="font-bold text-slate-900">{user?.email || 'member@gildempire.in'}</span>.
+                  We sent a 6-digit authentication code to <span className="font-bold text-slate-900">{user?.email || 'member@infinitygram.in'}</span>.
                 </p>
               </div>
 
@@ -171,7 +171,7 @@ export const AuthExtensionsPage: React.FC<Props> = ({ mode = 'verify-email' }) =
                 </div>
                 <h2 className="text-xl font-black text-[#0B1E39]">Change Security Password</h2>
                 <p className="text-xs text-slate-500 font-medium">
-                  Update your GildEmpire portal account login password.
+                  Update your InfinityGram portal account login password.
                 </p>
               </div>
 

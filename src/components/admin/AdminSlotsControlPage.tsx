@@ -40,7 +40,7 @@ export const AdminSlotsControlPage = () => {
   const batchData = {
     batchA: {
       groupId: 'GROUP-001',
-      name: 'GildEmpire 50 Gold Club - Batch A',
+      name: 'InfinityGram 50 Gold Club - Batch A',
       status: '1. Live 50-Day Cycle Active',
       statusType: 'live',
       filled: 50,
@@ -51,7 +51,7 @@ export const AdminSlotsControlPage = () => {
     },
     batchB: {
       groupId: 'GROUP-002',
-      name: 'GildEmpire 50 Gold Club - Batch B',
+      name: 'InfinityGram 50 Gold Club - Batch B',
       status: '2. Full - Schedule Ready',
       statusType: 'full',
       filled: 50,
@@ -62,7 +62,7 @@ export const AdminSlotsControlPage = () => {
     },
     batchC: {
       groupId: 'GROUP-003',
-      name: 'GildEmpire 50 Gold Club - Batch C',
+      name: 'InfinityGram 50 Gold Club - Batch C',
       status: '3. Recruiting Active (10 Open Slots)',
       statusType: 'recruiting',
       filled: 40,
@@ -73,7 +73,7 @@ export const AdminSlotsControlPage = () => {
     },
     batchD: {
       groupId: 'GROUP-004',
-      name: 'GildEmpire 50 Gold Club - Batch D',
+      name: 'InfinityGram 50 Gold Club - Batch D',
       status: '4. Reserve Queue (50 Open Slots)',
       statusType: 'empty',
       filled: 0,
@@ -84,7 +84,7 @@ export const AdminSlotsControlPage = () => {
     },
     batchE: {
       groupId: 'GROUP-005',
-      name: 'GildEmpire 50 Gold Club - Batch E',
+      name: 'InfinityGram 50 Gold Club - Batch E',
       status: '5. Reserve Queue (50 Open Slots)',
       statusType: 'empty',
       filled: 0,
@@ -786,7 +786,7 @@ export const AdminSlotsControlPage = () => {
                 </div>
                 <div className="flex justify-between border-b border-slate-200 pb-2">
                   <span className="text-slate-500 font-medium">Email Address:</span>
-                  <span className="text-slate-800 font-medium">{selectedMemberModal.memberName ? `${selectedMemberModal.memberName.toLowerCase().replace(/\s+/g, '.')}@gildempire.in` : 'member@gildempire.in'}</span>
+                  <span className="text-slate-800 font-medium">{selectedMemberModal.memberName ? `${selectedMemberModal.memberName.toLowerCase().replace(/\s+/g, '.')}@infinitygram.in` : 'member@infinitygram.in'}</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-200 pb-2">
                   <span className="text-slate-500 font-medium">Joined Date:</span>

@@ -103,7 +103,7 @@ export const RegisterPage = () => {
               </div>
               <div>
                 <h3 className="text-xl font-black text-white tracking-tight leading-tight group-hover:text-amber-300 transition-colors">
-                  GildEmpire
+                  InfinityGram
                 </h3>
                 <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">SOVEREIGN MEMBER PORTAL</p>
               </div>
@@ -227,7 +227,7 @@ export const RegisterPage = () => {
                   disabled={showOtpSection}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="rajesh@gildempire.in"
+                  placeholder="rajesh@infinitygram.in"
                   className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs disabled:opacity-75 disabled:cursor-not-allowed"
                 />
               </div>

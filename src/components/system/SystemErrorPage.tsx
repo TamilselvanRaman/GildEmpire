@@ -126,7 +126,7 @@ export const SystemErrorPage: React.FC<Props> = ({ type = '404' }) => {
           badge: 'SCHEDULED SYSTEM MAINTENANCE',
           badgeColor: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
           title: 'Sovereign Audit Vault Upgrading',
-          description: 'GildEmpire is performing routine 50-day cycle database optimization and daily gold audit sync. Platform access will resume shortly.',
+          description: 'InfinityGram is performing routine 50-day cycle database optimization and daily gold audit sync. Platform access will resume shortly.',
           icon: Construction,
           iconColor: 'text-blue-400',
           primaryBtn: 'Check System Status',
@@ -154,7 +154,7 @@ export const SystemErrorPage: React.FC<Props> = ({ type = '404' }) => {
           badge: 'NO INTERNET CONNECTION',
           badgeColor: 'bg-slate-500/20 border-slate-500/30 text-slate-300',
           title: 'Connection to Network Lost',
-          description: 'Unable to connect to GildEmpire server. Please verify your Wi-Fi or mobile data connection and try refreshing.',
+          description: 'Unable to connect to InfinityGram server. Please verify your Wi-Fi or mobile data connection and try refreshing.',
           icon: WifiOff,
           iconColor: 'text-slate-300',
           primaryBtn: isReconnecting ? 'Reconnecting...' : 'Test Connection Again',
@@ -196,7 +196,7 @@ export const SystemErrorPage: React.FC<Props> = ({ type = '404' }) => {
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-sm font-black text-white tracking-wider uppercase font-mono">GildEmpire</h2>
+            <h2 className="text-sm font-black text-white tracking-wider uppercase font-mono">InfinityGram</h2>
             <p className="text-[10px] text-emerald-400 font-mono font-bold">Audited Sovereign Platform</p>
           </div>
         </div>

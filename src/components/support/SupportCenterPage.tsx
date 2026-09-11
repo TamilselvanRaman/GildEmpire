@@ -116,7 +116,7 @@ export const SupportCenterPage: React.FC<Props> = ({ mode = 'home' }) => {
                 <Mail className="w-6 h-6" />
               </div>
               <h3 className="text-base font-black text-[#0B1E39]">Email Support Audit Desk</h3>
-              <p className="text-xs text-slate-500 font-medium">support@gildempire.in</p>
+              <p className="text-xs text-slate-500 font-medium">support@infinitygram.in</p>
               <p className="text-[11px] text-emerald-600 font-mono font-bold">24-Hour Guaranteed SLA Response</p>
             </div>
 

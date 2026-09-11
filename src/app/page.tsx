@@ -62,6 +62,7 @@ import { SystemNoticePage } from '../components/system/SystemNoticePage';
 
 // System Pages
 import { SystemStatesPage } from '../components/system/SystemStatesPage';
+import { Preloader } from '../components/system/Preloader';
 
 export default function Home() {
   const { currentView, setCurrentView } = useApp();
@@ -152,7 +153,7 @@ export default function Home() {
     // 7. MEMBER PORTAL (Wrapped with User Sidebar + Header + Mobile Bottom Nav)
     if (currentView.startsWith('user-')) {
       return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row pb-16 md:pb-0">
+        <div className="min-h-screen bg-[#081E26] text-white flex flex-col md:flex-row pb-16 md:pb-0">
           <UserSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl mx-auto w-full">
@@ -212,7 +213,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white relative">
+    <div className="min-h-screen bg-[#081E26] relative text-white">
+
       {/* Shortcut Key Toast Banner */}
       <AnimatePresence>
         {showAdminToast && (
@@ -233,13 +235,13 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <motion.div
           key={currentView}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -12 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
         >
           {renderContent()}
         </motion.div>

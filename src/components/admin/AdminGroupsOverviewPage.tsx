@@ -33,7 +33,7 @@ export const AdminGroupsOverviewPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showRosterModal, setShowRosterModal] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
-  const [newBatchName, setNewBatchName] = useState('GildEmpire 50 Gold Club - Batch F');
+  const [newBatchName, setNewBatchName] = useState('InfinityGram 50 Gold Club - Batch F');
   const [activeTab, setActiveTab] = useState<'all' | 'live' | 'full' | 'recruiting' | 'empty'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [rosterSearch, setRosterSearch] = useState('');

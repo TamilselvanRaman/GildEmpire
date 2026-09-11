@@ -42,12 +42,10 @@ export const AdminSidebar = () => {
       <div className="space-y-6">
         {/* Admin Brand Header */}
         <div className="flex items-center space-x-3 px-2 py-1 cursor-pointer group" onClick={() => setCurrentView('admin-dashboard')}>
-          <div className="w-9 h-9 rounded-xl bg-[#2F6FED] text-white flex items-center justify-center font-black shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
+          <img src="/logo.png" alt="InfinityGram Logo" className="h-8 w-auto object-contain shrink-0 group-hover:scale-105 transition-transform" />
           <div>
-            <h3 className="text-xs font-black text-[#0B1E39] tracking-wider uppercase">Audited Admin</h3>
-            <p className="text-[10px] text-emerald-700 font-mono font-bold">Sovereign Audit Engine</p>
+            <h3 className="text-xs font-black text-[#081E26] tracking-wider uppercase">InfinityGram</h3>
+            <p className="text-[10px] text-[#00C2B8] font-mono font-bold">Audit Control Console</p>
           </div>
         </div>
 

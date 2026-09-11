@@ -53,9 +53,9 @@ export const AdminUsersPage = () => {
     { id: 'usr_102', memberId: 'MB-4029', name: 'Priya Sundaram', mobile: '+91 98765 11223', email: 'priya@example.com', regDate: '15 Aug 2026', deposit: 'Verified', group: 'GROUP-001', slot: '2', status: 'Active', role: 'Member' },
     { id: 'usr_103', memberId: 'MB-7712', name: 'Vikramaditya Singh', mobile: '+91 98765 44332', email: 'vikram@example.com', regDate: '10 Sep 2026', deposit: 'Pending', group: 'GROUP-003', slot: '41', status: 'Pending Verification', role: 'Member' },
     { id: 'usr_104', memberId: 'MB-1092', name: 'Ananya Deshmukh', mobile: '+91 98765 99887', email: 'ananya@example.com', regDate: '09 Sep 2026', deposit: 'Rejected', group: 'Unassigned', slot: '-', status: 'Deactivated', role: 'Member' },
-    { id: 'adm_201', memberId: 'ADM-001', name: 'Vikram Roy', mobile: '+91 98765 00001', email: 'superadmin@gildempire.in', regDate: '01 Aug 2026', deposit: 'Verified', group: 'ALL GROUPS', slot: 'ADMIN', status: 'Active', role: 'Super Admin' },
-    { id: 'adm_202', memberId: 'ADM-002', name: 'Ananya Sen', mobile: '+91 98765 00002', email: 'admin.op@gildempire.in', regDate: '05 Aug 2026', deposit: 'Verified', group: 'ALL GROUPS', slot: 'STAFF', status: 'Active', role: 'Operations' },
-    { id: 'adm_203', memberId: 'ADM-003', name: 'Karthik Raja', mobile: '+91 98765 00003', email: 'admin.verify@gildempire.in', regDate: '10 Aug 2026', deposit: 'Verified', group: 'VERIFY DESK', slot: 'STAFF', status: 'Active', role: 'Reviewer' },
+    { id: 'adm_201', memberId: 'ADM-001', name: 'Vikram Roy', mobile: '+91 98765 00001', email: 'superadmin@infinitygram.in', regDate: '01 Aug 2026', deposit: 'Verified', group: 'ALL GROUPS', slot: 'ADMIN', status: 'Active', role: 'Super Admin' },
+    { id: 'adm_202', memberId: 'ADM-002', name: 'Ananya Sen', mobile: '+91 98765 00002', email: 'admin.op@infinitygram.in', regDate: '05 Aug 2026', deposit: 'Verified', group: 'ALL GROUPS', slot: 'STAFF', status: 'Active', role: 'Operations' },
+    { id: 'adm_203', memberId: 'ADM-003', name: 'Karthik Raja', mobile: '+91 98765 00003', email: 'admin.verify@infinitygram.in', regDate: '10 Aug 2026', deposit: 'Verified', group: 'VERIFY DESK', slot: 'STAFF', status: 'Active', role: 'Reviewer' },
   ];
 
   const [usersList, setUsersList] = useState(initialUsersList);
@@ -384,7 +384,7 @@ export const AdminUsersPage = () => {
                     <input
                       type="email"
                       required
-                      placeholder="admin@gildempire.in"
+                      placeholder="admin@infinitygram.in"
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"

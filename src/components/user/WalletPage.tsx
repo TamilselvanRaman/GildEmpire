@@ -116,26 +116,26 @@ export const WalletPage = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans relative z-10">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans relative z-10 text-white">
       
       {/* Executive Dark Sovereign Wallet Header */}
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#0B1E39] text-white p-8 sm:p-10 rounded-[2.5rem] border border-[#1A3860] space-y-6 relative overflow-hidden shadow-2xl"
+        className="bg-gradient-to-r from-[#0D3B43] via-[#081E26] to-[#0D3B43] text-white p-8 sm:p-10 rounded-[2.5rem] border border-[#E1A238]/40 space-y-6 relative overflow-hidden shadow-2xl"
       >
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#E1A238]/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#00C2B8]/10 rounded-full blur-[80px] pointer-events-none"></div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3.5 py-1 rounded-full uppercase tracking-widest flex items-center space-x-1.5 shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span className="text-[10px] font-black bg-[#00C2B8]/20 text-[#00C2B8] border border-[#00C2B8]/40 px-3.5 py-1 rounded-full uppercase tracking-widest flex items-center space-x-1.5 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-[#00C2B8] animate-ping"></span>
                 <span>Encrypted Sovereign Digital Wallet</span>
               </span>
-              <span className="text-[10px] font-mono font-black text-amber-300 bg-amber-400/10 border border-amber-400/30 px-3 py-1 rounded-full uppercase">
+              <span className="text-[10px] font-mono font-black text-[#F2C868] bg-[#081E26] border border-[#E1A238]/40 px-3 py-1 rounded-full uppercase">
                 {user.memberId}
               </span>
             </div>
@@ -152,15 +152,15 @@ export const WalletPage = () => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 relative z-10 w-full lg:w-auto">
             <button
               onClick={() => setCurrentView('user-deposit-overview')}
-              className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/20 text-xs font-black px-6 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-md cursor-pointer hover:-translate-y-0.5"
+              className="bg-[#081E26] hover:bg-[#081E26]/80 text-[#00C2B8] border border-[#00C2B8]/40 text-xs font-black px-6 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-md cursor-pointer hover:-translate-y-0.5"
             >
-              <Wallet className="w-4 h-4 text-blue-300" />
+              <Wallet className="w-4 h-4 text-[#00C2B8]" />
               <span>Deposit Ledger</span>
             </button>
 
             <button
               onClick={() => setShowWithdrawModal(true)}
-              className="bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:to-emerald-700 text-emerald-950 text-xs font-black px-7 py-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(16,185,129,0.4)] transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer hover:-translate-y-0.5"
+              className="btn-infinity-cyan text-xs font-black px-7 py-4 rounded-2xl shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer hover:-translate-y-0.5"
             >
               <ArrowUpRight className="w-4.5 h-4.5 stroke-[3]" />
               <span>Instant Withdrawal</span>
@@ -169,10 +169,10 @@ export const WalletPage = () => {
         </div>
 
         {/* Balance Breakdown Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-white/10 relative z-10 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-[#0D3B43] relative z-10 text-xs">
           <div>
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Available Wallet Balance</p>
-            <p className="text-2xl font-black text-amber-300 font-mono tracking-tight mt-0.5">₹3,500.00</p>
+            <p className="text-2xl font-black text-[#F2C868] font-mono tracking-tight mt-0.5">₹3,500.00</p>
           </div>
           <div>
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Verified Group Deposit</p>
@@ -180,11 +180,11 @@ export const WalletPage = () => {
           </div>
           <div>
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">5% Referral Bonus Earned</p>
-            <p className="text-2xl font-black text-emerald-400 font-mono tracking-tight mt-0.5">₹500.00</p>
+            <p className="text-2xl font-black text-[#00C2B8] font-mono tracking-tight mt-0.5">₹500.00</p>
           </div>
           <div>
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Total Payouts Processed</p>
-            <p className="text-2xl font-black text-blue-300 font-mono tracking-tight mt-0.5">₹2,000.00</p>
+            <p className="text-2xl font-black text-[#E1A238] font-mono tracking-tight mt-0.5">₹2,000.00</p>
           </div>
         </div>
 
@@ -195,22 +195,22 @@ export const WalletPage = () => {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="bg-white rounded-[2.5rem] border border-slate-200 shadow-[0_20px_40px_-15px_rgba(11,30,57,0.08)] p-8 sm:p-10 space-y-6"
+        className="bg-[#0D3B43] rounded-[2.5rem] border border-[#E1A238]/30 shadow-2xl p-8 sm:p-10 space-y-6"
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#081E26]">
           <div>
-            <h3 className="text-lg font-black text-[#0B1E39] flex items-center space-x-2">
-              <FileText className="w-5 h-5 text-[#2F6FED]" />
+            <h3 className="text-lg font-black text-white flex items-center space-x-2">
+              <FileText className="w-5 h-5 text-[#00C2B8]" />
               <span>Full Audit Transaction Statement</span>
             </h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="text-xs text-slate-300 font-medium mt-0.5">
               Live cryptographically recorded deposits, referral bonuses, and bank withdrawals.
             </p>
           </div>
 
           {/* Statement Filters & Export */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 text-xs font-black">
+            <div className="flex items-center space-x-1 bg-[#081E26] p-1 rounded-2xl border border-[#0D3B43] text-xs font-black">
               {[
                 { id: 'all', label: 'All Logs' },
                 { id: 'deposit', label: 'Deposits' },
@@ -222,8 +222,8 @@ export const WalletPage = () => {
                   onClick={() => setActiveTab(t.id as any)}
                   className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                     activeTab === t.id 
-                      ? 'bg-[#0B1E39] text-white shadow-xs' 
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-[#00C2B8] text-[#081E26] shadow-xs' 
+                      : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   {t.label}
@@ -233,7 +233,7 @@ export const WalletPage = () => {
 
             <button 
               onClick={() => alert('Downloading official PDF statement...')}
-              className="bg-blue-50 hover:bg-blue-100 text-[#2F6FED] text-xs font-black px-4 py-2 rounded-xl transition-colors flex items-center space-x-1.5 cursor-pointer"
+              className="bg-[#081E26] hover:bg-[#081E26]/80 text-[#00C2B8] text-xs font-black px-4 py-2 rounded-xl border border-[#00C2B8]/30 transition-colors flex items-center space-x-1.5 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>PDF Statement</span>
@@ -244,7 +244,7 @@ export const WalletPage = () => {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#F8FAFC] border-b border-slate-200 text-slate-400 uppercase text-[10px] font-black tracking-wider">
+            <thead className="bg-[#081E26] border-b border-[#0D3B43] text-[#F2C868] uppercase text-[10px] font-black tracking-wider">
               <tr>
                 <th className="p-4 rounded-l-xl">Transaction Date</th>
                 <th className="p-4">Type & Description</th>
@@ -254,33 +254,33 @@ export const WalletPage = () => {
                 <th className="p-4 rounded-r-xl">Audit Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
+            <tbody className="divide-y divide-[#081E26] font-medium">
               {filteredTransactions.map(tx => (
-                <tr key={tx.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="p-4 font-mono text-slate-500">{tx.date}</td>
-                  <td className="p-4 font-extrabold text-[#0B1E39]">
+                <tr key={tx.id} className="hover:bg-[#081E26]/50 transition-colors">
+                  <td className="p-4 font-mono text-slate-400">{tx.date}</td>
+                  <td className="p-4 font-extrabold text-white">
                     <div className="flex items-center space-x-2.5">
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold shrink-0 ${
-                        tx.direction === 'in' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+                        tx.direction === 'in' ? 'bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/30' : 'bg-[#081E26] text-[#E1A238] border border-[#E1A238]/30'
                       }`}>
-                        {tx.direction === 'in' ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+                        {tx.direction === 'in' ? <ArrowDownLeft className="w-4 h-4 text-[#00C2B8]" /> : <ArrowUpRight className="w-4 h-4 text-[#E1A238]" />}
                       </div>
                       <span>{tx.type}</span>
                     </div>
                   </td>
-                  <td className="p-4 font-mono font-bold text-[#2F6FED]">{tx.refId}</td>
-                  <td className="p-4 text-slate-600 font-medium">{tx.method}</td>
+                  <td className="p-4 font-mono font-bold text-[#00C2B8]">{tx.refId}</td>
+                  <td className="p-4 text-slate-300 font-medium">{tx.method}</td>
                   <td className="p-4 font-mono font-black text-sm">
                     {tx.amount === 0 ? (
-                      <span className="text-amber-600">1 Gram 24K Gold</span>
+                      <span className="text-[#F2C868]">1 Gram 24K Gold</span>
                     ) : tx.direction === 'in' ? (
-                      <span className="text-emerald-600">+₹{tx.amount.toLocaleString()}</span>
+                      <span className="text-[#00C2B8]">+₹{tx.amount.toLocaleString()}</span>
                     ) : (
-                      <span className="text-blue-600">-₹{tx.amount.toLocaleString()}</span>
+                      <span className="text-[#E1A238]">-₹{tx.amount.toLocaleString()}</span>
                     )}
                   </td>
                   <td className="p-4">
-                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+                    <span className="bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/40 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
                       {tx.status}
                     </span>
                   </td>
@@ -298,34 +298,34 @@ export const WalletPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-[#081E26]/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white max-w-md w-full rounded-[2.5rem] p-8 border border-slate-200 shadow-2xl space-y-6 relative text-left"
+              className="bg-[#0D3B43] max-w-md w-full rounded-[2.5rem] p-8 border border-[#E1A238]/40 shadow-2xl space-y-6 relative text-left text-white"
             >
               <button
                 onClick={() => setShowWithdrawModal(false)}
-                className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-full cursor-pointer"
+                className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-full cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                <div className="w-12 h-12 rounded-2xl bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/40 flex items-center justify-center shrink-0">
                   <ArrowUpRight className="w-6 h-6 stroke-[3]" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-[#0B1E39]">Instant Wallet Withdrawal</h3>
-                  <p className="text-xs text-slate-500 font-medium">Available to withdraw: ₹3,500.00</p>
+                  <h3 className="text-xl font-black text-white">Instant Wallet Withdrawal</h3>
+                  <p className="text-xs text-slate-300 font-medium">Available to withdraw: ₹3,500.00</p>
                 </div>
               </div>
 
               {withdrawSuccess && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl text-xs font-bold flex items-center space-x-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div className="bg-[#081E26] border border-[#00C2B8]/40 text-[#00C2B8] p-4 rounded-2xl text-xs font-bold flex items-center space-x-2">
+                  <CheckCircle2 className="w-5 h-5 text-[#00C2B8] shrink-0" />
                   <span>Withdrawal request of ₹{withdrawForm.amount} initiated. Reference #WTH-8924012. IMPS payout dispatched to bank.</span>
                 </div>
               )}
@@ -341,7 +341,7 @@ export const WalletPage = () => {
                     max={3500}
                     value={withdrawForm.amount}
                     onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
-                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-black text-lg p-3.5 rounded-2xl focus:outline-none focus:border-[#2F6FED]"
+                    className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-black text-lg p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8]"
                   />
                 </div>
 
@@ -354,7 +354,7 @@ export const WalletPage = () => {
                     required
                     value={withdrawForm.upiId}
                     onChange={(e) => setWithdrawForm({ ...withdrawForm, upiId: e.target.value })}
-                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-bold p-3.5 rounded-2xl focus:outline-none focus:border-[#2F6FED]"
+                    className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-bold p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8]"
                   />
                 </div>
 
@@ -367,13 +367,13 @@ export const WalletPage = () => {
                     required
                     value={withdrawForm.bankAccount}
                     onChange={(e) => setWithdrawForm({ ...withdrawForm, bankAccount: e.target.value })}
-                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-bold p-3.5 rounded-2xl focus:outline-none focus:border-[#2F6FED]"
+                    className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-mono font-bold p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8]"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-[#0B1E39] hover:bg-[#142d52] text-white font-black py-4 rounded-2xl shadow-lg transition-all text-xs uppercase tracking-wider cursor-pointer"
+                  className="w-full btn-infinity-cyan font-black py-4 rounded-2xl shadow-lg transition-all text-xs uppercase tracking-wider cursor-pointer"
                 >
                   Submit Instant IMPS Withdrawal Request
                 </button>

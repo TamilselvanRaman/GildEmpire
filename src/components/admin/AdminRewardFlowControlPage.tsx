@@ -28,6 +28,12 @@ import {
   Tv
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
+
+const Interactive3DBottleCard = dynamic(
+  () => import('../mystery-letter/Interactive3DBottleCard').then((mod) => mod.Interactive3DBottleCard),
+  { ssr: false }
+);
 
 export const AdminRewardFlowControlPage = () => {
   const { 
@@ -150,20 +156,20 @@ export const AdminRewardFlowControlPage = () => {
     <div className="space-y-8 max-w-7xl mx-auto pb-16 font-sans select-none">
       
       {/* Executive Command Header */}
-      <div className="bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#15345E] text-white p-6 sm:p-8 rounded-3xl border border-[#1A3860] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-[90px] pointer-events-none"></div>
+      <div className="bg-gradient-to-r from-[#0D3B43] via-[#081E26] to-[#040D11] text-white p-6 sm:p-8 rounded-3xl border-2 border-[#E1A238]/60 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#00C2B8] via-[#F2C868] to-[#E1A238]"></div>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#00C2B8]/10 rounded-full blur-[90px] pointer-events-none"></div>
 
         <div className="space-y-2 relative z-10">
-          <div className="inline-flex items-center space-x-2 bg-amber-400/10 text-amber-300 border border-amber-400/30 px-3.5 py-1 rounded-full text-xs font-black">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>Admin Control Panel — Reward Program Engine</span>
+          <div className="inline-flex items-center space-x-2 bg-[#00C2B8]/15 text-[#00C2B8] border border-[#00C2B8]/40 px-3.5 py-1 rounded-full text-xs font-mono font-bold">
+            <Sparkles className="w-4 h-4 text-[#00C2B8]" />
+            <span>Admin Control Panel — InfinityGram Program Engine</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-black text-white tracking-tight">
             50-Day Reward Program Control
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 font-medium">
-            Target Batch: <strong className="text-white font-bold">{group.groupName}</strong> ({group.groupId}) | Schedule: <span className="text-amber-400 font-black">{scheduledTime} {scheduledAmPm} IST Daily</span>
+            Target Batch: <strong className="text-white font-bold">{group.groupName}</strong> ({group.groupId}) | Schedule: <span className="text-[#F2C868] font-mono font-black">{scheduledTime} {scheduledAmPm} IST Daily</span>
           </p>
         </div>
 
@@ -171,9 +177,9 @@ export const AdminRewardFlowControlPage = () => {
           {/* Configure Schedule Button */}
           <button
             onClick={() => setShowScheduleModal(true)}
-            className="bg-white/10 hover:bg-white/20 text-white font-extrabold px-4 py-3 rounded-2xl text-xs border border-white/20 shadow-md transition-all flex items-center space-x-2 cursor-pointer"
+            className="bg-[#081E26] hover:bg-[#0D3B43] text-white font-extrabold px-4 py-3 rounded-2xl text-xs border border-[#E1A238]/40 shadow-md transition-all flex items-center space-x-2 cursor-pointer"
           >
-            <Sliders className="w-4 h-4 text-amber-400" />
+            <Sliders className="w-4 h-4 text-[#F2C868]" />
             <span>Configure Schedule</span>
           </button>
 
@@ -183,7 +189,7 @@ export const AdminRewardFlowControlPage = () => {
             className={`px-4 py-3 rounded-2xl font-extrabold text-xs shadow-md transition-all flex items-center space-x-2 cursor-pointer ${
               emailSent 
                 ? 'bg-emerald-600 text-white shadow-emerald-600/20' 
-                : 'bg-[#2F6FED] hover:bg-blue-700 text-white shadow-blue-600/20'
+                : 'bg-[#00C2B8] hover:bg-[#009890] text-[#081E26] font-black shadow-[#00C2B8]/20'
             }`}
           >
             <Mail className="w-4 h-4" />
@@ -208,15 +214,15 @@ export const AdminRewardFlowControlPage = () => {
             disabled={isLocked24h || drawState !== 'idle' || activePoolMembers.length === 0}
             className={`px-6 py-3.5 rounded-2xl font-black text-xs shadow-xl transition-all flex items-center space-x-2 cursor-pointer ${
               isLocked24h 
-                ? 'bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed'
+                ? 'bg-[#081E26] text-slate-500 border border-slate-700 cursor-not-allowed'
                 : drawState !== 'idle' 
                   ? 'bg-slate-700 text-slate-400 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-amber-950 shadow-amber-500/20 hover:scale-[1.02]'
+                  : 'bg-gradient-to-r from-[#F2C868] via-[#E1A238] to-[#B87C10] hover:brightness-110 text-[#081E26] font-serif shadow-[#E1A238]/30 hover:scale-[1.02]'
             }`}
           >
             {isLocked24h ? (
               <>
-                <Lock className="w-4 h-4 text-amber-400" />
+                <Lock className="w-4 h-4 text-[#E1A238]" />
                 <span>
                   Draw Locked (Next in {String(lockCountdown?.hours).padStart(2, '0')}h {String(lockCountdown?.minutes).padStart(2, '0')}m {String(lockCountdown?.seconds).padStart(2, '0')}s)
                 </span>
@@ -237,8 +243,8 @@ export const AdminRewardFlowControlPage = () => {
       </div>
 
       {/* ACTIVE EVENT BATCH SELECTOR BAR (ONLY SHOW 50/50 FULL BATCHES) */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-center space-x-2 overflow-x-auto">
-        <span className="text-xs font-black text-[#0B1E39] uppercase tracking-wider shrink-0 mr-2">Target Event Batch:</span>
+      <div className="bg-[#081E26] p-4 rounded-2xl border border-[#E1A238]/40 shadow-xs flex items-center space-x-2 overflow-x-auto">
+        <span className="text-xs font-mono font-black text-[#F2C868] uppercase tracking-wider shrink-0 mr-2">Target Event Batch:</span>
         {allGroups.filter(g => g.totalMembers === 50).map((g) => {
           const isSelected = group.groupId === g.groupId;
           return (
@@ -247,13 +253,13 @@ export const AdminRewardFlowControlPage = () => {
               onClick={() => setSelectedBatchId(g.groupId)}
               className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
                 isSelected
-                  ? 'bg-[#0B1E39] text-white shadow-md'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200/80'
+                  ? 'bg-[#00C2B8] text-[#081E26] shadow-md font-mono'
+                  : 'bg-[#0D3B43] text-slate-300 hover:bg-[#0D3B43]/80 border border-[#E1A238]/20'
               }`}
             >
               <span>{g.groupName.split(' - ')[1]}</span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono ${
-                isSelected ? 'bg-amber-400 text-amber-950' : 'bg-slate-200 text-slate-800'
+                isSelected ? 'bg-[#081E26] text-[#00C2B8]' : 'bg-[#081E26] text-[#F2C868]'
               }`}>
                 {g.groupId} (50/50)
               </span>
@@ -333,17 +339,17 @@ export const AdminRewardFlowControlPage = () => {
       )}
 
       {/* 🔮 INTERACTIVE GLASS BOTTLE PANAI DRAW VISUALIZER WIDGET */}
-      <div className="bg-gradient-to-br from-[#0B1E39] via-[#0F284B] to-[#122A4E] p-6 sm:p-10 rounded-3xl border border-[#1E3E6B] shadow-2xl text-white relative overflow-hidden space-y-6">
+      <div className="bg-gradient-to-br from-[#0D3B43] via-[#081E26] to-[#040D11] p-6 sm:p-10 rounded-3xl border-2 border-[#E1A238]/60 shadow-2xl text-white relative overflow-hidden space-y-6">
         
         {/* Top Status Bar */}
-        <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-[#081E26]/80 backdrop-blur-md p-4 rounded-2xl border border-[#E1A238]/30 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400 text-amber-950 flex items-center justify-center font-black shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-[#00C2B8] text-[#081E26] flex items-center justify-center font-black shadow-md">
               <Tv className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest block">Admin Command Console</span>
-              <p className="text-sm font-black text-white">Live Stream & Bottle Shake Trigger Panel</p>
+              <span className="text-[10px] font-mono font-black text-[#F2C868] uppercase tracking-widest block">Admin Command Console</span>
+              <p className="text-sm font-serif font-black text-white">Live Stream & Bottle Shake Trigger Panel</p>
             </div>
           </div>
 
@@ -356,8 +362,8 @@ export const AdminRewardFlowControlPage = () => {
                 <span>Locked 24h ({String(lockCountdown?.hours).padStart(2, '0')}h {String(lockCountdown?.minutes).padStart(2, '0')}m {String(lockCountdown?.seconds).padStart(2, '0')}s)</span>
               </span>
             ) : (
-              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center space-x-1.5">
-                <Unlock className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="bg-[#00C2B8]/20 text-[#00C2B8] border border-[#00C2B8]/40 px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center space-x-1.5">
+                <Unlock className="w-3.5 h-3.5 text-[#00C2B8]" />
                 <span>Ready for Draw</span>
               </span>
             )}
@@ -365,19 +371,19 @@ export const AdminRewardFlowControlPage = () => {
         </div>
 
         {/* Glass Bottle Visualizer Main Section */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-8 relative z-10 pt-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10 pt-2">
           
           {/* Left Text & Controls */}
-          <div className="space-y-4 max-w-lg text-center lg:text-left">
-            <div className="inline-flex items-center space-x-2 bg-amber-400/10 text-amber-400 border border-amber-400/30 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider">
-              <Dices className="w-4 h-4 text-amber-400" />
-              <span>Panai Glass Bottle Draw Pot</span>
+          <div className="lg:col-span-7 space-y-4 text-center lg:text-left">
+            <div className="inline-flex items-center space-x-2 bg-[#00C2B8]/15 text-[#00C2B8] border border-[#00C2B8]/30 px-3.5 py-1 rounded-full text-xs font-mono font-black uppercase tracking-wider">
+              <Dices className="w-4 h-4 text-[#00C2B8]" />
+              <span>InfinityGram Glass Bottle Draw Pot</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight">
               Traditional Glass Bottle Lucky Pot
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
-              Inside this glass bottle are <strong className="text-amber-400 font-bold">{activePoolMembers.length} folded paper chits</strong> representing active members in sequence. Clicking the button below starts the bottle shake, draws one folded chit, and broadcasts live to all user dashboards.
+              Inside this glass bottle are <strong className="text-[#F2C868] font-bold">{activePoolMembers.length} folded paper chits</strong> representing active members in sequence. Clicking the button below starts the bottle shake, draws one folded chit, and broadcasts live to all user dashboards.
             </p>
 
             {/* Quick Action Trigger Button */}
@@ -387,18 +393,18 @@ export const AdminRewardFlowControlPage = () => {
                 disabled={isLocked24h || drawState !== 'idle' || activePoolMembers.length === 0}
                 className={`py-4 px-8 rounded-2xl shadow-xl text-xs uppercase tracking-wider flex items-center space-x-3 transition-all ${
                   isLocked24h
-                    ? 'bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-amber-950 font-black shadow-amber-500/20 hover:scale-105 cursor-pointer'
+                    ? 'bg-[#081E26] text-slate-500 border border-slate-700 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-[#00C2B8] to-[#009890] hover:brightness-110 text-[#081E26] font-serif font-black shadow-[#00C2B8]/30 hover:scale-105 cursor-pointer'
                 }`}
               >
                 {isLocked24h ? (
                   <>
-                    <Lock className="w-5 h-5 text-amber-400" />
+                    <Lock className="w-5 h-5 text-[#E1A238]" />
                     <span>24H Lock Active ({String(lockCountdown?.hours).padStart(2, '0')}h {String(lockCountdown?.minutes).padStart(2, '0')}m remaining)</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-5 h-5 text-amber-950 stroke-[2.5]" />
+                    <Sparkles className="w-5 h-5 text-[#081E26] stroke-[2.5]" />
                     <span>Click to Shake & Draw Lucky Chit</span>
                   </>
                 )}
@@ -406,91 +412,17 @@ export const AdminRewardFlowControlPage = () => {
             </div>
           </div>
 
-          {/* Right: Glass Bottle Graphic & Animation Container */}
-          <div className="relative flex flex-col items-center justify-center shrink-0 py-4">
-            
-            {/* Floating Paper Chit Out Of Glass Bottle Animation */}
-            <AnimatePresence>
-              {(drawState === 'drawing' || drawState === 'revealed') && (
-                <motion.div
-                  initial={{ y: 80, scale: 0.3, opacity: 0 }}
-                  animate={{ y: -60, scale: 1.2, opacity: 1, rotate: [0, 15, -15, 0] }}
-                  exit={{ y: -100, opacity: 0 }}
-                  transition={{ duration: 1.2, ease: "easeOut" }}
-                  className="absolute top-0 z-30 flex flex-col items-center"
-                >
-                  <div className="bg-gradient-to-r from-amber-200 via-amber-100 to-amber-300 text-amber-950 px-5 py-3 rounded-2xl border-2 border-amber-400 shadow-2xl flex items-center space-x-2 font-black text-xs">
-                    <span className="text-xl">📜</span>
-                    <span>Folded Winner Chit</span>
-                  </div>
-                  <motion.div 
-                    animate={{ scale: [1, 1.4, 1] }}
-                    transition={{ repeat: Infinity, duration: 0.8 }}
-                    className="text-amber-400 text-xl font-bold mt-1"
-                  >
-                    ✨ ✨ ✨
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Glass Bottle Body Container */}
-            <motion.div
-              onClick={handleTriggerGlassBottleDraw}
-              animate={
-                drawState === 'shaking' ? {
-                  x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
-                  y: [-4, 4, -3, 3, -1, 1, 0],
-                  rotate: [-6, 6, -4, 4, -2, 2, 0]
-                } : { x: 0, y: 0, rotate: 0 }
-              }
-              transition={{ duration: 1.8, ease: "easeInOut" }}
-              className={`relative w-48 h-64 flex flex-col items-center justify-end group select-none ${isLocked24h ? 'cursor-not-allowed opacity-85' : 'cursor-pointer'}`}
-            >
-              
-              {/* Bottle Cork Stopper */}
-              <div className="w-16 h-8 bg-gradient-to-b from-amber-700 via-amber-800 to-amber-900 rounded-t-lg border-2 border-amber-600 shadow-md relative z-20 flex items-center justify-center">
-                <span className="text-[10px] text-amber-200 font-extrabold uppercase">GILD 24K</span>
-              </div>
-
-              {/* Bottle Neck */}
-              <div className="w-20 h-10 bg-white/20 backdrop-blur-md border-x-2 border-white/40 shadow-inner relative z-10"></div>
-
-              {/* Glass Bottle Jar Main Body */}
-              <div className="w-48 h-48 bg-gradient-to-b from-white/25 via-white/15 to-white/30 backdrop-blur-md rounded-b-[3.5rem] rounded-t-3xl border-2 border-white/50 shadow-2xl relative overflow-hidden flex items-end justify-center p-4">
-                
-                <div className="absolute top-2 left-3 w-6 h-36 bg-gradient-to-b from-white/60 via-white/20 to-transparent rounded-full transform -rotate-12 pointer-events-none"></div>
-                <div className="absolute top-4 right-3 w-3 h-24 bg-gradient-to-b from-white/40 via-white/10 to-transparent rounded-full transform rotate-12 pointer-events-none"></div>
-
-                <div className="grid grid-cols-5 gap-1.5 w-full relative z-10 pb-2">
-                  {Array.from({ length: Math.min(35, activePoolMembers.length) }).map((_, idx) => (
-                    <motion.div
-                      key={idx}
-                      animate={
-                        drawState === 'shaking' ? {
-                          y: [0, -18, 5, -12, 0],
-                          x: [0, (idx % 2 === 0 ? 8 : -8), 0],
-                          rotate: [0, (idx % 3 === 0 ? 45 : -45), 0]
-                        } : { y: 0, x: 0, rotate: idx * 12 }
-                      }
-                      transition={{ duration: 1.8, delay: idx * 0.02 }}
-                      className="w-6 h-6 bg-gradient-to-br from-amber-200 via-amber-300 to-amber-400 rounded-md border border-amber-500 shadow-sm flex items-center justify-center text-[9px] font-black text-amber-950 font-mono"
-                    >
-                      📜
-                    </motion.div>
-                  ))}
-                </div>
-
-              </div>
-
-            </motion.div>
-
-            {/* Bottom Status Pill */}
-            <div className="mt-3 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 text-[11px] font-extrabold text-amber-300 flex items-center space-x-2 shadow-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span>{activePoolMembers.length} Active Paper Chits in Pot</span>
-            </div>
-
+          {/* Right: Interactive 3D Glass Bottle Container */}
+          <div className="lg:col-span-5 flex items-center justify-center lg:justify-end w-full">
+            <Interactive3DBottleCard
+              drawState={drawState}
+              winner={selectedWinner}
+              activeChitCount={activePoolMembers.length}
+              onTriggerDraw={handleTriggerGlassBottleDraw}
+              isLocked24h={isLocked24h}
+              lockCountdown={lockCountdown}
+              isAdminView={true}
+            />
           </div>
 
         </div>
@@ -949,7 +881,7 @@ export const AdminRewardFlowControlPage = () => {
 
               <div className="bg-[#F8FAFC] p-5 rounded-2xl border border-slate-200 space-y-3 text-xs">
                 <div className="border-b border-slate-200 pb-2 space-y-1 font-mono">
-                  <p className="text-slate-500"><strong>From:</strong> notifications@gildempire.in</p>
+                  <p className="text-slate-500"><strong>From:</strong> notifications@infinitygram.in</p>
                   <p className="text-slate-500"><strong>Recipients:</strong> All 50 Enrolled Members in Batch A</p>
                   <p className="text-[#0B1E39] font-black font-sans text-sm pt-1">
                     Subject: ⏰ Live 1 Gram Gold Panai Selection Starts at {scheduledTime} {scheduledAmPm}!

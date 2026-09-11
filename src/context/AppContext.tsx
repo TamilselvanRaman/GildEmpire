@@ -308,7 +308,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const newAudit: AuditLogItem = {
       id: `audit_${Date.now()}`,
       timestamp: new Date().toLocaleString('en-IN') + ' IST',
-      actor: email || 'admin@gildempire.in',
+      actor: email || 'admin@infinitygram.in',
       role: 'Super Admin',
       action: 'ADMIN_GATEWAY_LOGIN_SUCCESS',
       module: 'Security Vault',
@@ -457,7 +457,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const newAudit: AuditLogItem = {
       id: `audit_${Date.now()}`,
       timestamp: new Date().toLocaleString('en-IN') + ' IST',
-      actor: 'admin.verify@gildempire.in',
+      actor: 'admin.verify@infinitygram.in',
       role: 'Reviewer',
       action: status === 'Verified' ? 'VERIFIED_AND_AUTO_ASSIGNED_SLOT' : 'REJECTED_MEMBER_DEPOSIT',
       module: 'Deposits',
@@ -548,7 +548,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const newAudit: AuditLogItem = {
       id: `audit_${Date.now()}`,
       timestamp: new Date().toLocaleString('en-IN') + ' IST',
-      actor: 'admin.op@gildempire.in',
+      actor: 'admin.op@infinitygram.in',
       role: 'Operations',
       action: 'ADMIN_EXECUTED_DAILY_GOLD_SELECTION_24H_LOCKED',
       module: 'Rewards',

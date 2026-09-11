@@ -14,7 +14,7 @@ export const currentUserMock: UserProfile = {
   id: 'usr_101',
   memberId: 'LOP-000014',
   fullName: 'Rajesh Kumar Sharma',
-  email: 'rajesh.sharma@gildempire.in',
+  email: 'rajesh.sharma@infinitygram.in',
   mobile: '+91 98765 43210',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   registrationDate: '12 Aug 2026',
@@ -116,7 +116,7 @@ export const generateBatchSlots = (filledCount: number, prefix: string = 'LOP-')
 
 export const currentGroupMock: GroupDetails = {
   groupId: 'GROUP-001',
-  groupName: 'GildEmpire 50 Gold Club - Batch A',
+  groupName: 'InfinityGram 50 Gold Club - Batch A',
   status: 'active',
   createdDate: '01 Aug 2026',
   totalMembers: 50,
@@ -132,7 +132,7 @@ export const allGroupsMock: GroupDetails[] = [
   currentGroupMock,
   {
     groupId: 'GROUP-002',
-    groupName: 'GildEmpire 50 Gold Club - Batch B',
+    groupName: 'InfinityGram 50 Gold Club - Batch B',
     status: 'full',
     createdDate: '05 Aug 2026',
     totalMembers: 50,
@@ -145,7 +145,7 @@ export const allGroupsMock: GroupDetails[] = [
   },
   {
     groupId: 'GROUP-003',
-    groupName: 'GildEmpire 50 Gold Club - Batch C',
+    groupName: 'InfinityGram 50 Gold Club - Batch C',
     status: 'recruiting',
     createdDate: '10 Aug 2026',
     totalMembers: 40,
@@ -158,7 +158,7 @@ export const allGroupsMock: GroupDetails[] = [
   },
   {
     groupId: 'GROUP-004',
-    groupName: 'GildEmpire 50 Gold Club - Batch D',
+    groupName: 'InfinityGram 50 Gold Club - Batch D',
     status: 'empty',
     createdDate: '15 Aug 2026',
     totalMembers: 0,
@@ -171,7 +171,7 @@ export const allGroupsMock: GroupDetails[] = [
   },
   {
     groupId: 'GROUP-005',
-    groupName: 'GildEmpire 50 Gold Club - Batch E',
+    groupName: 'InfinityGram 50 Gold Club - Batch E',
     status: 'empty',
     createdDate: '20 Aug 2026',
     totalMembers: 0,
@@ -252,7 +252,7 @@ export const notificationsMock: NotificationItem[] = [
   {
     id: 'notif_3',
     title: 'Added to GROUP-001',
-    description: 'You have been assigned Slot #14 in GildEmpire 50 Gold Club - Batch A.',
+    description: 'You have been assigned Slot #14 in InfinityGram 50 Gold Club - Batch A.',
     category: 'Group',
     timestamp: '14 Aug 2026, 02:20 PM',
     read: true,
@@ -271,7 +271,7 @@ export const auditLogsMock: AuditLogItem[] = [
   {
     id: 'audit_901',
     timestamp: '10 Sep 2026, 07:00:02 IST',
-    actor: 'admin.op@gildempire.in',
+    actor: 'admin.op@infinitygram.in',
     role: 'Operations',
     action: 'EXECUTED_DAILY_GOLD_SELECTION',
     module: 'Rewards',
@@ -283,7 +283,7 @@ export const auditLogsMock: AuditLogItem[] = [
   {
     id: 'audit_902',
     timestamp: '10 Sep 2026, 15:45:10 IST',
-    actor: 'admin.verify@gildempire.in',
+    actor: 'admin.verify@infinitygram.in',
     role: 'Reviewer',
     action: 'VERIFIED_MEMBER_DEPOSIT',
     module: 'Deposits',
@@ -295,7 +295,7 @@ export const auditLogsMock: AuditLogItem[] = [
   {
     id: 'audit_903',
     timestamp: '09 Sep 2026, 11:20:00 IST',
-    actor: 'superadmin@gildempire.in',
+    actor: 'superadmin@infinitygram.in',
     role: 'Super Admin',
     action: 'UPDATED_SYSTEM_BUSINESS_RULES',
     module: 'System Settings',
@@ -310,7 +310,7 @@ export const adminUsersMock: AdminUser[] = [
   {
     id: 'adm_1',
     name: 'Vikram Roy',
-    email: 'superadmin@gildempire.in',
+    email: 'superadmin@infinitygram.in',
     role: 'Super Admin',
     status: 'Active',
     lastLogin: 'Today, 08:30 PM',
@@ -318,7 +318,7 @@ export const adminUsersMock: AdminUser[] = [
   {
     id: 'adm_2',
     name: 'Ananya Sen',
-    email: 'admin.op@gildempire.in',
+    email: 'admin.op@infinitygram.in',
     role: 'Operations',
     status: 'Active',
     lastLogin: 'Today, 06:15 PM',
@@ -326,7 +326,7 @@ export const adminUsersMock: AdminUser[] = [
   {
     id: 'adm_3',
     name: 'Karthik Raja',
-    email: 'admin.verify@gildempire.in',
+    email: 'admin.verify@infinitygram.in',
     role: 'Reviewer',
     status: 'Active',
     lastLogin: 'Yesterday, 04:00 PM',

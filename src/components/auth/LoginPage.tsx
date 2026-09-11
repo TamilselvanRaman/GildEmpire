@@ -21,7 +21,7 @@ import { motion } from 'framer-motion';
 
 export const LoginPage = () => {
   const { setCurrentView, loginUser } = useApp();
-  const [mobileEmail, setMobileEmail] = useState('rajesh.sharma@gildempire.in');
+  const [mobileEmail, setMobileEmail] = useState('rajesh.sharma@infinitygram.in');
   const [password, setPassword] = useState('UserPass#2026');
   const [showPassword, setShowPassword] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
@@ -64,16 +64,13 @@ export const LoginPage = () => {
 
           <div className="relative z-10 space-y-8">
             <div 
-              className="flex items-center space-x-3 cursor-pointer group" 
+              className="flex items-center space-x-2.5 cursor-pointer group" 
               onClick={() => setCurrentView('public-landing')}
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#2F6FED] to-blue-400 flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-                <Award className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="font-extrabold text-lg text-white font-mono tracking-tight">GildEmpire</span>
-                <span className="block text-[10px] text-blue-200 font-semibold tracking-wider uppercase">Sovereign Portal</span>
-              </div>
+              <img src="/logo.png" alt="InfinityGram Logo" className="h-8 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(0,194,184,0.4)] group-hover:scale-105 transition-transform" />
+              <span className="text-xl font-black tracking-tight text-white group-hover:text-[#00C2B8] transition-colors flex items-center">
+                Infinity<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C2B8] to-[#a855f7]">Gram</span>
+              </span>
             </div>
 
             <div className="space-y-4">
@@ -134,12 +131,12 @@ export const LoginPage = () => {
                 <Sparkles className="w-3.5 h-3.5 text-[#2F6FED]" />
                 <span>Demo Account Available</span>
               </div>
-              <p className="text-[11px] text-slate-500 font-mono">rajesh.sharma@gildempire.in</p>
+              <p className="text-[11px] text-slate-500 font-mono">rajesh.sharma@infinitygram.in</p>
             </div>
             <button
               type="button"
               onClick={() => {
-                setMobileEmail('rajesh.sharma@gildempire.in');
+                setMobileEmail('rajesh.sharma@infinitygram.in');
                 setPassword('UserPass#2026');
                 setErrorMessage('');
               }}
@@ -165,7 +162,7 @@ export const LoginPage = () => {
                 required
                 value={mobileEmail}
                 onChange={(e) => setMobileEmail(e.target.value)}
-                placeholder="+91 98765 43210 or user@gildempire.in"
+                placeholder="+91 98765 43210 or user@infinitygram.in"
                 className="w-full bg-[#FAFAFC] border border-slate-200 text-[#0B1E39] p-3.5 rounded-xl focus:outline-none focus:border-[#2F6FED] focus:ring-2 focus:ring-blue-500/10 font-sans transition-all text-xs font-semibold"
               />
             </div>

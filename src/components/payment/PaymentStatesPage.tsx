@@ -236,7 +236,7 @@ export const PaymentStatesPage: React.FC<Props> = ({ status = 'success' }) => {
               </div>
               <div>
                 <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Issued By:</p>
-                <p className="font-bold text-slate-900 mt-1">GildEmpire Sovereign Platform</p>
+                <p className="font-bold text-slate-900 mt-1">InfinityGram Sovereign Platform</p>
                 <p className="text-slate-500">GSTIN: 33AAAAA0000A1Z5</p>
               </div>
             </div>

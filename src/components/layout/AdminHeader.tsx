@@ -12,9 +12,9 @@ export const AdminHeader = () => {
     <header className="bg-white text-slate-900 border-b border-slate-200/90 px-6 py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-40 select-none backdrop-blur-md">
       
       {/* Breadcrumb & System Status Tag */}
-      <div className="flex items-center space-x-2.5 bg-[#0B1E39] text-white px-3.5 py-1.5 rounded-full text-xs font-mono font-bold shadow-xs">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-        <span className="text-amber-400 font-bold">GILDEMPIRE SOVEREIGN</span>
+      <div className="flex items-center space-x-2.5 bg-[#081E26] text-white px-3.5 py-1.5 rounded-full text-xs font-mono font-bold shadow-xs">
+        <span className="w-2 h-2 rounded-full bg-[#00C2B8] animate-pulse shrink-0"></span>
+        <span className="text-[#F2C868] font-bold">INFINITYGRAM SOVEREIGN</span>
         <span className="text-slate-500">•</span>
         <span className="text-slate-200 text-[11px]">BATCH A (DAY 15 ACTIVE)</span>
       </div>
@@ -41,12 +41,10 @@ export const AdminHeader = () => {
 
         {/* Admin Badge */}
         <div className="flex items-center space-x-2.5 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
-          <div className="w-7 h-7 rounded-lg bg-[#0B1E39] flex items-center justify-center text-amber-400 font-black text-xs shadow-xs">
-            G
-          </div>
+          <img src="/logo.png" alt="InfinityGram Logo" className="w-7 h-7 object-contain" />
           <div className="text-left hidden sm:block">
-            <p className="text-xs font-black text-[#0B1E39] leading-tight">Super Admin</p>
-            <p className="text-[10px] text-slate-500 font-medium leading-tight">admin.op@gildempire.in</p>
+            <p className="text-xs font-black text-[#081E26] leading-tight">Super Admin</p>
+            <p className="text-[10px] text-slate-500 font-medium leading-tight">admin.op@infinitygram.in</p>
           </div>
         </div>
 

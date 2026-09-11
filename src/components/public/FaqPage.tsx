@@ -59,7 +59,7 @@ export const FaqPage = () => {
     },
     { 
       cat: 'Referral', 
-      q: 'How does the GildEmpire referral incentive program work?', 
+      q: 'How does the InfinityGram referral incentive program work?', 
       a: 'Share your unique referral link from your user dashboard. When a referred friend registers and completes their deposit verification, you earn referral commission credit and priority group placement perks.' 
     },
   ];
@@ -75,7 +75,7 @@ export const FaqPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFC] text-[#0B1E39] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#081E26] text-white flex flex-col font-sans">
       <Navbar />
 
       <main className="flex-1 py-14 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -86,12 +86,12 @@ export const FaqPage = () => {
           transition={{ duration: 0.4 }}
           className="text-center space-y-3"
         >
-          <div className="inline-flex items-center space-x-2 bg-[#EFF6FF] border border-[#BFDBFE] px-3.5 py-1.5 rounded-full text-xs font-bold text-[#2F6FED]">
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>GildEmpire Enterprise Knowledge Base</span>
+          <div className="inline-flex items-center space-x-2 bg-[#0D3B43] border border-[#E1A238]/40 px-3.5 py-1.5 rounded-full text-xs font-bold text-[#F2C868]">
+            <HelpCircle className="w-3.5 h-3.5 text-[#E1A238]" />
+            <span>InfinityGram Enterprise Knowledge Base</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0B1E39] tracking-tight">Searchable Help & FAQ Center</h1>
-          <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Searchable Help & FAQ Center</h1>
+          <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xl mx-auto">
             Clear, transparent answers regarding account verification, ₹5,000 deposits, 50-member groups, and daily 1g 24K Gold distribution.
           </p>
         </motion.div>
@@ -104,12 +104,12 @@ export const FaqPage = () => {
             placeholder="Search questions (e.g. KYC, Deposit, Spin, Gold Courier)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white border border-[#DCE4F0] text-xs sm:text-sm text-[#0B1E39] pl-11 pr-10 py-3.5 rounded-2xl focus:outline-none focus:border-[#2F6FED] focus:ring-2 focus:ring-[#2F6FED]/10 shadow-xs font-medium placeholder:text-slate-400"
+            className="w-full bg-[#0D3B43] border border-[#E1A238]/30 text-xs sm:text-sm text-white pl-11 pr-10 py-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8] focus:ring-2 focus:ring-[#00C2B8]/20 shadow-xs font-medium placeholder:text-slate-400"
           />
           {search && (
             <button 
               onClick={() => setSearch('')}
-              className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 p-1"
+              className="absolute right-3.5 top-3.5 text-slate-400 hover:text-white p-1"
             >
               <X className="w-4 h-4" />
             </button>
@@ -124,8 +124,8 @@ export const FaqPage = () => {
               onClick={() => setActiveCategory(cat as any)}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 activeCategory === cat 
-                  ? 'bg-[#2F6FED] text-white shadow-md shadow-[#2F6FED]/20' 
-                  : 'bg-white border border-[#DCE4F0] text-slate-600 hover:bg-[#F0F4FA] hover:text-[#0B1E39]'
+                  ? 'bg-[#00C2B8] text-[#081E26] shadow-md shadow-[#00C2B8]/20' 
+                  : 'bg-[#0D3B43] border border-[#E1A238]/20 text-slate-300 hover:bg-[#0D3B43]/80 hover:text-white'
               }`}
             >
               {cat}
@@ -136,8 +136,8 @@ export const FaqPage = () => {
         {/* FAQ Accordion List */}
         <div className="space-y-3.5">
           {filteredFaqs.length === 0 ? (
-            <div className="sovereign-card bg-white p-8 text-center space-y-2">
-              <p className="text-xs font-bold text-slate-600">No matching questions found for "{search}".</p>
+            <div className="bg-[#0D3B43] rounded-2xl border border-[#E1A238]/20 p-8 text-center space-y-2">
+              <p className="text-xs font-bold text-slate-300">No matching questions found for "{search}".</p>
               <p className="text-[11px] text-slate-400">Try adjusting your query or contact our operations desk.</p>
             </div>
           ) : (
@@ -147,21 +147,21 @@ export const FaqPage = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.04 }}
-                className={`sovereign-card overflow-hidden bg-white transition-all ${
-                  openIndex === i ? 'ring-1 ring-[#2F6FED]/30 border-[#2F6FED]' : 'hover:border-slate-300'
+                className={`rounded-2xl border overflow-hidden bg-[#0D3B43] transition-all ${
+                  openIndex === i ? 'ring-1 ring-[#00C2B8] border-[#00C2B8]' : 'border-[#E1A238]/20 hover:border-[#E1A238]/40'
                 }`}
               >
                 <button
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full text-left p-4 sm:p-5 text-xs sm:text-sm font-bold text-[#0B1E39] flex items-center justify-between hover:bg-[#F8FAFC] transition-colors"
+                  className="w-full text-left p-4 sm:p-5 text-xs sm:text-sm font-bold text-white flex items-center justify-between hover:bg-[#081E26]/40 transition-colors"
                 >
                   <div className="flex items-center space-x-3 pr-4">
-                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#F0F4FA] text-[#2F6FED] border border-[#DCE4F0]">
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#081E26] text-[#F2C868] border border-[#E1A238]/30">
                       {faq.cat}
                     </span>
                     <span>{faq.q}</span>
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${openIndex === i ? 'rotate-180 text-[#2F6FED]' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${openIndex === i ? 'rotate-180 text-[#00C2B8]' : ''}`} />
                 </button>
                 
                 <AnimatePresence>
@@ -170,18 +170,18 @@ export const FaqPage = () => {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-[#DCE4F0] bg-[#FAFAFC]"
+                      className="border-t border-[#081E26] bg-[#081E26]"
                     >
-                      <div className="p-4 sm:p-5 text-xs text-slate-600 leading-relaxed font-medium space-y-4">
+                      <div className="p-4 sm:p-5 text-xs text-slate-300 leading-relaxed font-medium space-y-4">
                         <p>{faq.a}</p>
 
-                        <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
+                        <div className="pt-3 border-t border-[#0D3B43] flex items-center justify-between text-[11px] text-slate-400">
                           <span>Was this answer helpful?</span>
                           <div className="flex items-center space-x-2">
                             <button 
                               onClick={() => handleFeedback(i, 'yes')}
                               className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg border font-bold transition-all ${
-                                feedback[i] === 'yes' ? 'bg-[#E8F7F0] text-[#1E9E64] border-[#1E9E64]' : 'bg-white border-[#DCE4F0] hover:bg-slate-50 text-slate-600'
+                                feedback[i] === 'yes' ? 'bg-[#00C2B8]/20 text-[#00C2B8] border-[#00C2B8]' : 'bg-[#0D3B43] border-[#E1A238]/20 hover:bg-[#0D3B43]/80 text-slate-300'
                               }`}
                             >
                               <ThumbsUp className="w-3 h-3" />
@@ -190,7 +190,7 @@ export const FaqPage = () => {
                             <button 
                               onClick={() => handleFeedback(i, 'no')}
                               className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg border font-bold transition-all ${
-                                feedback[i] === 'no' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white border-[#DCE4F0] hover:bg-slate-50 text-slate-600'
+                                feedback[i] === 'no' ? 'bg-rose-900/30 text-rose-400 border-rose-700/50' : 'bg-[#0D3B43] border-[#E1A238]/20 hover:bg-[#0D3B43]/80 text-slate-300'
                               }`}
                             >
                               <ThumbsDown className="w-3 h-3" />
@@ -208,19 +208,19 @@ export const FaqPage = () => {
         </div>
 
         {/* Support Desk Banner */}
-        <div className="sovereign-card bg-gradient-to-r from-[#0B1E39] to-[#1E3A60] p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="rounded-3xl bg-[#0D3B43] border border-[#E1A238]/30 p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[#2F6FED]">
-              <MessageSquare className="w-6 h-6 text-blue-400" />
+            <div className="w-12 h-12 rounded-2xl bg-[#081E26] border border-[#00C2B8]/30 flex items-center justify-center text-[#00C2B8]">
+              <MessageSquare className="w-6 h-6 text-[#00C2B8]" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">Still have questions about GildEmpire?</h3>
+              <h3 className="font-bold text-sm text-white">Still have questions about InfinityGram?</h3>
               <p className="text-xs text-slate-300 font-medium">Our corporate support desk is ready to assist you via email or phone.</p>
             </div>
           </div>
           <button 
             onClick={() => setCurrentView('public-contact')}
-            className="px-5 py-2.5 rounded-xl bg-[#2F6FED] hover:bg-[#2558C9] text-white text-xs font-bold transition-all shrink-0 flex items-center space-x-2 shadow-md"
+            className="btn-infinity-cyan px-5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center space-x-2 shadow-md"
           >
             <span>Contact Support Desk</span>
             <ArrowRight className="w-4 h-4" />

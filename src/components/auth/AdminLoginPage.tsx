@@ -22,7 +22,7 @@ import { motion } from 'framer-motion';
 
 export const AdminLoginPage = () => {
   const { setCurrentView, loginAdmin } = useApp();
-  const [adminEmail, setAdminEmail] = useState('admin@gildempire.in');
+  const [adminEmail, setAdminEmail] = useState('admin@infinitygram.in');
   const [adminKey, setAdminKey] = useState('SovereignKey#2026');
   const [showKey, setShowKey] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
@@ -32,8 +32,8 @@ export const AdminLoginPage = () => {
 
   // Preset demo accounts for enterprise testing
   const presets = [
-    { label: 'Super Admin', email: 'admin@gildempire.in', key: 'SovereignKey#2026', role: 'Full Access' },
-    { label: 'Operations Lead', email: 'ops.lead@gildempire.in', key: 'OpsSecret#2026', role: 'Audit & Rewards' },
+    { label: 'Super Admin', email: 'admin@infinitygram.in', key: 'SovereignKey#2026', role: 'Full Access' },
+    { label: 'Operations Lead', email: 'ops.lead@infinitygram.in', key: 'OpsSecret#2026', role: 'Audit & Rewards' },
   ];
 
   const handleAdminLogin = (e: React.FormEvent) => {
@@ -161,7 +161,7 @@ export const AdminLoginPage = () => {
                   required
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="admin@gildempire.in"
+                  placeholder="admin@infinitygram.in"
                   className="w-full bg-slate-50/80 border border-slate-200 focus:border-amber-500 focus:bg-white text-slate-900 p-3.5 pl-4 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-sans font-semibold text-xs placeholder:text-slate-400"
                 />
                 <ShieldCheck className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
@@ -255,7 +255,7 @@ export const AdminLoginPage = () => {
           <span>SOC-2 Type II Certified</span>
         </div>
         <div>
-          © {new Date().getFullYear()} GildEmpire Sovereign Platform. All Rights Reserved.
+          © {new Date().getFullYear()} InfinityGram Sovereign Platform. All Rights Reserved.
         </div>
       </footer>
 
