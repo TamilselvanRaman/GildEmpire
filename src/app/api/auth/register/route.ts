@@ -55,6 +55,20 @@ export async function POST(request: Request) {
           joined_date: joinedDate,
         },
       ]);
+
+      // 3. If registered via a referral code, record referral association
+      if (referralCode) {
+        await supabase.from('referrals').insert([
+          {
+            referrer_code: referralCode,
+            referred_user_id: userId,
+            referred_name: fullName,
+            referred_member_id: memberId,
+            deposit_status: 'Not Started',
+            bonus_amount: 250, // 5% of ₹5,000 scheme deposit = ₹250 instant bonus
+          },
+        ]);
+      }
     } catch (dbErr) {
       console.warn('Supabase DB Insert Warning:', dbErr);
     }

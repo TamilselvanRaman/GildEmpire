@@ -39,12 +39,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Update user profile deposit status to 'Under Review'
+    // 2. Update user profile deposit status to 'Under Review' & calculate 5% referral bonus for referrer
     try {
       await supabase
         .from('profiles')
         .update({ deposit_status: 'Under Review' })
         .eq('id', userId);
+
+      // Calculate 5% referral bonus (5% of deposit amount, e.g., 5% of ₹5,000 = ₹250)
+      const referralBonusAmount = Math.round(Number(amount) * 0.05);
+
+      await supabase
+        .from('referrals')
+        .update({
+          deposit_status: 'Pending Verification',
+          bonus_amount: referralBonusAmount,
+        })
+        .eq('referred_user_id', userId);
     } catch (e) {}
 
     return NextResponse.json({

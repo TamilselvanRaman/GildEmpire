@@ -7,15 +7,29 @@ import { motion } from 'framer-motion';
 
 export const ReferralDashboardPage = () => {
   const { user, referrals } = useApp();
-  const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  const referralLink = `https://infinitygram.in/register?ref=${user.referralId}`;
+  const referralCode = user.referralId || `REF-${user.memberId?.slice(-6) || 'AMIT99'}`;
+  const referralLink = typeof window !== 'undefined'
+    ? `${window.location.origin}/register?ref=${referralCode}`
+    : `https://infinitygram.in/register?ref=${referralCode}`;
 
-  const handleCopy = () => {
+  const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(referralCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const verifiedCount = referrals.filter(r => r.depositStatus === 'Verified').length;
+  const pendingCount = referrals.filter(r => r.depositStatus === 'Pending' || r.depositStatus === 'Not Started').length;
+  const total5PercentEarnings = verifiedCount * 250; // 5% of ₹5,000 = ₹250 per verified member
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 font-sans text-white">
@@ -34,40 +48,69 @@ export const ReferralDashboardPage = () => {
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-[10px] font-black bg-[#081E26] text-[#F2C868] border border-[#E1A238]/40 px-3.5 py-1 rounded-full uppercase tracking-widest flex items-center space-x-1.5 shadow-xs">
               <Sparkles className="w-3.5 h-3.5 text-[#E1A238]" />
-              <span>InfinityGram Referral Wealth Network</span>
+              <span>InfinityGram 5% Referral Program</span>
             </span>
             <span className="text-[10px] font-black text-[#00C2B8] bg-[#00C2B8]/20 border border-[#00C2B8]/40 px-3 py-1 rounded-full uppercase tracking-wider">
-              5% Instant Cash Bonus (₹250 / Member)
+              5% Instant Bonus (₹250 / Verified Deposit)
             </span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
-            Invite Colleagues to 50-Member Gold Groups
+            Invite Members & Earn 5% Instant Cash Rewards
           </h1>
           <p className="text-sm text-slate-300 max-w-2xl leading-relaxed font-medium">
-            Share your verified referral link with trusted members. Earn ₹250 instant wallet bonus upon their deposit confirmation.
+            Share your unique referral code or link. For every member who joins and completes their ₹5,000 scheme deposit, you earn an instant 5% commission (₹250) credited to your wallet.
           </p>
         </div>
 
-        {/* Link Generator Box */}
-        <div className="bg-[#081E26] p-5 rounded-2xl border border-[#0D3B43] space-y-3 relative z-10 shadow-inner">
-          <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
-            Your Unique Referral Invitation Link
-          </p>
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <input
-              type="text"
-              readOnly
-              value={referralLink}
-              className="w-full bg-[#0D3B43] border border-[#E1A238]/30 text-[#F2C868] font-mono text-xs p-3.5 rounded-xl focus:outline-none font-bold tracking-wider select-all"
-            />
-            <button
-              onClick={handleCopy}
-              className="w-full sm:w-auto btn-infinity-cyan text-xs font-black px-7 py-3.5 rounded-xl shadow-lg transition-all shrink-0 flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
-            >
-              {copied ? <Check className="w-4 h-4 text-[#081E26]" /> : <Copy className="w-4 h-4 text-[#081E26]" />}
-              <span>{copied ? 'Copied Link!' : 'Copy Invitation Link'}</span>
-            </button>
+        {/* Link & Code Generator Box */}
+        <div className="bg-[#081E26] p-5 rounded-2xl border border-[#0D3B43] space-y-4 relative z-10 shadow-inner">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+            
+            {/* Referral Code Box */}
+            <div className="md:col-span-4 space-y-1.5">
+              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
+                Your Referral Code
+              </p>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={referralCode}
+                  className="w-full bg-[#0D3B43] border border-[#E1A238]/40 text-[#F2C868] font-mono text-sm p-3 rounded-xl focus:outline-none font-black tracking-widest text-center select-all"
+                />
+                <button
+                  onClick={handleCopyCode}
+                  className="bg-[#0D3B43] hover:bg-[#144f5a] text-[#F2C868] border border-[#E1A238]/40 p-3 rounded-xl transition-all cursor-pointer shrink-0"
+                  title="Copy Referral Code"
+                >
+                  {copiedCode ? <Check className="w-4 h-4 text-[#00C2B8]" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Referral Link Box */}
+            <div className="md:col-span-8 space-y-1.5">
+              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
+                Your Direct Referral Link
+              </p>
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={referralLink}
+                  className="w-full bg-[#0D3B43] border border-[#00C2B8]/40 text-[#00C2B8] font-mono text-xs p-3 rounded-xl focus:outline-none font-bold tracking-wider select-all"
+                />
+                <button
+                  onClick={handleCopyLink}
+                  className="w-full sm:w-auto btn-infinity-cyan text-xs font-black px-6 py-3 rounded-xl shadow-lg transition-all shrink-0 flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
+                >
+                  {copiedLink ? <Check className="w-4 h-4 text-[#081E26]" /> : <Share2 className="w-4 h-4 text-[#081E26]" />}
+                  <span>{copiedLink ? 'Copied Link!' : 'Copy Link'}</span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       </motion.div>
@@ -81,7 +124,7 @@ export const ReferralDashboardPage = () => {
           className="bg-[#0D3B43] rounded-[2rem] border border-[#E1A238]/30 shadow-2xl p-6 text-center space-y-1 hover:border-[#E1A238]/60 transition-all"
         >
           <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Total Invites</p>
-          <p className="text-2xl font-black text-white">4</p>
+          <p className="text-2xl font-black text-white">{referrals.length}</p>
         </motion.div>
 
         <motion.div 
@@ -91,7 +134,7 @@ export const ReferralDashboardPage = () => {
           className="bg-[#0D3B43] rounded-[2rem] border border-[#E1A238]/30 shadow-2xl p-6 text-center space-y-1 hover:border-[#E1A238]/60 transition-all"
         >
           <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Verified Deposits</p>
-          <p className="text-2xl font-black text-[#00C2B8]">2 Active</p>
+          <p className="text-2xl font-black text-[#00C2B8]">{verifiedCount} Active</p>
         </motion.div>
 
         <motion.div 
@@ -100,18 +143,18 @@ export const ReferralDashboardPage = () => {
           transition={{ duration: 0.4, delay: 0.2 }}
           className="bg-[#0D3B43] rounded-[2rem] border border-[#E1A238]/30 shadow-2xl p-6 text-center space-y-1 hover:border-[#E1A238]/60 transition-all"
         >
-          <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Pending Verification</p>
-          <p className="text-2xl font-black text-[#F2C868]">1 Pending</p>
+          <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Commission Rate</p>
+          <p className="text-2xl font-black text-[#F2C868]">5% Instant</p>
         </motion.div>
 
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.25 }}
-          className="bg-[#0D3B43] rounded-[2rem] border border-[#E1A238]/30 shadow-2xl p-6 text-center space-y-1 hover:border-[#E1A238]/60 transition-all"
+          className="bg-[#0D3B43] rounded-[2rem] border border-[#00C2B8]/40 shadow-2xl p-6 text-center space-y-1 hover:border-[#00C2B8] transition-all bg-gradient-to-br from-[#0D3B43] to-[#0A2E35]"
         >
-          <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Unverified Leads</p>
-          <p className="text-2xl font-black text-slate-400">1 User</p>
+          <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Total Bonus Earned</p>
+          <p className="text-2xl font-black text-[#00C2B8]">₹{total5PercentEarnings}</p>
         </motion.div>
       </div>
 
@@ -127,8 +170,8 @@ export const ReferralDashboardPage = () => {
             <h3 className="text-base font-black text-white tracking-tight">Referred Members Directory</h3>
             <p className="text-xs text-slate-300 font-medium mt-0.5">Real-time deposit verification log and 5% bonus tracking.</p>
           </div>
-          <span className="text-[10px] font-mono font-black text-[#00C2B8] bg-[#081E26] px-3 py-1 rounded-full border border-[#00C2B8]/40">
-            Total Bonus Earned: ₹500
+          <span className="text-[10px] font-mono font-black text-[#00C2B8] bg-[#081E26] px-3.5 py-1.5 rounded-full border border-[#00C2B8]/40">
+            Total Commission: ₹{total5PercentEarnings} (5% on ₹5,000)
           </span>
         </div>
 
@@ -140,6 +183,7 @@ export const ReferralDashboardPage = () => {
                 <th className="p-4">Member ID</th>
                 <th className="p-4">Joined Date</th>
                 <th className="p-4">Deposit Status</th>
+                <th className="p-4">5% Referral Bonus</th>
                 <th className="p-4 rounded-r-xl">Eligibility</th>
               </tr>
             </thead>
@@ -164,6 +208,9 @@ export const ReferralDashboardPage = () => {
                     }`}>
                       {ref.depositStatus}
                     </span>
+                  </td>
+                  <td className="p-4 font-mono font-black text-[#00C2B8]">
+                    {ref.depositStatus === 'Verified' ? '+₹250 (5%)' : '₹0 (Pending)'}
                   </td>
                   <td className="p-4 font-extrabold text-slate-300">{ref.eligibility}</td>
                 </tr>
