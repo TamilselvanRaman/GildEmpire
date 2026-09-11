@@ -63,26 +63,26 @@ export const AdminGroupDetailPage = () => {
           <span>Back to Group Batches Overview</span>
         </button>
 
-        <div className="bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#15345E] text-white p-6 sm:p-8 rounded-3xl border border-[#1A3860] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
+        <div className="bg-white text-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200/90 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
 
           <div className="space-y-2 relative z-10">
-            <div className="inline-flex items-center space-x-2 bg-amber-400/10 text-amber-300 border border-amber-400/30 px-3.5 py-1 rounded-full text-xs font-black">
-              <Users className="w-4 h-4 text-amber-400" />
+            <div className="inline-flex items-center space-x-2 bg-amber-50 text-amber-900 border border-amber-300/80 px-3.5 py-1 rounded-full text-xs font-black">
+              <Users className="w-4 h-4 text-amber-600" />
               <span>50-Member Batch Roster & Slot Audit</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0B1E39] tracking-tight">
               {group.groupName}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium">
-              Batch Code: <span className="font-mono text-amber-300 font-bold">{group.groupId}</span> | Status: <span className="text-emerald-400 font-bold">{group.status === 'active' || group.status === 'live' ? `Active Day ${group.currentCycleDay} Cycle` : group.status === 'full' ? 'Full 50/50 Ready' : `Recruiting (${group.totalMembers}/50)`}</span> | Capacity: <span className="text-white font-bold">{group.totalMembers} / 50 Slots</span>
+            <p className="text-xs sm:text-sm text-slate-600 font-medium">
+              Batch Code: <span className="font-mono text-amber-700 font-bold">{group.groupId}</span> | Status: <span className="text-emerald-700 font-bold">{group.status === 'active' || group.status === 'live' ? `Active Day ${group.currentCycleDay} Cycle` : group.status === 'full' ? 'Full 50/50 Ready' : `Recruiting (${group.totalMembers}/50)`}</span> | Capacity: <span className="text-[#0B1E39] font-extrabold">{group.totalMembers} / 50 Slots</span>
             </p>
           </div>
 
           <div className="flex items-center space-x-3 shrink-0 relative z-10">
             <button
               onClick={() => setCurrentView('admin-reward-flow-control')}
-              className="bg-amber-500 hover:bg-amber-400 text-amber-950 font-black px-5 py-3.5 rounded-2xl text-xs shadow-xl shadow-amber-500/20 flex items-center space-x-2 cursor-pointer transition-all hover:scale-105"
+              className="bg-amber-500 hover:bg-amber-400 text-amber-950 font-black px-5 py-3.5 rounded-2xl text-xs shadow-md flex items-center space-x-2 cursor-pointer transition-all hover:scale-105"
             >
               <Sparkles className="w-4 h-4" />
               <span>Open Panai Gold Engine</span>

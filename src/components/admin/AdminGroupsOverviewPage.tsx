@@ -88,16 +88,16 @@ export const AdminGroupsOverviewPage = () => {
     <div className="space-y-8 max-w-7xl mx-auto pb-16 font-sans select-none">
       
       {/* Top Executive Header */}
-      <div className="bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#15345E] text-white p-6 sm:p-8 rounded-3xl border border-[#1A3860] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
+      <div className="bg-white text-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200/90 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
 
         <div className="space-y-2 relative z-10">
-          <div className="inline-flex items-center space-x-2 bg-amber-400/10 text-amber-300 border border-amber-400/30 px-3.5 py-1 rounded-full text-xs font-black">
-            <Layers className="w-4 h-4 text-amber-400" />
+          <div className="inline-flex items-center space-x-2 bg-amber-50 text-amber-900 border border-amber-300/80 px-3.5 py-1 rounded-full text-xs font-black">
+            <Layers className="w-4 h-4 text-amber-600" />
             <span>50-Member Batch Roster & Lifecycle Engine</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">Group Batches Overview</h1>
-          <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl leading-relaxed">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0B1E39] tracking-tight">Group Batches Overview</h1>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-2xl leading-relaxed">
             Manage 50-member groups: Live active cycle (GROUP-001), Full schedule ready (GROUP-002), Active recruiting (GROUP-003), and Empty reserve queues.
           </p>
         </div>
@@ -105,7 +105,7 @@ export const AdminGroupsOverviewPage = () => {
         <div className="flex items-center space-x-3 shrink-0 relative z-10 w-full lg:w-auto">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="w-full lg:w-auto bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-amber-950 font-black py-3.5 px-6 rounded-2xl shadow-xl text-xs uppercase tracking-wider flex items-center justify-center space-x-2 cursor-pointer transition-all hover:scale-[1.02]"
+            className="w-full lg:w-auto bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-amber-950 font-black py-3.5 px-6 rounded-2xl shadow-md text-xs uppercase tracking-wider flex items-center justify-center space-x-2 cursor-pointer transition-all hover:scale-[1.02]"
           >
             <PlusCircle className="w-4 h-4 stroke-[2.5]" />
             <span>Create New 50-Member Batch</span>
