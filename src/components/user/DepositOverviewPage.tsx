@@ -23,8 +23,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const DepositOverviewPage = () => {
-  const { user, deposits, submitDeposit, setCurrentView } = useApp();
-  const [amount, setAmount] = useState(5000);
+  const { user, deposits, submitDeposit, setCurrentView, settings } = useApp();
+  const [amount, setAmount] = useState(settings.depositAmountINR || 10000);
   const [refId, setRefId] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<'Razorpay' | 'UPI' | 'Bank Transfer'>('Razorpay');
   const [submitted, setSubmitted] = useState(false);

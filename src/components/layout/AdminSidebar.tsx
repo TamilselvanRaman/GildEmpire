@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export const AdminSidebar = () => {
-  const { currentView, setCurrentView } = useApp();
+  const { currentView, setCurrentView, logout } = useApp();
 
   const adminMenu = [
     { id: 'admin-dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -29,27 +29,25 @@ export const AdminSidebar = () => {
     { id: 'admin-deposits', label: 'Deposit Queue', icon: Wallet },
     { id: 'admin-groups', label: '50-Member Groups', icon: Layers },
     { id: 'admin-slots', label: 'Slot Control Grid', icon: Grid },
-    { id: 'admin-rewards', label: '50-Day Gold Admin', icon: Award },
+    { id: 'admin-rewards', label: 'Reward Program', icon: Award },
     { id: 'admin-referrals', label: 'Referral Admin', icon: Share2 },
-    { id: 'admin-notifications', label: 'Notifications Broadcast', icon: Bell },
     { id: 'admin-reports', label: 'Analytics & Reports', icon: BarChart3 },
-    { id: 'admin-audit-logs', label: 'Enterprise Audit Logs', icon: FileCheck2 },
     { id: 'admin-team', label: 'Admin Users & Roles', icon: UserCheck },
     { id: 'admin-settings', label: 'System Rules & Config', icon: Sliders },
   ];
 
   return (
-    <aside className="w-64 bg-[#0B1E39] text-slate-300 min-h-screen border-r border-[#1A2E4A] flex flex-col justify-between p-4 hidden md:flex sticky top-0">
+    <aside className="w-64 bg-[#EFF6FF] text-slate-800 h-screen sticky top-0 border-r border-blue-200/80 flex flex-col justify-between p-4 hidden md:flex overflow-y-auto shrink-0 z-40 shadow-sm select-none">
       
       <div className="space-y-6">
         {/* Admin Brand Header */}
-        <div className="flex items-center space-x-3 px-2 py-1">
-          <div className="w-9 h-9 rounded-xl bg-[#2F6FED] flex items-center justify-center text-white font-bold">
+        <div className="flex items-center space-x-3 px-2 py-1 cursor-pointer group" onClick={() => setCurrentView('admin-dashboard')}>
+          <div className="w-9 h-9 rounded-xl bg-[#2F6FED] text-white flex items-center justify-center font-black shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-white tracking-wider uppercase">Audited Admin</h3>
-            <p className="text-[10px] text-[#1E9E64] font-mono font-bold">Sovereign Audit Engine</p>
+            <h3 className="text-xs font-black text-[#0B1E39] tracking-wider uppercase">Audited Admin</h3>
+            <p className="text-[10px] text-emerald-700 font-mono font-bold">Sovereign Audit Engine</p>
           </div>
         </div>
 
@@ -63,13 +61,13 @@ export const AdminSidebar = () => {
               <button
                 key={item.id}
                 onClick={() => setCurrentView(item.id as ViewMode)}
-                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   isActive 
-                    ? 'bg-[#2F6FED] text-white shadow-md shadow-blue-600/30' 
-                    : 'text-slate-300 hover:bg-[#142d52] hover:text-white'
+                    ? 'bg-[#2F6FED] text-white shadow-md shadow-blue-500/20 font-extrabold' 
+                    : 'text-[#0B1E39] hover:bg-blue-200/60 hover:text-[#2F6FED]'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-600/80'}`} />
                 <span>{item.label}</span>
               </button>
             );
@@ -77,14 +75,25 @@ export const AdminSidebar = () => {
         </nav>
       </div>
 
-      {/* Admin Switch Back */}
-      <div className="pt-4 border-t border-[#1A2E4A]">
+      {/* Admin Actions: Switch View & Logout */}
+      <div className="pt-4 border-t border-blue-200/80 space-y-2">
         <button
           onClick={() => setCurrentView('user-dashboard')}
-          className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:bg-[#142d52] hover:text-white transition-colors"
+          className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-blue-200/60 hover:text-[#2F6FED] transition-colors cursor-pointer"
         >
-          <LogOut className="w-4 h-4" />
+          <ShieldCheck className="w-4 h-4 text-blue-600/80" />
           <span>Switch to Member View</span>
+        </button>
+
+        <button
+          onClick={() => {
+            logout();
+            setCurrentView('auth-admin-login');
+          }}
+          className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-extrabold text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition-colors cursor-pointer border border-rose-200/80 shadow-xs"
+        >
+          <LogOut className="w-4 h-4 text-rose-600" />
+          <span>Logout Admin</span>
         </button>
       </div>
 

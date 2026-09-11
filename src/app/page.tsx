@@ -44,8 +44,21 @@ import { AdminDashboardPage } from '../components/admin/AdminDashboardPage';
 import { AdminUsersPage } from '../components/admin/AdminUsersPage';
 import { AdminDepositsPage } from '../components/admin/AdminDepositsPage';
 import { AdminRewardFlowControlPage } from '../components/admin/AdminRewardFlowControlPage';
+import { AdminSlotsControlPage } from '../components/admin/AdminSlotsControlPage';
+import { AdminGroupsOverviewPage } from '../components/admin/AdminGroupsOverviewPage';
+import { AdminGroupDetailPage } from '../components/admin/AdminGroupDetailPage';
 import { AdminAuditLogsPage } from '../components/admin/AdminAuditLogsPage';
 import { AdminSettingsPage } from '../components/admin/AdminSettingsPage';
+import { AdminReferralsPage } from '../components/admin/AdminReferralsPage';
+import { AdminMobileRestrictionPage } from '../components/admin/AdminMobileRestrictionPage';
+
+// Pre-Deployment System, Payment, Support, Legal & Error Components
+import { SystemErrorPage } from '../components/system/SystemErrorPage';
+import { AuthExtensionsPage } from '../components/auth/AuthExtensionsPage';
+import { PaymentStatesPage } from '../components/payment/PaymentStatesPage';
+import { SupportCenterPage } from '../components/support/SupportCenterPage';
+import { LegalSuitePage } from '../components/public/LegalSuitePage';
+import { SystemNoticePage } from '../components/system/SystemNoticePage';
 
 // System Pages
 import { SystemStatesPage } from '../components/system/SystemStatesPage';
@@ -54,11 +67,13 @@ export default function Home() {
   const { currentView, setCurrentView } = useApp();
   const [showAdminToast, setShowAdminToast] = React.useState(false);
 
-  // Check URL pathname for /admin and set up Ctrl + Alt + A keyboard shortcut
+  // Check URL pathname for /admin or /admin/login and set up Ctrl + Alt + A keyboard shortcut
   useEffect(() => {
-    // 1. Check if URL contains /admin
-    if (typeof window !== 'undefined' && window.location.pathname.includes('/admin')) {
-      setCurrentView('auth-admin-login');
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if ((path === '/admin' || path === '/admin/login') && !currentView.startsWith('admin-')) {
+        setCurrentView('auth-admin-login');
+      }
     }
 
     // 2. Global Shortcut: Ctrl + Alt + A
@@ -73,7 +88,7 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setCurrentView]);
+  }, [currentView, setCurrentView]);
 
   // Ensure window scrolls to top on any view change
   useEffect(() => {
@@ -83,22 +98,58 @@ export default function Home() {
   const renderContent = () => {
     // 1. PUBLIC PORTAL
     if (currentView === 'public-landing') return <LandingPage />;
-    if (currentView === 'public-[#2F6FED]') return <LandingPage />;
     if (currentView === 'public-about') return <AboutPage />;
     if (currentView === 'public-faq') return <FaqPage />;
-    if (currentView === 'public-terms') return <TermsPage />;
-    if (currentView === 'public-privacy') return <PrivacyPage />;
+    if (currentView === 'public-terms' || currentView === 'legal-terms') return <LegalSuitePage docType="terms" />;
+    if (currentView === 'public-privacy' || currentView === 'legal-privacy') return <LegalSuitePage docType="privacy" />;
     if (currentView === 'public-contact') return <ContactPage />;
+    if (currentView === 'legal-cookies') return <LegalSuitePage docType="cookies" />;
+    if (currentView === 'legal-refund') return <LegalSuitePage docType="refund" />;
+    if (currentView === 'legal-disclaimer') return <LegalSuitePage docType="disclaimer" />;
+    if (currentView === 'legal-acceptable-use') return <LegalSuitePage docType="acceptable-use" />;
+    if (currentView === 'legal-grievance') return <LegalSuitePage docType="grievance" />;
+    if (currentView === 'legal-data-deletion') return <LegalSuitePage docType="data-deletion" />;
 
-    // 2. AUTHENTICATION PORTAL
+    // 2. AUTHENTICATION PORTAL & EXTENSIONS
     if (currentView === 'auth-login') return <LoginPage />;
     if (currentView === 'auth-register') return <RegisterPage />;
     if (currentView === 'auth-otp') return <OtpPage />;
     if (currentView === 'auth-forgot') return <ForgotPasswordPage />;
     if (currentView === 'auth-reset') return <ResetPasswordPage />;
     if (currentView === 'auth-admin-login') return <AdminLoginPage />;
+    if (currentView === 'auth-verify-email') return <AuthExtensionsPage mode="verify-email" />;
+    if (currentView === 'auth-change-password') return <AuthExtensionsPage mode="change-password" />;
+    if (currentView === 'auth-account-locked') return <AuthExtensionsPage mode="account-locked" />;
 
-    // 3. MEMBER PORTAL (Wrapped with User Sidebar + Header + Mobile Bottom Nav)
+    // 3. PAYMENT STATES & INVOICE RECEIPT
+    if (currentView === 'payment-processing') return <PaymentStatesPage status="processing" />;
+    if (currentView === 'payment-success') return <PaymentStatesPage status="success" />;
+    if (currentView === 'payment-failed') return <PaymentStatesPage status="failed" />;
+    if (currentView === 'payment-cancelled') return <PaymentStatesPage status="cancelled" />;
+    if (currentView === 'payment-invoice' || currentView === 'payment-transaction-details') return <PaymentStatesPage status="invoice" />;
+
+    // 4. SUPPORT & HELP CENTER
+    if (currentView === 'support-home') return <SupportCenterPage mode="home" />;
+    if (currentView === 'support-ticket') return <SupportCenterPage mode="ticket" />;
+    if (currentView === 'support-ticket-success') return <SupportCenterPage mode="ticket-success" />;
+
+    // 5. SYSTEM NOTICES & ANNOUNCEMENTS
+    if (currentView === 'system-announcements' || currentView === 'system-notice') return <SystemNoticePage />;
+
+    // 6. SYSTEM ERROR STATES
+    if (currentView === 'system-404') return <SystemErrorPage type="404" />;
+    if (currentView === 'system-403') return <SystemErrorPage type="403" />;
+    if (currentView === 'system-500') return <SystemErrorPage type="500" />;
+    if (currentView === 'system-503') return <SystemErrorPage type="503" />;
+    if (currentView === 'system-429') return <SystemErrorPage type="429" />;
+    if (currentView === 'system-access-denied') return <SystemErrorPage type="access-denied" />;
+    if (currentView === 'system-unauthorized') return <SystemErrorPage type="unauthorized" />;
+    if (currentView === 'system-session-expired') return <SystemErrorPage type="session-expired" />;
+    if (currentView === 'system-offline') return <SystemErrorPage type="offline" />;
+    if (currentView === 'system-maintenance') return <SystemErrorPage type="maintenance" />;
+    if (currentView === 'system-coming-soon') return <SystemErrorPage type="coming-soon" />;
+
+    // 7. MEMBER PORTAL (Wrapped with User Sidebar + Header + Mobile Bottom Nav)
     if (currentView.startsWith('user-')) {
       return (
         <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row pb-16 md:pb-0">
@@ -109,10 +160,10 @@ export default function Home() {
               {(currentView === 'user-profile' || currentView === 'user-edit-profile') && <ProfilePage />}
               {(currentView.startsWith('user-deposit')) && <DepositOverviewPage />}
               {(currentView.startsWith('user-group') || currentView === 'user-my-group') && <MyGroupPage />}
-              {(currentView.startsWith('user-reward') || currentView === 'user-rewards-overview' || currentView === 'user-reward-spin' || currentView === 'user-reward-history') && <RewardSpinPage />}
+              {(currentView.startsWith('user-reward')) && <RewardSpinPage />}
               {(currentView.startsWith('user-referral')) && <ReferralDashboardPage />}
               {(currentView.startsWith('user-notification')) && <NotificationsPage />}
-              {(currentView === 'user-wallet' || currentView.startsWith('user-wallet')) && <WalletPage />}
+              {(currentView.startsWith('user-wallet')) && <WalletPage />}
               {currentView === 'user-settings' && <SettingsPage />}
               {currentView === 'user-help' && <HelpFaqPage />}
             </main>
@@ -122,23 +173,35 @@ export default function Home() {
       );
     }
 
-    // 4. ADMIN PORTAL (Wrapped with Admin Sidebar + Header)
+    // 8. ADMIN PORTAL (Wrapped with Admin Sidebar + Header with Mobile Screen Blocker)
     if (currentView.startsWith('admin-')) {
       return (
-        <div className="min-h-screen bg-[#071325] flex flex-col md:flex-row text-slate-100 font-sans">
-          <AdminSidebar />
-          <div className="flex-1 flex flex-col min-w-0">
-            <AdminHeader />
-            <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl mx-auto w-full">
-              {(currentView === 'admin-dashboard' || currentView === 'admin-overview') && <AdminDashboardPage />}
-              {(currentView === 'admin-users' || currentView === 'admin-members') && <AdminUsersPage />}
-              {(currentView === 'admin-deposits' || currentView === 'admin-reconciliation') && <AdminDepositsPage />}
-              {(currentView.startsWith('admin-reward') || currentView === 'admin-rewards-overview' || currentView === 'admin-reward-flow') && <AdminRewardFlowControlPage />}
-              {(currentView === 'admin-logs' || currentView === 'admin-audit') && <AdminAuditLogsPage />}
-              {currentView === 'admin-settings' && <AdminSettingsPage />}
-            </main>
+        <>
+          {/* Mobile Screen Blocker (< 1024px) */}
+          <div className="block lg:hidden">
+            <AdminMobileRestrictionPage />
           </div>
-        </div>
+
+          {/* Laptop & Desktop Workspace (>= 1024px) */}
+          <div className="hidden lg:flex min-h-screen bg-[#F8FAFC] flex-col lg:flex-row text-slate-900 font-sans">
+            <AdminSidebar />
+            <div className="flex-1 flex flex-col min-w-0">
+              <AdminHeader />
+              <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl mx-auto w-full">
+                {currentView === 'admin-dashboard' && <AdminDashboardPage />}
+                {(currentView === 'admin-users' || currentView === 'admin-user-detail' || currentView === 'admin-team') && <AdminUsersPage />}
+                {(currentView === 'admin-deposits' || currentView === 'admin-deposit-review') && <AdminDepositsPage />}
+                {currentView === 'admin-groups' && <AdminGroupsOverviewPage />}
+                {currentView === 'admin-group-detail' && <AdminGroupDetailPage />}
+                {currentView === 'admin-slots' && <AdminSlotsControlPage />}
+                {currentView.startsWith('admin-reward') && <AdminRewardFlowControlPage />}
+                {(currentView === 'admin-audit-logs' || currentView === 'admin-reports') && <AdminAuditLogsPage />}
+                {currentView === 'admin-referrals' && <AdminReferralsPage />}
+                {(currentView === 'admin-settings' || currentView === 'admin-notifications') && <AdminSettingsPage />}
+              </main>
+            </div>
+          </div>
+        </>
       );
     }
     return (

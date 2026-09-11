@@ -2,61 +2,66 @@
 
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Search, Bell, Activity, AlertCircle } from 'lucide-react';
+import { Activity, AlertCircle, ShieldCheck, LogOut } from 'lucide-react';
 
 export const AdminHeader = () => {
-  const { currentView, setCurrentView, deposits } = useApp();
+  const { setCurrentView, deposits, logout } = useApp();
   const pendingDepositsCount = deposits.filter(d => d.status === 'Pending').length;
 
   return (
-    <header className="bg-[#0B1E39] text-white border-b border-[#1A2E4A] px-6 py-3.5 flex items-center justify-between shadow-md sticky top-0 z-30">
+    <header className="bg-white text-slate-900 border-b border-slate-200/90 px-6 py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-40 select-none backdrop-blur-md">
       
-      {/* Search & Breadcrumb */}
-      <div className="flex items-center space-x-4">
-        <div className="relative hidden md:block w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            placeholder="Search Member ID, UTR, Name..."
-            className="w-full bg-[#102747] border border-[#1A3860] text-white text-xs pl-9 pr-3 py-2 rounded-xl focus:outline-none focus:border-[#2F6FED]"
-          />
-        </div>
-        <div className="text-xs text-slate-400">
-          <span className="text-[#2F6FED] font-mono font-bold">GILDEMPIRE SOVEREIGN:</span>
-          <span className="ml-2 font-semibold text-white">Batch A Day 15 Active</span>
-        </div>
+      {/* Breadcrumb & System Status Tag */}
+      <div className="flex items-center space-x-2.5 bg-[#0B1E39] text-white px-3.5 py-1.5 rounded-full text-xs font-mono font-bold shadow-xs">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+        <span className="text-amber-400 font-bold">GILDEMPIRE SOVEREIGN</span>
+        <span className="text-slate-500">•</span>
+        <span className="text-slate-200 text-[11px]">BATCH A (DAY 15 ACTIVE)</span>
       </div>
 
       {/* Admin Actions */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3">
         
         {/* Pending Review Alert Pill */}
         {pendingDepositsCount > 0 && (
           <button 
             onClick={() => setCurrentView('admin-deposits')} 
-            className="flex items-center space-x-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-amber-500/30 transition-colors"
+            className="flex items-center space-x-2 bg-amber-50 text-amber-900 border border-amber-300 px-3.5 py-1.5 rounded-xl text-xs font-extrabold hover:bg-amber-100 transition-all cursor-pointer shadow-xs"
           >
-            <AlertCircle className="w-4 h-4 text-amber-400" />
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
             <span>{pendingDepositsCount} Pending Deposit Review</span>
           </button>
         )}
 
         {/* Audit Status */}
-        <div className="flex items-center space-x-2 text-xs bg-[#102747] px-3 py-1.5 rounded-xl border border-[#1A3860]">
-          <Activity className="w-4 h-4 text-[#1E9E64]" />
-          <span className="text-slate-200 font-mono text-[11px]">Audited Engine: OK</span>
+        <div className="flex items-center space-x-2 text-xs bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/80 hidden lg:flex">
+          <Activity className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="text-slate-700 font-mono text-[11px] font-semibold">Audited Engine: OK</span>
         </div>
 
         {/* Admin Badge */}
-        <div className="flex items-center space-x-2 bg-[#102747] border border-[#1A3860] px-3 py-1.5 rounded-xl">
-          <div className="w-6 h-6 rounded-full bg-[#2F6FED] flex items-center justify-center text-white font-bold text-xs">
+        <div className="flex items-center space-x-2.5 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+          <div className="w-7 h-7 rounded-lg bg-[#0B1E39] flex items-center justify-center text-amber-400 font-black text-xs shadow-xs">
             G
           </div>
           <div className="text-left hidden sm:block">
-            <p className="text-xs font-bold text-white leading-tight">Super Admin</p>
-            <p className="text-[10px] text-slate-400 leading-tight">admin.op@gildempire.in</p>
+            <p className="text-xs font-black text-[#0B1E39] leading-tight">Super Admin</p>
+            <p className="text-[10px] text-slate-500 font-medium leading-tight">admin.op@gildempire.in</p>
           </div>
         </div>
+
+        {/* Explicit Header Logout Button */}
+        <button
+          onClick={() => {
+            logout();
+            setCurrentView('auth-admin-login');
+          }}
+          className="flex items-center space-x-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shadow-xs hover:border-rose-300"
+          title="Logout Admin Session"
+        >
+          <LogOut className="w-4 h-4 text-rose-600" />
+          <span className="hidden sm:inline">Logout</span>
+        </button>
 
       </div>
 

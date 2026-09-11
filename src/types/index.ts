@@ -10,6 +10,7 @@ export type ViewMode =
   | 'auth-otp'
   | 'auth-forgot'
   | 'auth-reset'
+  | 'auth-admin-login'
   | 'user-dashboard'
   | 'user-profile'
   | 'user-edit-profile'
@@ -50,7 +51,38 @@ export type ViewMode =
   | 'system-404'
   | 'system-403'
   | 'system-500'
-  | 'system-states';
+  | 'system-503'
+  | 'system-429'
+  | 'system-access-denied'
+  | 'system-unauthorized'
+  | 'system-session-expired'
+  | 'system-offline'
+  | 'system-maintenance'
+  | 'system-coming-soon'
+  | 'system-states'
+  | 'auth-verify-email'
+  | 'auth-change-password'
+  | 'auth-account-locked'
+  | 'payment-processing'
+  | 'payment-success'
+  | 'payment-failed'
+  | 'payment-cancelled'
+  | 'payment-history'
+  | 'payment-transaction-details'
+  | 'payment-invoice'
+  | 'support-home'
+  | 'support-ticket'
+  | 'support-ticket-success'
+  | 'legal-privacy'
+  | 'legal-terms'
+  | 'legal-cookies'
+  | 'legal-refund'
+  | 'legal-disclaimer'
+  | 'legal-acceptable-use'
+  | 'legal-grievance'
+  | 'legal-data-deletion'
+  | 'system-announcements'
+  | 'system-notice';
 
 export type ViewportMode = 'desktop' | 'tablet' | 'mobile';
 
@@ -81,7 +113,7 @@ export interface DepositRecord {
   memberId: string;
   memberName: string;
   amount: number;
-  paymentMethod: 'UPI' | 'Bank Transfer (NEFT/IMPS)' | 'Net Banking';
+  paymentMethod: 'UPI' | 'Bank Transfer (NEFT/IMPS)' | 'Net Banking' | 'UPI (Manual UTR)' | 'Razorpay Instant Gateway';
   transactionDate: string;
   status: 'Pending' | 'Verified' | 'Rejected';
   proofUrl?: string;
@@ -99,16 +131,42 @@ export interface GroupSlot {
   wonDate?: string;
 }
 
+export type GroupStatus = 
+  | 'filling' 
+  | 'full' 
+  | 'ready_to_schedule' 
+  | 'scheduled' 
+  | 'active'
+  | 'live' 
+  | 'completed' 
+  | 'recruiting'
+  | 'empty'
+  | 'Recruiting' 
+  | 'Active 50-Day Cycle' 
+  | 'Completed Cycle';
+
 export interface GroupDetails {
   groupId: string;
   groupName: string;
-  status: 'Recruiting' | 'Active 50-Day Cycle' | 'Completed Cycle';
+  status: GroupStatus;
   createdDate: string;
   totalMembers: number; // Max 50
   currentCycleDay: number; // 1 to 50
   totalGoldDistributedGrams: number; // e.g. 14 grams for 14 days
   activePoolCount: number; // e.g. 36 active members remaining
   slots: GroupSlot[];
+  scheduledTime?: string;
+  startDate?: string;
+}
+
+export interface ProgramEvent {
+  dayNumber: number; // 1 to 50
+  date: string; // YYYY-MM-DD
+  time: string; // e.g. "07:00 AM IST"
+  status: 'Completed' | 'Today' | 'Scheduled' | 'Upcoming';
+  winnerMemberId?: string;
+  winnerName?: string;
+  auditHash?: string;
 }
 
 export interface DailyGoldWinner {
@@ -147,7 +205,7 @@ export interface AuditLogItem {
   actor: string;
   role: 'Super Admin' | 'Operations' | 'Reviewer' | 'System';
   action: string;
-  module: 'Deposits' | 'Groups' | 'Rewards' | 'User Management' | 'System Settings';
+  module: 'Deposits' | 'Groups' | 'Rewards' | 'User Management' | 'System Settings' | 'Security Vault';
   recordId: string;
   previousStatus?: string;
   newStatus?: string;
@@ -166,8 +224,8 @@ export interface AdminUser {
 export interface SystemSettingsConfig {
   groupCapacity: number; // 50
   goldPrizeGramsPerDay: number; // 1
-  depositAmountINR: number; // e.g. 1000
-  autoDailySpinTime: string; // "18:00 IST"
+  depositAmountINR: number; // 10000
+  autoDailySpinTime: string; // "07:00 IST"
   allowManualSpinTrigger: boolean;
   maintenanceMode: boolean;
   requireDepositVerification: boolean;

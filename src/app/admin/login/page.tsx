@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useApp } from '../../context/AppContext';
-import Home from '../page';
+import { useApp } from '../../../context/AppContext';
+import Home from '../../page';
 
-export default function AdminPage() {
+export default function AdminLoginRoute() {
   const { currentView, setCurrentView } = useApp();
 
   useEffect(() => {

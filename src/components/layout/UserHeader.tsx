@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { ChevronRight, ArrowLeft, Wallet } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Wallet, LogOut } from 'lucide-react';
 
 export const UserHeader = () => {
-  const { currentView, setCurrentView, user } = useApp();
+  const { currentView, setCurrentView, user, logout } = useApp();
 
   const getViewTitle = (view: string) => {
     switch (view) {
@@ -17,13 +17,13 @@ export const UserHeader = () => {
       case 'user-referral-dashboard': return 'Referral Network & Earnings';
       case 'user-wallet': return 'Digital Wallet & Audit Statement';
       case 'user-settings': return 'Account Settings & Security';
-      case 'user-help': return 'Help Center & Member FAQs';
+      case 'user-[#0B1E39]': return 'Help Center & Member FAQs';
       default: return view.replace('user-', '').replace('-', ' ');
     }
   };
 
   return (
-    <header className="bg-white/90 backdrop-blur-xl border-b border-slate-200/80 px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-[0_4px_25px_-5px_rgba(11,30,57,0.04)] transition-all">
+    <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200/80 px-6 py-3.5 flex items-center justify-between sticky top-0 z-40 shadow-[0_4px_25px_-5px_rgba(11,30,57,0.04)] transition-all select-none">
       
       {/* Left Section: Breadcrumb & Page Title */}
       <div className="flex items-center space-x-3.5">
@@ -59,7 +59,7 @@ export const UserHeader = () => {
         </div>
       </div>
 
-      {/* Right Section: EXACTLY 2 ITEMS (Wallet & Profile) */}
+      {/* Right Section: Digital Wallet, Profile & Logout */}
       <div className="flex items-center space-x-3">
         
         {/* 1. Digital Wallet Pill */}
@@ -104,9 +104,21 @@ export const UserHeader = () => {
           </div>
         </div>
 
+        {/* 3. Explicit Header Logout Button */}
+        <button
+          onClick={() => {
+            logout();
+            setCurrentView('auth-login');
+          }}
+          className="flex items-center space-x-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/90 px-3.5 py-2 rounded-2xl text-xs font-extrabold transition-all cursor-pointer shadow-2xs hover:shadow-md"
+          title="Logout Account"
+        >
+          <LogOut className="w-4 h-4 text-rose-600" />
+          <span className="hidden sm:inline">Logout</span>
+        </button>
+
       </div>
 
     </header>
   );
 };
-

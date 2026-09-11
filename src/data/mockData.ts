@@ -12,7 +12,7 @@ import {
 
 export const currentUserMock: UserProfile = {
   id: 'usr_101',
-  memberId: 'MB-8924',
+  memberId: 'LOP-000014',
   fullName: 'Rajesh Kumar Sharma',
   email: 'rajesh.sharma@gildempire.in',
   mobile: '+91 98765 43210',
@@ -22,7 +22,7 @@ export const currentUserMock: UserProfile = {
   referralId: 'REF-RAJESH89',
   referredBy: 'REF-AMIT99',
   depositStatus: 'Verified',
-  groupId: 'GRP-50-GOLD-01',
+  groupId: 'GROUP-001',
   slotNumber: 14,
   rewardStatus: 'In Selection Pool',
 };
@@ -31,22 +31,22 @@ export const depositHistoryMock: DepositRecord[] = [
   {
     id: 'dep_501',
     referenceId: 'UPI-982341209384',
-    memberId: 'MB-8924',
+    memberId: 'LOP-000014',
     memberName: 'Rajesh Kumar Sharma',
-    amount: 5000,
+    amount: 10000,
     paymentMethod: 'UPI',
     transactionDate: '14 Aug 2026, 11:30 AM',
     status: 'Verified',
     verifiedDate: '14 Aug 2026, 02:15 PM',
-    reviewerNotes: 'UPI UTR verified with HDFC Bank gateway.',
+    reviewerNotes: 'UPI UTR verified with HDFC Bank gateway. Assigned Slot #14 in GROUP-001.',
     proofUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80',
   },
   {
     id: 'dep_502',
     referenceId: 'IMPS-773829102938',
-    memberId: 'MB-4029',
+    memberId: 'LOP-000002',
     memberName: 'Priya Sundaram',
-    amount: 5000,
+    amount: 10000,
     paymentMethod: 'Bank Transfer (NEFT/IMPS)',
     transactionDate: '15 Aug 2026, 09:45 AM',
     status: 'Verified',
@@ -56,9 +56,9 @@ export const depositHistoryMock: DepositRecord[] = [
   {
     id: 'dep_503',
     referenceId: 'UPI-449302910294',
-    memberId: 'MB-7712',
+    memberId: 'LOP-000045',
     memberName: 'Vikramaditya Singh',
-    amount: 5000,
+    amount: 10000,
     paymentMethod: 'UPI',
     transactionDate: '10 Sep 2026, 04:20 PM',
     status: 'Pending',
@@ -67,9 +67,9 @@ export const depositHistoryMock: DepositRecord[] = [
   {
     id: 'dep_504',
     referenceId: 'UPI-119283746501',
-    memberId: 'MB-1092',
+    memberId: 'LOP-000048',
     memberName: 'Ananya Deshmukh',
-    amount: 5000,
+    amount: 10000,
     paymentMethod: 'UPI',
     transactionDate: '09 Sep 2026, 06:10 PM',
     status: 'Rejected',
@@ -77,75 +77,131 @@ export const depositHistoryMock: DepositRecord[] = [
   }
 ];
 
-// Generate exact 50 slots for the 50-member group
-const generate50Slots = () => {
+// Helper to generate slots for specific count
+export const generateBatchSlots = (filledCount: number, prefix: string = 'LOP-') => {
   const indianNames = [
     'Aarav Patel', 'Priya Sundaram', 'Vikramaditya Singh', 'Ananya Deshmukh', 'Kavita Menon',
-    'Rohan Verma', 'Sanjay Dutt', 'Deepika Padukone', 'Amitabh Bachchan', 'Sunil Gavaskar',
-    'Sachin Tendulkar', 'Rahul Dravid', 'Rajesh Kumar Sharma', 'Sneha Reddy', 'Manoj Bajpayee',
-    'Neha Kakkar', 'Karan Johar', 'Shreya Ghoshal', 'Arjun Kapoor', 'Pooja Hegde',
-    'Siddharth Malhotra', 'Kiara Advani', 'Rishabh Pant', 'Hardik Pandya', 'Jasprit Bumrah',
-    'Ravindra Jadeja', 'Shikhar Dhawan', 'Kalyani Priyadarshan', 'Nivetha Thomas', 'Dulquer Salmaan',
-    'Fahadh Faasil', 'Prithviraj Sukumaran', 'Suriya Sivakumar', 'Jyothika Saravanan', 'Trisha Krishnan',
-    'Mahesh Babu', 'Nandamuri Balakrishna', 'Vijay Deverakonda', 'Rashmika Mandanna', 'Samantha Ruth',
-    'Nani Ghanta', 'Keerthy Suresh', 'Allu Arjun', 'Ram Charan', 'Jr NTR',
-    'Prabhas Raju', 'Anushka Shetty', 'Tamannaah Bhatia', 'Rana Daggubati', 'Naga Chaitanya'
+    'Rohan Verma', 'Siddharth Joshi', 'Meera Nambiar', 'Amitabh Roy', 'Deepika Padukone',
+    'Suresh Raina', 'Zaheer Khan', 'Sneha Reddy', 'Rajesh Kumar Sharma', 'Pooja Hegde',
+    'Karthik Raja', 'Bhavna Sharma', 'Nitin Gadkari', 'Divya Spandana', 'Gautam Gambhir',
+    'Tarun Gogoi', 'Harish Rawat', 'Venkatesh Prasad', 'Lakshmi Narayanan', 'Manish Sisodia',
+    'Nandini Murthy', 'Om Prakash', 'Payal Ghosh', 'Raghav Chadha', 'Swati Maliwal',
+    'Tanmay Bhat', 'Urvashi Rautela', 'Varun Dhawan', 'Yamini Krishnamurthy', 'Zoya Akhtar',
+    'Ashish Nehra', 'Bhuvneshwar Kumar', 'Chetan Sharma', 'Dinesh Karthik', 'Eshwarappa',
+    'Farhan Akhtar', 'Giri Babu', 'Harbhajan Singh', 'Irfan Pathan', 'Jasprit Bumrah',
+    'Kedar Jadhav', 'Lokesh Rahul', 'Mohammad Shami', 'Navdeep Saini', 'Prithvi Shaw'
   ];
 
   return Array.from({ length: 50 }, (_, index) => {
     const slotNo = index + 1;
-    const name = indianNames[index];
-    const isCurrentMember = slotNo === 14;
-    // Slots 1 to 14 have won 1g Gold on Days 1 to 14
-    const hasWon = slotNo <= 14;
+    const isOccupied = slotNo <= filledCount;
+    const name = isOccupied ? (indianNames[index] || `Member #${slotNo}`) : '';
+    const memberId = isOccupied ? `${prefix}${String(slotNo).padStart(6, '0')}` : '';
 
     return {
       slotNumber: slotNo,
-      memberId: `MB-${1000 + slotNo}`,
+      memberId: memberId,
       memberName: name,
-      status: hasWon 
-        ? 'Won 1g Gold' 
-        : isCurrentMember 
-          ? 'Current Member' 
-          : 'Occupied',
-      joinedDate: `12 Aug 2026`,
-      wonDay: hasWon ? slotNo : undefined,
-      wonDate: hasWon ? `${slotNo} Aug 2026` : undefined,
-    } as const;
+      status: (slotNo === 1 && filledCount === 50 && prefix === 'LOP-') 
+        ? ('Won 1g Gold' as const) 
+        : isOccupied 
+          ? ('Occupied' as const) 
+          : ('Available' as const),
+      joinedDate: isOccupied ? '12 Aug 2026' : undefined,
+      wonDay: (slotNo === 1 && filledCount === 50 && prefix === 'LOP-') ? 1 : undefined,
+      wonDate: (slotNo === 1 && filledCount === 50 && prefix === 'LOP-') ? '14 Aug 2026' : undefined,
+    };
   });
 };
 
 export const currentGroupMock: GroupDetails = {
-  groupId: 'GRP-50-GOLD-01',
+  groupId: 'GROUP-001',
   groupName: 'GildEmpire 50 Gold Club - Batch A',
-  status: 'Active 50-Day Cycle',
+  status: 'active',
   createdDate: '01 Aug 2026',
   totalMembers: 50,
-  currentCycleDay: 15, // Currently on Day 15 of 50
-  totalGoldDistributedGrams: 14, // 14 Grams Gold given to Days 1-14 winners
-  activePoolCount: 36, // 50 - 14 = 36 members remaining in active spin pool
-  slots: generate50Slots(),
+  currentCycleDay: 2,
+  totalGoldDistributedGrams: 1,
+  activePoolCount: 49,
+  scheduledTime: '07:00 AM IST',
+  startDate: '2026-08-14',
+  slots: generateBatchSlots(50, 'LOP-'),
 };
 
-export const pastGoldWinnersMock: DailyGoldWinner[] = Array.from({ length: 14 }, (_, i) => {
-  const day = i + 1;
-  return {
-    dayNumber: day,
-    date: `${day} Aug 2026`,
-    winnerMemberId: `MB-${1000 + day}`,
-    winnerName: currentGroupMock.slots[i].memberName || `Member #${day}`,
+export const allGroupsMock: GroupDetails[] = [
+  currentGroupMock,
+  {
+    groupId: 'GROUP-002',
+    groupName: 'GildEmpire 50 Gold Club - Batch B',
+    status: 'full',
+    createdDate: '05 Aug 2026',
+    totalMembers: 50,
+    currentCycleDay: 0,
+    totalGoldDistributedGrams: 0,
+    activePoolCount: 50,
+    scheduledTime: 'Awaiting Admin Schedule',
+    startDate: '',
+    slots: generateBatchSlots(50, 'LOPB-'),
+  },
+  {
+    groupId: 'GROUP-003',
+    groupName: 'GildEmpire 50 Gold Club - Batch C',
+    status: 'recruiting',
+    createdDate: '10 Aug 2026',
+    totalMembers: 40,
+    currentCycleDay: 0,
+    totalGoldDistributedGrams: 0,
+    activePoolCount: 40,
+    scheduledTime: '10 Open Slots Remaining',
+    startDate: '',
+    slots: generateBatchSlots(40, 'LOPC-'),
+  },
+  {
+    groupId: 'GROUP-004',
+    groupName: 'GildEmpire 50 Gold Club - Batch D',
+    status: 'empty',
+    createdDate: '15 Aug 2026',
+    totalMembers: 0,
+    currentCycleDay: 0,
+    totalGoldDistributedGrams: 0,
+    activePoolCount: 0,
+    scheduledTime: 'Reserve Batch Queue',
+    startDate: '',
+    slots: generateBatchSlots(0, 'LOPD-'),
+  },
+  {
+    groupId: 'GROUP-005',
+    groupName: 'GildEmpire 50 Gold Club - Batch E',
+    status: 'empty',
+    createdDate: '20 Aug 2026',
+    totalMembers: 0,
+    currentCycleDay: 0,
+    totalGoldDistributedGrams: 0,
+    activePoolCount: 0,
+    scheduledTime: 'Reserve Batch Queue',
+    startDate: '',
+    slots: generateBatchSlots(0, 'LOPE-'),
+  },
+];
+
+export const pastGoldWinnersMock: DailyGoldWinner[] = [
+  {
+    dayNumber: 1,
+    date: '14 Aug 2026',
+    winnerMemberId: 'LOP-000001',
+    winnerName: 'Aarav Patel',
     prizeDescription: '1 Gram 24K Gold Coin',
-    dispatchStatus: day <= 10 ? 'Verified & Shipped' : 'Processing',
-    trackingNumber: day <= 10 ? `BLUEDART-IND-994820${day}` : undefined,
-    auditHash: `0x8f9a2b${day}e410c9a87d65e21b44a`,
-  };
-});
+    dispatchStatus: 'Verified & Shipped',
+    trackingNumber: 'BLUEDART-IND-9948201',
+    auditHash: '0x8f9a2b1e410c9a87d65e21b44a',
+  }
+];
 
 export const referralsMock: ReferralItem[] = [
   {
     id: 'ref_1',
     referredName: 'Suresh Raina',
-    referredMemberId: 'MB-9901',
+    referredMemberId: 'LOP-000011',
     joinedDate: '18 Aug 2026',
     depositStatus: 'Verified',
     eligibility: 'Eligible',
@@ -153,7 +209,7 @@ export const referralsMock: ReferralItem[] = [
   {
     id: 'ref_2',
     referredName: 'Meera Nambiar',
-    referredMemberId: 'MB-9902',
+    referredMemberId: 'LOP-000008',
     joinedDate: '22 Aug 2026',
     depositStatus: 'Verified',
     eligibility: 'Eligible',
@@ -161,7 +217,7 @@ export const referralsMock: ReferralItem[] = [
   {
     id: 'ref_3',
     referredName: 'Gautam Gambhir',
-    referredMemberId: 'MB-9903',
+    referredMemberId: 'LOP-000020',
     joinedDate: '01 Sep 2026',
     depositStatus: 'Pending',
     eligibility: 'Pending Deposit',
@@ -169,7 +225,7 @@ export const referralsMock: ReferralItem[] = [
   {
     id: 'ref_4',
     referredName: 'Zaheer Khan',
-    referredMemberId: 'MB-9904',
+    referredMemberId: 'LOP-000012',
     joinedDate: '05 Sep 2026',
     depositStatus: 'Not Started',
     eligibility: 'Pending Deposit',
@@ -179,23 +235,23 @@ export const referralsMock: ReferralItem[] = [
 export const notificationsMock: NotificationItem[] = [
   {
     id: 'notif_1',
-    title: 'Day 14 Gold Reward Awarded',
-    description: 'Day 14 selection completed. Member #MB-1014 (Sneha Reddy) won 1 Gram 24K Gold!',
+    title: 'Day 1 Gold Reward Awarded',
+    description: 'Day 1 selection completed. Member #LOP-000001 (Aarav Patel) won 1 Gram 24K Gold!',
     category: 'Reward',
-    timestamp: 'Today, 06:05 PM',
+    timestamp: 'Yesterday, 07:05 AM',
     read: false,
   },
   {
     id: 'notif_2',
     title: 'Deposit Verified',
-    description: 'Your ₹5,000 membership deposit reference #UPI-982341209384 has been verified by Admin.',
+    description: 'Your ₹10,000 membership deposit reference #UPI-982341209384 has been verified by Admin.',
     category: 'Deposit',
     timestamp: '14 Aug 2026, 02:15 PM',
     read: true,
   },
   {
     id: 'notif_3',
-    title: 'Added to 50-Member Group',
+    title: 'Added to GROUP-001',
     description: 'You have been assigned Slot #14 in GildEmpire 50 Gold Club - Batch A.',
     category: 'Group',
     timestamp: '14 Aug 2026, 02:20 PM',
@@ -214,14 +270,14 @@ export const notificationsMock: NotificationItem[] = [
 export const auditLogsMock: AuditLogItem[] = [
   {
     id: 'audit_901',
-    timestamp: '10 Sep 2026, 18:00:02 IST',
+    timestamp: '10 Sep 2026, 07:00:02 IST',
     actor: 'admin.op@gildempire.in',
     role: 'Operations',
     action: 'EXECUTED_DAILY_GOLD_SELECTION',
     module: 'Rewards',
-    recordId: 'GRP-50-GOLD-01-DAY14',
-    previousStatus: 'Pool size: 37',
-    newStatus: 'Winner: MB-1014 | Pool size: 36',
+    recordId: 'GROUP-001-DAY1',
+    previousStatus: 'Pool size: 50',
+    newStatus: 'Winner: LOP-000001 | Pool size: 49',
     ipAddress: '103.21.124.89',
   },
   {
@@ -233,7 +289,7 @@ export const auditLogsMock: AuditLogItem[] = [
     module: 'Deposits',
     recordId: 'dep_501',
     previousStatus: 'Pending',
-    newStatus: 'Verified',
+    newStatus: 'Verified (₹10,000)',
     ipAddress: '49.207.181.12',
   },
   {
@@ -245,7 +301,7 @@ export const auditLogsMock: AuditLogItem[] = [
     module: 'System Settings',
     recordId: 'SYS_CFG_01',
     previousStatus: 'Deposit INR: 5000',
-    newStatus: 'Deposit INR: 5000 (Verified Lock)',
+    newStatus: 'Deposit INR: 10000 (Verified Lock)',
     ipAddress: '115.240.99.34',
   }
 ];
@@ -280,8 +336,8 @@ export const adminUsersMock: AdminUser[] = [
 export const systemSettingsMock: SystemSettingsConfig = {
   groupCapacity: 50,
   goldPrizeGramsPerDay: 1,
-  depositAmountINR: 5000,
-  autoDailySpinTime: '18:00 IST',
+  depositAmountINR: 10000,
+  autoDailySpinTime: '07:00 IST',
   allowManualSpinTrigger: true,
   maintenanceMode: false,
   requireDepositVerification: true,
