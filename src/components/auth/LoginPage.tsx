@@ -41,7 +41,11 @@ export const LoginPage = () => {
     }
 
     setLoggingIn(true);
-    await loginUser(mobileEmail, password);
+    const res = await loginUser(mobileEmail, password);
+    setLoggingIn(false);
+    if (res && !res.success && res.error) {
+      setErrorMessage(res.error);
+    }
   };
 
   return (

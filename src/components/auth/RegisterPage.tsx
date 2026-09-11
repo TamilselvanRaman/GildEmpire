@@ -2,76 +2,33 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Award, ShieldCheck, Check, ArrowRight, Lock, Users, Sparkles, FileText } from 'lucide-react';
+import { Award, ShieldCheck, Check, ArrowRight, Lock, Users, Sparkles, FileText, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const RegisterPage = () => {
-  const { setCurrentView } = useApp();
+  const { setCurrentView, registerUser } = useApp();
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Inline OTP state
-  const [showOtpSection, setShowOtpSection] = useState(false);
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [resendTimer, setResendTimer] = useState(45);
-
-  // Handle password strength
-  const getPasswordStrength = () => {
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    return score;
-  };
-
-  const strength = getPasswordStrength();
-
-  // Timer countdown for resend OTP
-  React.useEffect(() => {
-    let timerId: NodeJS.Timeout;
-    if (showOtpSection && resendTimer > 0) {
-      timerId = setInterval(() => {
-        setResendTimer((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(timerId);
-  }, [showOtpSection, resendTimer]);
-
-  const handleProceedClick = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!showOtpSection) {
-      setShowOtpSection(true);
-      setOtpDigits(['8', '4', '9', '2', '0', '1']);
+    if (!fullName.trim() || !email.trim() || !mobile.trim() || !password.trim()) {
+      setErrorMessage('Please fill in all required registration fields.');
+      return;
+    }
+    setErrorMessage('');
+    setIsSubmitting(true);
+    const res = await registerUser(fullName, email, mobile, password);
+    setIsSubmitting(false);
+    if (res && res.success) {
+      setCurrentView('user-dashboard');
     } else {
-      setIsVerifying(true);
-      setTimeout(() => {
-        setIsVerifying(false);
-        setCurrentView('user-dashboard');
-      }, 900);
-    }
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) value = value.slice(-1);
-    const newDigits = [...otpDigits];
-    newDigits[index] = value;
-    setOtpDigits(newDigits);
-
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
-      const prevInput = document.getElementById(`otp-input-${index - 1}`);
-      prevInput?.focus();
+      setErrorMessage(res?.error || 'Registration failed');
     }
   };
 
@@ -156,31 +113,33 @@ export const RegisterPage = () => {
         {/* RIGHT SIDE: Registration Form */}
         <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-4 bg-white overflow-y-auto max-h-full">
           
-          {/* Header & Step */}
+          {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-[#0B1E39] tracking-tight">
                 Create Member Account
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                {showOtpSection 
-                  ? 'Step 2 of 2: Enter 2FA Security Code' 
-                  : 'Step 1 of 2: Personal Identity & KYC Details'}
+                Personal Identity & KYC Details
               </p>
             </div>
 
-            <span className={`text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full border transition-all flex items-center space-x-1.5 ${
-              showOtpSection 
-                ? 'text-emerald-600 bg-emerald-50 border-emerald-200' 
-                : 'text-[#2563EB] bg-[#EEF4FF] border-blue-100/90'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${showOtpSection ? 'bg-emerald-500' : 'bg-blue-600'} animate-pulse`}></span>
-              <span>{showOtpSection ? 'STEP 2 OF 2' : 'STEP 1 OF 2'}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full border transition-all flex items-center space-x-1.5 text-[#2563EB] bg-[#EEF4FF] border-blue-100/90">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+              <span>ACCOUNT REGISTRATION</span>
             </span>
           </div>
 
+          {/* Error Banner */}
+          {errorMessage && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-xs flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Registration Form */}
-          <form onSubmit={handleProceedClick} className="space-y-3.5 text-xs font-medium">
+          <form onSubmit={handleRegister} className="space-y-3.5 text-xs font-medium">
             
             {/* Full Legal Name */}
             <div>
@@ -191,11 +150,10 @@ export const RegisterPage = () => {
               <input
                 type="text"
                 required
-                disabled={showOtpSection}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="e.g. Rajesh Kumar Sharma"
-                className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs disabled:opacity-75 disabled:cursor-not-allowed"
+                className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
               />
             </div>
 
@@ -204,16 +162,15 @@ export const RegisterPage = () => {
               <div>
                 <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center space-x-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
-                  <span>MOBILE (OTP VERIFIED)</span>
+                  <span>MOBILE NUMBER</span>
                 </label>
                 <input
                   type="tel"
                   required
-                  disabled={showOtpSection}
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs disabled:opacity-75 disabled:cursor-not-allowed"
+                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
                 />
               </div>
               <div>
@@ -224,11 +181,10 @@ export const RegisterPage = () => {
                 <input
                   type="email"
                   required
-                  disabled={showOtpSection}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="rajesh@infinitygram.in"
-                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs disabled:opacity-75 disabled:cursor-not-allowed"
+                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
                 />
               </div>
             </div>
@@ -240,9 +196,7 @@ export const RegisterPage = () => {
                 <span>LEGAL ID DOCUMENT (AADHAAR / PAN / DRIVING LICENSE)</span>
               </label>
               <div className="flex items-center justify-center w-full">
-                <label className={`flex flex-col items-center justify-center w-full h-20 sm:h-22 bg-[#F8FAFC] border-2 border-dashed border-slate-300 rounded-xl p-2 transition-all group ${
-                  showOtpSection ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-50/40 hover:border-[#2563EB]'
-                }`}>
+                <label className="flex flex-col items-center justify-center w-full h-20 sm:h-22 bg-[#F8FAFC] border-2 border-dashed border-slate-300 rounded-xl p-2 transition-all group cursor-pointer hover:bg-blue-50/40 hover:border-[#2563EB]">
                   <div className="flex flex-col items-center justify-center">
                     <ShieldCheck className="w-5 h-5 text-[#2563EB] mb-1 group-hover:scale-110 transition-transform" />
                     <p className="mb-0.5 text-[11px] text-slate-600 font-medium">
@@ -252,7 +206,7 @@ export const RegisterPage = () => {
                       PDF, JPG, PNG (Max 5MB)
                     </p>
                   </div>
-                  <input type="file" disabled={showOtpSection} className="hidden" accept=".pdf,.jpg,.jpeg,.png" />
+                  <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" />
                 </label>
               </div>
             </div>
@@ -267,11 +221,10 @@ export const RegisterPage = () => {
                 <input
                   type="password"
                   required
-                  disabled={showOtpSection}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimum 8 characters"
-                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs disabled:opacity-75 disabled:cursor-not-allowed"
+                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
                 />
               </div>
 
@@ -282,11 +235,10 @@ export const RegisterPage = () => {
                 </label>
                 <input
                   type="text"
-                  disabled={showOtpSection}
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value)}
                   placeholder="E.G. REF-AMIT99"
-                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 uppercase text-xs disabled:opacity-75 disabled:cursor-not-allowed"
+                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 uppercase text-xs"
                 />
               </div>
             </div>
@@ -296,7 +248,6 @@ export const RegisterPage = () => {
               <input 
                 type="checkbox" 
                 required 
-                disabled={showOtpSection}
                 className="mt-0.5 rounded border-slate-300 text-[#2563EB] focus:ring-0 cursor-pointer w-4 h-4" 
               />
               <span className="text-[11px] text-slate-500 leading-tight font-medium">
@@ -304,100 +255,20 @@ export const RegisterPage = () => {
               </span>
             </div>
 
-            {/* INLINE OTP VERIFICATION BOX */}
-            {showOtpSection && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0, y: -5 }}
-                animate={{ opacity: 1, height: 'auto', y: 0 }}
-                exit={{ opacity: 0, height: 0, y: -5 }}
-                transition={{ duration: 0.3 }}
-                className="bg-gradient-to-br from-blue-50/90 via-indigo-50/40 to-slate-50 border-2 border-[#2563EB]/40 rounded-xl p-4 shadow-sm my-3 relative overflow-hidden"
-              >
-                <div className="flex items-center justify-between pb-2 border-b border-blue-200/60 mb-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-md bg-[#2563EB] text-white flex items-center justify-center shadow-md">
-                      <Lock className="w-3.5 h-3.5 stroke-[2.5]" />
-                    </div>
-                    <div>
-                      <h4 className="text-[11px] font-black text-[#0B1E39] uppercase tracking-wider">
-                        ENTER 6-DIGIT OTP CODE
-                      </h4>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowOtpSection(false)}
-                    className="text-[10px] font-extrabold text-[#2563EB] hover:underline cursor-pointer bg-white px-2.5 py-1 rounded-md border border-blue-100"
-                  >
-                    Edit Form
-                  </button>
-                </div>
-
-                {/* 6 Digit Inputs */}
-                <div className="py-1">
-                  <div className="flex items-center justify-center gap-2">
-                    {otpDigits.map((digit, idx) => (
-                      <input
-                        key={idx}
-                        id={`otp-input-${idx}`}
-                        type="text"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleOtpChange(idx, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-9 h-11 text-center text-lg font-black bg-white border border-slate-200 rounded-lg focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/20 outline-none font-mono text-[#0B1E39] shadow-sm transition-all"
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Resend & Status Footer */}
-                <div className="flex items-center justify-between text-[10px] pt-2 text-slate-500 font-semibold border-t border-blue-100/60 mt-1">
-                  <span className="flex items-center space-x-1 text-emerald-600 font-bold">
-                    <ShieldCheck className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>Instant Verification</span>
-                  </span>
-
-                  <div>
-                    {resendTimer > 0 ? (
-                      <span>Resend in <span className="font-mono font-bold text-[#0B1E39]">00:{resendTimer < 10 ? `0${resendTimer}` : resendTimer}</span></span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setResendTimer(45);
-                          setOtpDigits(['8', '4', '9', '2', '0', '1']);
-                        }}
-                        className="text-[#2563EB] font-extrabold hover:underline cursor-pointer"
-                      >
-                        Resend Code Now
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isVerifying}
+              disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-[#2563EB] via-blue-600 to-[#1D4ED8] hover:from-blue-600 hover:to-blue-800 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-[0_10px_25px_-5px_rgba(37,99,235,0.35)] hover:shadow-[0_15px_30px_-5px_rgba(37,99,235,0.45)] hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2 text-xs uppercase tracking-wider cursor-pointer mt-4 disabled:opacity-80"
             >
-              {isVerifying ? (
+              {isSubmitting ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>VERIFYING OTP & CREATING ACCOUNT...</span>
-                </div>
-              ) : showOtpSection ? (
-                <div className="flex items-center space-x-2">
-                  <span>VERIFY & COMPLETE REGISTRATION</span>
-                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>CREATING MEMBER ACCOUNT...</span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <span>PROCEED TO OTP VERIFICATION</span>
+                  <span>COMPLETE REGISTRATION & OPEN DASHBOARD</span>
                   <ArrowRight className="w-4 h-4 stroke-[2.5]" />
                 </div>
               )}

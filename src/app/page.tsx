@@ -65,7 +65,7 @@ import { SystemStatesPage } from '../components/system/SystemStatesPage';
 import { Preloader } from '../components/system/Preloader';
 
 export default function Home() {
-  const { currentView, setCurrentView } = useApp();
+  const { currentView, setCurrentView, isAuthenticated } = useApp();
   const [showAdminToast, setShowAdminToast] = React.useState(false);
 
   // Check URL pathname for /admin or /admin/login and set up Ctrl + Alt + A keyboard shortcut
@@ -152,6 +152,9 @@ export default function Home() {
 
     // 7. MEMBER PORTAL (Wrapped with User Sidebar + Header + Mobile Bottom Nav)
     if (currentView.startsWith('user-')) {
+      if (!isAuthenticated) {
+        return <LoginPage />;
+      }
       return (
         <div className="min-h-screen bg-[#081E26] text-white flex flex-col md:flex-row pb-16 md:pb-0">
           <UserSidebar />
