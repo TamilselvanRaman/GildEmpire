@@ -43,7 +43,7 @@ export const PaymentStatesPage: React.FC<Props> = ({ status = 'success' }) => {
     utr: 'UTR-2026-8840192',
     amount: 10000,
     memberId: user?.memberId || 'MB-1002',
-    memberName: user?.fullName || 'Tamil Selvan',
+    memberName: user?.fullName || 'Rajesh Kumar',
     date: '11 Sep 2026, 10:18 AM IST',
     paymentMethod: 'UPI (Manual UTR Verification)',
     groupAllocated: 'GROUP-003 (Batch A)',

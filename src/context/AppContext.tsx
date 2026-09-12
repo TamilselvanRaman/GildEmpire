@@ -421,7 +421,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const memberId = `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
       setUser(prev => ({
         ...prev,
-        fullName: email.includes('@') ? email.split('@')[0] : 'Tamil Selvan',
+        fullName: email.includes('@') ? email.split('@')[0] : 'Rajesh Kumar',
         email: email.trim(),
         memberId,
         accountStatus: 'Active',

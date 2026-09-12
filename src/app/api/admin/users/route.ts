@@ -22,7 +22,7 @@ export async function GET() {
       id: p.id || `usr_${idx + 1}`,
       memberId: p.member_id || `LOP-${501928 + idx}`,
       name: p.full_name || 'Member User',
-      mobile: p.mobile || '+91 99442 87852',
+      mobile: p.mobile || '+91 98765 43210',
       email: p.email,
       regDate: p.joined_date || new Date(p.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
       deposit: p.deposit_status || 'Verified',

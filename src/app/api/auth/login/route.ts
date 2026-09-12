@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     }
 
     const memberId = profileData?.member_id || `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
-    const displayName = profileData?.full_name || (email.includes('@') ? email.split('@')[0] : 'Tamil Selvan');
+    const displayName = profileData?.full_name || (email.includes('@') ? email.split('@')[0] : 'Member User');
 
     return NextResponse.json({
       success: true,
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         memberId,
         fullName: displayName,
         email: profileData?.email || email.trim(),
-        mobile: profileData?.mobile || '+91 99442 87852',
+        mobile: profileData?.mobile || '+91 98765 43210',
         accountStatus: profileData?.account_status || 'Active',
         depositStatus: profileData?.deposit_status || 'Not Started',
         rewardStatus: profileData?.reward_status || 'In Selection Pool',

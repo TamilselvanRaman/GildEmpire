@@ -366,7 +366,7 @@ export const RegisterPage = () => {
                   setFullName(e.target.value);
                   if (errorMessage) setErrorMessage('');
                 }}
-                placeholder="e.g. Tamil Selvan Raman"
+                placeholder="e.g. Rajesh Kumar Sharma"
                 className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
               />
             </div>
@@ -391,7 +391,7 @@ export const RegisterPage = () => {
                     maxLength={10}
                     value={mobile}
                     onChange={handleMobileChange}
-                    placeholder="10 Digits e.g. 9944287852"
+                    placeholder="10 Digits e.g. 9876543210"
                     className={`w-full bg-[#F8FAFC] border text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs ${
                       mobile.length === 10 ? 'border-emerald-500/80 bg-emerald-50/20' : 'border-slate-200 focus:border-[#2563EB]'
                     }`}
@@ -421,7 +421,7 @@ export const RegisterPage = () => {
                     setEmail(e.target.value);
                     if (errorMessage) setErrorMessage('');
                   }}
-                  placeholder="e.g. tamil01@gmail.com"
+                  placeholder="e.g. rajesh@gmail.com"
                   className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
                 />
               </div>
