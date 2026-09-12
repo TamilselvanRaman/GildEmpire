@@ -244,6 +244,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const [user, setUser] = useState<UserProfile>(currentUserMock);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  // Auto-restore active user session from browser storage on mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('infinity_gold_user_session');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.email) {
+            setUser(parsed);
+            setIsAuthenticated(true);
+          }
+        } catch (e) {}
+      }
+    }
+  }, []);
+
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(true);
   const [deposits, setDeposits] = useState<DepositRecord[]>(depositHistoryMock);
   const [allGroups, setAllGroups] = useState<GroupDetails[]>(allGroupsMock);
@@ -355,6 +372,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     idDocumentName?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Auto-logout any existing user session in this browser before creating new user session
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {}
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('infinity_gold_user_session');
+      }
+      setIsAuthenticated(false);
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -376,6 +402,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       if (resData.user) {
         setUser(resData.user);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('infinity_gold_user_session', JSON.stringify(resData.user));
+        }
       }
       setIsAuthenticated(true);
       fetchDbUsers();
@@ -388,6 +417,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const loginUser = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Auto-logout any existing user session in this browser before logging in new user
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {}
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('infinity_gold_user_session');
+      }
+      setIsAuthenticated(false);
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -398,28 +436,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (response.ok && resData?.success) {
         if (resData?.user) {
           setUser(resData.user);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('infinity_gold_user_session', JSON.stringify(resData.user));
+          }
         }
         setIsAuthenticated(true);
         setCurrentView('user-dashboard');
         return { success: true };
       }
 
-      // Dev mode fallback login session
-      const memberId = `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
-      setUser(prev => ({
-        ...prev,
-        fullName: email.includes('@') ? email.split('@')[0] : 'Rajesh Kumar',
-        email: email.trim(),
-        memberId,
-        accountStatus: 'Active',
-      }));
-      setIsAuthenticated(true);
-      setCurrentView('user-dashboard');
-      return { success: true };
+      return { success: false, error: resData?.error || 'Invalid email or password.' };
     } catch (err: any) {
-      setIsAuthenticated(true);
-      setCurrentView('user-dashboard');
-      return { success: true };
+      return { success: false, error: err?.message || 'Network error during login.' };
     }
   };
 
@@ -482,8 +510,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       await supabase.auth.signOut();
     } catch (e) {}
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('infinity_gold_user_session');
+    }
     setIsAuthenticated(false);
     setIsAdminAuthenticated(false);
+    setUser(currentUserMock);
     setCurrentView('public-landing');
   };
 
