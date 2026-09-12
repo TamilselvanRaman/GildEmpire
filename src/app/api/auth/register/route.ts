@@ -66,30 +66,19 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(cleanBase64, 'base64');
         const ext = idDocumentName ? idDocumentName.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') || 'jpg' : 'jpg';
         const filePath = `kyc/${memberId}_${Date.now()}.${ext}`;
-        const rootFilePath = `${memberId}_${Date.now()}.${ext}`;
 
         // Ensure id_documents bucket exists
         try {
           await dbClient.storage.createBucket('id_documents', { public: true });
         } catch (bErr) {}
 
-        // Upload to kyc/ folder
+        // Upload directly to kyc/ folder inside id_documents bucket
         const { data: uploadData, error: uploadErr } = await dbClient.storage
           .from('id_documents')
           .upload(filePath, buffer, {
             contentType,
             upsert: true,
           });
-
-        // Also upload to root level of id_documents bucket for direct root visibility in Supabase Storage dashboard
-        try {
-          await dbClient.storage
-            .from('id_documents')
-            .upload(rootFilePath, buffer, {
-              contentType,
-              upsert: true,
-            });
-        } catch (rootErr) {}
 
         if (!uploadErr && uploadData) {
           const { data: urlData } = dbClient.storage.from('id_documents').getPublicUrl(filePath);

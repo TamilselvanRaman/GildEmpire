@@ -152,7 +152,8 @@ export default function Home() {
 
     // 7. MEMBER PORTAL (Wrapped with User Sidebar + Header + Mobile Bottom Nav)
     if (currentView.startsWith('user-')) {
-      if (!isAuthenticated) {
+      const hasStoredSession = typeof window !== 'undefined' && !!localStorage.getItem('infinity_gold_user_session');
+      if (!isAuthenticated && !hasStoredSession) {
         return <LoginPage />;
       }
       return (
