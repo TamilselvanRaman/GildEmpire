@@ -216,15 +216,14 @@ export const RegisterPage = () => {
       );
       setIsSubmitting(false);
 
-      if (res && res.success !== false) {
+      if (res && res.success) {
         setCurrentView('user-dashboard');
       } else {
         setErrorMessage(res?.error || 'Registration failed. Please try again.');
       }
     } catch (err: any) {
       setIsSubmitting(false);
-      // Fallback session opening user dashboard
-      setCurrentView('user-dashboard');
+      setErrorMessage(err?.message || 'Registration failed. Please try again.');
     }
   };
 

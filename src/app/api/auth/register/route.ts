@@ -21,39 +21,72 @@ export async function POST(request: Request) {
 
     const dbClient = supabaseAdmin || supabase;
 
+    // 0. Check for existing duplicate email or mobile number in public.profiles table
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanMobile = mobile.trim();
+
+    try {
+      const { data: existingUser } = await dbClient
+        .from('profiles')
+        .select('email, mobile')
+        .or(`email.ilike.${cleanEmail},mobile.eq.${cleanMobile}`)
+        .maybeSingle();
+
+      if (existingUser) {
+        if (existingUser.email?.toLowerCase() === cleanEmail) {
+          return NextResponse.json(
+            { success: false, error: 'An account with this email address already exists. Please log in.' },
+            { status: 400 }
+          );
+        }
+        if (existingUser.mobile === cleanMobile) {
+          return NextResponse.json(
+            { success: false, error: 'This mobile number is already registered. Please log in or use another number.' },
+            { status: 400 }
+          );
+        }
+      }
+    } catch (checkErr) {
+      console.warn('Duplicate check notice:', checkErr);
+    }
+
     // 1. Upload Legal ID Document to Supabase Storage bucket if base64 provided
     if (idDocumentBase64) {
       try {
-        const matches = idDocumentBase64.match(/^data:(.+);base64,(.+)$/);
-        if (matches) {
-          const contentType = matches[1];
-          const base64Data = matches[2];
-          const buffer = Buffer.from(base64Data, 'base64');
-          const ext = idDocumentName ? idDocumentName.split('.').pop() : 'png';
-          const filePath = `kyc/${memberId}_${Date.now()}.${ext}`;
+        let contentType = 'image/jpeg';
+        let base64Data = idDocumentBase64;
 
-          const { data: uploadData, error: uploadErr } = await dbClient.storage
+        if (idDocumentBase64.includes(';base64,')) {
+          const parts = idDocumentBase64.split(';base64,');
+          contentType = parts[0].replace('data:', '') || 'image/jpeg';
+          base64Data = parts[1];
+        }
+
+        const buffer = Buffer.from(base64Data, 'base64');
+        const ext = idDocumentName ? idDocumentName.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') || 'jpg' : 'jpg';
+        const filePath = `kyc/${memberId}_${Date.now()}.${ext}`;
+
+        const { data: uploadData, error: uploadErr } = await dbClient.storage
+          .from('id_documents')
+          .upload(filePath, buffer, {
+            contentType,
+            upsert: true,
+          });
+
+        if (!uploadErr && uploadData) {
+          const { data: urlData } = dbClient.storage.from('id_documents').getPublicUrl(filePath);
+          if (urlData?.publicUrl) {
+            idDocumentUrl = urlData.publicUrl;
+          }
+        } else if (uploadErr) {
+          console.warn('Storage upload notice, retrying with fallback client:', uploadErr.message);
+          const { data: uploadData2 } = await supabase.storage
             .from('id_documents')
-            .upload(filePath, buffer, {
-              contentType,
-              upsert: true,
-            });
-
-          if (!uploadErr && uploadData) {
-            const { data: urlData } = dbClient.storage.from('id_documents').getPublicUrl(filePath);
+            .upload(filePath, buffer, { contentType, upsert: true });
+          if (uploadData2) {
+            const { data: urlData } = supabase.storage.from('id_documents').getPublicUrl(filePath);
             if (urlData?.publicUrl) {
               idDocumentUrl = urlData.publicUrl;
-            }
-          } else if (uploadErr) {
-            // Fallback upload using standard client
-            const { data: uploadData2 } = await supabase.storage
-              .from('id_documents')
-              .upload(filePath, buffer, { contentType, upsert: true });
-            if (uploadData2) {
-              const { data: urlData } = supabase.storage.from('id_documents').getPublicUrl(filePath);
-              if (urlData?.publicUrl) {
-                idDocumentUrl = urlData.publicUrl;
-              }
             }
           }
         }

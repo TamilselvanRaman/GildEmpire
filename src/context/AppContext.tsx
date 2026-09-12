@@ -345,32 +345,33 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     currentGroupWinners
   );
 
-  const registerUser = async (fullName: string, email: string, mobile: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+  const registerUser = async (
+    fullName: string, 
+    email: string, 
+    mobile: string, 
+    pass: string, 
+    referralCode?: string, 
+    idDocumentBase64?: string, 
+    idDocumentName?: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, email, mobile, password: pass }),
+        body: JSON.stringify({ 
+          fullName, 
+          email: email.trim(), 
+          mobile, 
+          password: pass, 
+          referralCode, 
+          idDocumentBase64, 
+          idDocumentName 
+        }),
       });
 
       const resData = await response.json().catch(() => ({}));
       if (!response.ok || !resData.success) {
-        // Fallback to direct client session creation
-        const memberId = `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
-        const joinedDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-        setUser(prev => ({
-          ...prev,
-          fullName,
-          email: email.trim(),
-          mobile,
-          memberId,
-          registrationDate: joinedDate,
-          accountStatus: 'Active',
-          depositStatus: 'Not Started',
-        }));
-        setIsAuthenticated(true);
-        setCurrentView('user-dashboard');
-        return { success: true };
+        return { success: false, error: resData?.error || 'Registration failed. Please check your details.' };
       }
 
       if (resData.user) {
@@ -381,21 +382,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setCurrentView('user-dashboard');
       return { success: true };
     } catch (err: any) {
-      const memberId = `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
-      const joinedDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-      setUser(prev => ({
-        ...prev,
-        fullName,
-        email: email.trim(),
-        mobile,
-        memberId,
-        registrationDate: joinedDate,
-        accountStatus: 'Active',
-        depositStatus: 'Not Started',
-      }));
-      setIsAuthenticated(true);
-      setCurrentView('user-dashboard');
-      return { success: true };
+      return { success: false, error: err?.message || 'Network error during registration.' };
     }
   };
 
