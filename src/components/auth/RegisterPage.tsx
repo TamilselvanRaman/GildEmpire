@@ -106,46 +106,47 @@ export const RegisterPage = () => {
   // Canvas Image Compression Helper Function (Compresses heavy photos to lightweight ~150KB JPEG)
   const compressImageFile = (file: File, maxWidth = 1024, quality = 0.75): Promise<string> => {
     return new Promise((resolve) => {
-      if (file.type === 'application/pdf') {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-        return;
-      }
-
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const resultStr = event.target?.result as string;
+        if (!resultStr) {
+          resolve('');
+          return;
+        }
+        if (file.type === 'application/pdf' || !file.type.startsWith('image/')) {
+          resolve(resultStr);
+          return;
         }
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-          resolve(compressedBase64);
-        } else {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        }
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressedBase64);
+          } else {
+            resolve(resultStr);
+          }
+        };
+        img.onerror = () => {
+          resolve(resultStr);
+        };
+        img.src = resultStr;
       };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      };
-      img.src = url;
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
     });
   };
 

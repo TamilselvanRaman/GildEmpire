@@ -62,9 +62,15 @@ export async function POST(request: Request) {
           base64Data = parts[1];
         }
 
-        const buffer = Buffer.from(base64Data, 'base64');
+        const cleanBase64 = base64Data.replace(/\s/g, '');
+        const buffer = Buffer.from(cleanBase64, 'base64');
         const ext = idDocumentName ? idDocumentName.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') || 'jpg' : 'jpg';
         const filePath = `kyc/${memberId}_${Date.now()}.${ext}`;
+
+        // Ensure id_documents bucket exists
+        try {
+          await dbClient.storage.createBucket('id_documents', { public: true });
+        } catch (bErr) {}
 
         const { data: uploadData, error: uploadErr } = await dbClient.storage
           .from('id_documents')

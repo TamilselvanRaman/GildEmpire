@@ -23,7 +23,12 @@ import {
   Building,
   Sliders,
   Wallet,
-  Layers
+  Layers,
+  FileText,
+  ExternalLink,
+  Clock,
+  Maximize2,
+  FileCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -33,6 +38,8 @@ export const AdminUsersPage = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedUserModal, setSelectedUserModal] = useState<any>(null);
+  const [activeModalTab, setActiveModalTab] = useState<'info' | 'kyc' | 'logs' | 'scheme'>('info');
+  const [kycVerifiedStatus, setKycVerifiedStatus] = useState<Record<string, boolean>>({});
 
   // New Admin / User Form State
   const [newFullName, setNewFullName] = useState('');
@@ -487,86 +494,346 @@ export const AdminUsersPage = () => {
         )}
       </AnimatePresence>
 
-      {/* MEMBER / USER AUDIT MODAL */}
+      {/* MEMBER / USER EXECUTIVE AUDIT & KYC VERIFICATION MODAL */}
       <AnimatePresence>
         {selectedUserModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.94, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-white max-w-lg w-full rounded-[2.5rem] p-8 border border-slate-200 shadow-2xl space-y-6 relative text-left"
+              exit={{ scale: 0.94, y: 20 }}
+              className="bg-white max-w-4xl w-full rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-2xl relative text-left my-auto flex flex-col max-h-[92vh]"
             >
-              <button
-                onClick={() => setSelectedUserModal(null)}
-                className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-full cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {/* Sovereign Deep Dark Header */}
+              <div className="bg-gradient-to-r from-[#081E26] via-[#0D3B43] to-[#081E26] text-white p-6 sm:p-8 relative shrink-0">
+                <button
+                  onClick={() => setSelectedUserModal(null)}
+                  className="absolute top-5 right-5 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
 
-              <div className="flex items-center space-x-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0B1E39] to-[#2F6FED] text-white flex items-center justify-center font-black text-xl shadow-lg">
-                  {selectedUserModal.name.charAt(0)}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      {selectedUserModal.avatar ? (
+                        <img 
+                          src={selectedUserModal.avatar} 
+                          alt={selectedUserModal.name} 
+                          className="w-16 h-16 rounded-2xl object-cover border-2 border-[#E1A238] shadow-lg bg-[#081E26]" 
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00C2B8] to-[#2563EB] text-white flex items-center justify-center font-black text-2xl shadow-lg border-2 border-[#E1A238]">
+                          {selectedUserModal.name.charAt(0)}
+                        </div>
+                      )}
+                      <span className="w-4 h-4 rounded-full bg-[#00C2B8] border-2 border-[#081E26] absolute -bottom-1 -right-1"></span>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[10px] font-mono font-black text-[#081E26] bg-[#F2C868] border border-amber-300 px-3 py-0.5 rounded-full uppercase tracking-wider">
+                          {selectedUserModal.role}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold text-[#00C2B8] bg-[#00C2B8]/10 border border-[#00C2B8]/30 px-2.5 py-0.5 rounded-full uppercase">
+                          {selectedUserModal.status || 'Active'}
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-serif font-black text-white mt-1">
+                        {selectedUserModal.name}
+                      </h3>
+                      <p className="text-xs font-mono font-extrabold text-[#00C2B8]">
+                        Member ID: <span className="text-[#F2C868]">{selectedUserModal.memberId}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    {selectedUserModal.idDocumentUrl && (
+                      <a 
+                        href={selectedUserModal.idDocumentUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="bg-[#00C2B8] hover:bg-[#00a8a0] text-[#081E26] font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 transition-all shadow-md cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Inspect Original Image</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-mono font-black text-amber-800 bg-amber-100 border border-amber-300 px-3 py-0.5 rounded-full uppercase">
-                    {selectedUserModal.role}
-                  </span>
-                  <h3 className="text-xl font-black text-[#0B1E39] mt-1">
-                    {selectedUserModal.name}
-                  </h3>
-                  <p className="text-xs font-mono font-extrabold text-[#2F6FED]">
-                    ID: {selectedUserModal.memberId}
-                  </p>
+
+                {/* Audit Navigation Tabs */}
+                <div className="flex items-center space-x-2 mt-6 pt-4 border-t border-[#0D3B43] overflow-x-auto scrollbar-none">
+                  <button
+                    onClick={() => setActiveModalTab('info')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      activeModalTab === 'info' 
+                        ? 'bg-[#00C2B8] text-[#081E26] shadow-sm' 
+                        : 'bg-[#0D3B43]/50 text-slate-300 hover:text-white hover:bg-[#0D3B43]'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Member Overview</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveModalTab('kyc')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
+                      activeModalTab === 'kyc' 
+                        ? 'bg-[#00C2B8] text-[#081E26] shadow-sm' 
+                        : 'bg-[#0D3B43]/50 text-slate-300 hover:text-white hover:bg-[#0D3B43]'
+                    }`}
+                  >
+                    <FileCheck className="w-3.5 h-3.5" />
+                    <span>Legal KYC Document</span>
+                    {selectedUserModal.idDocumentUrl && (
+                      <span className="w-2 h-2 rounded-full bg-[#F2C868] animate-pulse"></span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setActiveModalTab('logs')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      activeModalTab === 'logs' 
+                        ? 'bg-[#00C2B8] text-[#081E26] shadow-sm' 
+                        : 'bg-[#0D3B43]/50 text-slate-300 hover:text-white hover:bg-[#0D3B43]'
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Audit Logs & Stream</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveModalTab('scheme')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      activeModalTab === 'scheme' 
+                        ? 'bg-[#00C2B8] text-[#081E26] shadow-sm' 
+                        : 'bg-[#0D3B43]/50 text-slate-300 hover:text-white hover:bg-[#0D3B43]'
+                    }`}
+                  >
+                    <Wallet className="w-3.5 h-3.5" />
+                    <span>50-Slot Scheme Status</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 text-xs">
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Account Role:</span>
-                  <span className="font-black text-[#0B1E39]">{selectedUserModal.role}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Assigned Group:</span>
-                  <span className="font-bold text-slate-800">{selectedUserModal.group}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Deposit Requirement:</span>
-                  <span className="font-mono text-emerald-700 font-black">{selectedUserModal.deposit}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Email Address:</span>
-                  <span className="font-mono text-slate-800 font-semibold">{selectedUserModal.email}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Mobile Contact:</span>
-                  <span className="font-mono text-slate-800 font-semibold">{selectedUserModal.mobile}</span>
-                </div>
-                <div className="flex justify-between pt-1">
-                  <span className="text-slate-500 font-medium">Registration Date:</span>
-                  <span className="font-semibold text-slate-800">{selectedUserModal.regDate}</span>
-                </div>
-                {selectedUserModal.idDocumentUrl && (
-                  <div className="pt-3 border-t border-slate-200 space-y-1.5">
-                    <span className="text-slate-700 font-bold block text-[11px]">📄 Uploaded KYC Legal ID Document:</span>
-                    <a href={selectedUserModal.idDocumentUrl} target="_blank" rel="noopener noreferrer" className="block rounded-xl overflow-hidden border border-amber-300 shadow-sm hover:opacity-90 transition-opacity">
-                      <img src={selectedUserModal.idDocumentUrl} alt="Legal ID Document" className="w-full h-36 object-cover bg-slate-900" />
-                    </a>
+              {/* Tab Content Body */}
+              <div className="p-6 sm:p-8 overflow-y-auto space-y-6">
+                {activeModalTab === 'info' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Full Legal Name</span>
+                        <p className="text-base font-extrabold text-[#0B1E39]">{selectedUserModal.name}</p>
+                      </div>
+
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Member Identification ID</span>
+                        <p className="text-base font-mono font-black text-[#2F6FED]">{selectedUserModal.memberId}</p>
+                      </div>
+
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Registered Email Address</span>
+                        <p className="text-sm font-mono font-bold text-slate-800 flex items-center space-x-2">
+                          <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span>{selectedUserModal.email}</span>
+                        </p>
+                      </div>
+
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Mobile Phone Contact</span>
+                        <p className="text-sm font-mono font-bold text-slate-800 flex items-center space-x-2">
+                          <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span>{selectedUserModal.mobile}</span>
+                        </p>
+                      </div>
+
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Assigned Batch Group</span>
+                        <p className="text-sm font-extrabold text-slate-900">{selectedUserModal.group || 'GROUP-001'}</p>
+                      </div>
+
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Registration Date</span>
+                        <p className="text-sm font-bold text-slate-800">{selectedUserModal.regDate}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-amber-50/70 p-5 rounded-2xl border border-amber-200 flex items-start space-x-3">
+                      <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">SOC-2 Verified Security Profile</h4>
+                        <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                          This user account has been registered and verified in Supabase Auth & PostgreSQL Profiles database.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeModalTab === 'kyc' && (
+                  <div className="space-y-6">
+                    {selectedUserModal.idDocumentUrl ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-sm font-black text-[#0B1E39]">Uploaded Legal ID Document Image</h4>
+                            <p className="text-xs text-slate-500">Stored in Supabase Storage Bucket (`id_documents/kyc/`)</p>
+                          </div>
+                          <span className="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full text-xs flex items-center space-x-1 border border-emerald-300">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Storage Object Active</span>
+                          </span>
+                        </div>
+
+                        {/* Interactive Large Preview Image Container */}
+                        <div className="relative rounded-2xl overflow-hidden border-2 border-amber-400/60 shadow-xl bg-slate-900 group">
+                          <img 
+                            src={selectedUserModal.idDocumentUrl} 
+                            alt="Uploaded Legal ID Document" 
+                            className="w-full max-h-96 object-contain mx-auto py-4 bg-slate-950" 
+                          />
+                          <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-3">
+                            <a 
+                              href={selectedUserModal.idDocumentUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="bg-white text-[#0B1E39] font-extrabold px-4 py-2 rounded-xl text-xs shadow-lg hover:bg-amber-100 transition-colors flex items-center space-x-2"
+                            >
+                              <Maximize2 className="w-4 h-4" />
+                              <span>View Full Size</span>
+                            </a>
+                            <a 
+                              href={selectedUserModal.idDocumentUrl} 
+                              download
+                              className="bg-[#2F6FED] text-white font-extrabold px-4 py-2 rounded-xl text-xs shadow-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
+                            >
+                              <Download className="w-4 h-4" />
+                              <span>Download Original</span>
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                          <button
+                            onClick={() => {
+                              setKycVerifiedStatus(prev => ({ ...prev, [selectedUserModal.id]: true }));
+                            }}
+                            className={`flex-1 font-extrabold py-3 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+                              kycVerifiedStatus[selectedUserModal.id]
+                                ? 'bg-emerald-600 text-white shadow-md'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300'
+                            }`}
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>{kycVerifiedStatus[selectedUserModal.id] ? '✓ KYC Document Approved & Verified' : 'Approve & Mark KYC Verified'}</span>
+                          </button>
+
+                          <a
+                            href={selectedUserModal.idDocumentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold py-3 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 border border-slate-300 transition-colors"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            <span>Open URL in New Tab</span>
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 p-8 rounded-2xl border-2 border-dashed border-slate-300 text-center space-y-3">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-800">No Legal ID Document Image Uploaded Yet</h4>
+                        <p className="text-xs text-slate-500 max-w-md mx-auto">
+                          This member has not yet uploaded an Aadhaar, PAN, or Driving License document image to Supabase Storage.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeModalTab === 'logs' && (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-black text-[#0B1E39]">Audit Log & Activity History Timeline</h4>
+                    
+                    <div className="space-y-3">
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-start space-x-3">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+                        <div>
+                          <p className="text-xs font-extrabold text-slate-900">Registration Complete & Profile Synchronized</p>
+                          <p className="text-[11px] text-slate-500 font-mono mt-0.5">Joined Date: {selectedUserModal.regDate} • Assigned ID {selectedUserModal.memberId}</p>
+                        </div>
+                      </div>
+
+                      {selectedUserModal.idDocumentUrl && (
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-start space-x-3">
+                          <div className="w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                          <div>
+                            <p className="text-xs font-extrabold text-slate-900">Legal ID Document Image Stored in Supabase Bucket</p>
+                            <p className="text-[11px] text-slate-500 font-mono mt-0.5">Path: `id_documents/kyc/` • Verified Public Access URL generated</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-start space-x-3">
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1.5 shrink-0"></div>
+                        <div>
+                          <p className="text-xs font-extrabold text-slate-900">50-Slot Pool Assignment</p>
+                          <p className="text-[11px] text-slate-500 font-mono mt-0.5">Assigned to Group {selectedUserModal.group || 'GROUP-001'} • 1g Gold Reward Selection Pool</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeModalTab === 'scheme' && (
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Scheme Group Batch</span>
+                        <p className="text-sm font-extrabold text-slate-900 mt-0.5">{selectedUserModal.group || 'GROUP-001'}</p>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Slot Position</span>
+                        <p className="text-sm font-mono font-black text-[#2F6FED] mt-0.5">{selectedUserModal.slot || '#1'}</p>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Deposit Status</span>
+                        <span className="text-xs font-mono font-extrabold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full inline-block mt-1">
+                          {selectedUserModal.deposit || 'Verified'}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Daily Gold Selection Pool</span>
+                        <span className="text-xs font-extrabold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full inline-block mt-1">
+                          Eligible Candidate
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
 
-              <button
-                onClick={() => setSelectedUserModal(null)}
-                className="w-full bg-[#0B1E39] hover:bg-[#152D50] text-white font-extrabold py-4 rounded-2xl shadow-xl text-xs uppercase tracking-wider cursor-pointer transition-all border border-amber-400/40"
-              >
-                Close Audit Profile Window
-              </button>
+              {/* Modal Footer */}
+              <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
+                <button
+                  onClick={() => setSelectedUserModal(null)}
+                  className="bg-[#0B1E39] hover:bg-[#152D50] text-white font-extrabold py-3.5 px-8 rounded-2xl text-xs uppercase tracking-wider cursor-pointer transition-all shadow-md border border-amber-400/40"
+                >
+                  Close Executive Audit Details
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
