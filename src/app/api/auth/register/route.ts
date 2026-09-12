@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const joinedDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     let idDocumentUrl: string | null = null;
 
-    const dbClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? supabaseAdmin : supabase;
+    const dbClient = supabaseAdmin || supabase;
 
     // 1. Upload Legal ID Document to Supabase Storage bucket if base64 provided
     if (idDocumentBase64) {
@@ -44,6 +44,17 @@ export async function POST(request: Request) {
             if (urlData?.publicUrl) {
               idDocumentUrl = urlData.publicUrl;
             }
+          } else if (uploadErr) {
+            // Fallback upload using standard client
+            const { data: uploadData2 } = await supabase.storage
+              .from('id_documents')
+              .upload(filePath, buffer, { contentType, upsert: true });
+            if (uploadData2) {
+              const { data: urlData } = supabase.storage.from('id_documents').getPublicUrl(filePath);
+              if (urlData?.publicUrl) {
+                idDocumentUrl = urlData.publicUrl;
+              }
+            }
           }
         }
       } catch (storageErr) {
@@ -56,22 +67,23 @@ export async function POST(request: Request) {
       let authData: any = null;
       let authError: any = null;
 
-      if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        const { data, error } = await supabaseAdmin.auth.admin.createUser({
-          email: email.trim(),
-          password,
-          email_confirm: true,
-          user_metadata: {
-            fullName,
-            mobile,
-            memberId,
-            idDocumentUrl,
-          },
-        });
-        authData = data;
-        authError = error;
-      } else {
-        const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
+        email: email.trim(),
+        password,
+        email_confirm: true,
+        user_metadata: {
+          fullName,
+          mobile,
+          memberId,
+          idDocumentUrl,
+        },
+      }).catch(() => ({ data: null, error: null }));
+
+      authData = data;
+      authError = error;
+
+      if (!authData?.user) {
+        const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
@@ -83,12 +95,9 @@ export async function POST(request: Request) {
             },
           },
         });
-        authData = data;
-        authError = error;
-      }
-
-      if (authError) {
-        console.warn('Supabase Auth Notice:', authError.message);
+        if (signUpData?.user) {
+          authData = signUpData;
+        }
       }
 
       if (authData?.user?.id) {
@@ -100,38 +109,44 @@ export async function POST(request: Request) {
 
     // 3. Insert User Profile into Supabase profiles table
     try {
-      const { error: insertErr } = await dbClient.from('profiles').insert([
-        {
-          id: userId,
-          full_name: fullName,
-          email: email.trim(),
-          mobile,
-          member_id: memberId,
-          referral_code: referralCode || null,
-          account_status: 'Active',
-          deposit_status: 'Not Started',
-          reward_status: 'In Selection Pool',
-          slot_number: 0,
-          joined_date: joinedDate,
-          id_document_url: idDocumentUrl,
-        },
-      ]);
+      const profileRecord = {
+        id: userId,
+        full_name: fullName,
+        email: email.trim(),
+        mobile,
+        member_id: memberId,
+        referral_code: referralCode || null,
+        account_status: 'Active',
+        deposit_status: 'Not Started',
+        reward_status: 'In Selection Pool',
+        slot_number: 0,
+        joined_date: joinedDate,
+        id_document_url: idDocumentUrl,
+      };
+
+      let { error: insertErr } = await dbClient.from('profiles').insert([profileRecord]);
 
       if (insertErr) {
-        console.warn('Supabase DB Insert Error:', insertErr.message);
+        console.warn('Primary DB Insert Notice, retrying with fallback client:', insertErr.message);
+        const { error: fallbackErr } = await supabase.from('profiles').insert([profileRecord]);
+        if (fallbackErr) {
+          console.error('Fallback DB Insert Error:', fallbackErr.message);
+        }
       }
 
       if (referralCode) {
-        await dbClient.from('referrals').insert([
-          {
-            referrer_code: referralCode,
-            referred_user_id: userId,
-            referred_name: fullName,
-            referred_member_id: memberId,
-            deposit_status: 'Not Started',
-            bonus_amount: 500,
-          },
-        ]);
+        try {
+          await dbClient.from('referrals').insert([
+            {
+              referrer_code: referralCode,
+              referred_user_id: userId,
+              referred_name: fullName,
+              referred_member_id: memberId,
+              deposit_status: 'Not Started',
+              bonus_amount: 500,
+            },
+          ]);
+        } catch (refErr) {}
       }
     } catch (dbErr) {
       console.warn('Supabase DB Insert Warning:', dbErr);
