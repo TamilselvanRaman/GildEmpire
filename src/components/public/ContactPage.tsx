@@ -117,9 +117,9 @@ export const ContactPage = () => {
           className="space-y-10 pt-10 border-t border-[#0D3B43]"
         >
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-extrabold text-white">Corporate Headquarters</h2>
+            <h2 className="text-2xl font-extrabold text-white">Corporate Headquarters & Registered Office</h2>
             <p className="text-xs text-slate-300 font-medium max-w-xl mx-auto">
-              Our registered office in Hyderabad handles all financial auditing, 50-day cycle supervision, and BlueDart gold dispatch logistics.
+              Our registered headquarters handles all financial auditing, 50-day cycle supervision, member verification, and gold reward courier logistics.
             </p>
           </div>
 
@@ -132,9 +132,9 @@ export const ContactPage = () => {
               </div>
               <div>
                 <h3 className="font-bold text-white text-sm mb-1">Official Email Desk</h3>
-                <p className="text-xs text-slate-300 mb-3">24/7 Email Support</p>
-                <a href="mailto:support@infinitygram.in" className="text-sm font-bold text-[#00C2B8] hover:underline">
-                  support@infinitygram.in
+                <p className="text-xs text-slate-300 mb-3">24/7 Support Desk</p>
+                <a href="mailto:gildemphire07@gmail.com" className="text-sm font-bold text-[#00C2B8] hover:underline break-all">
+                  gildemphire07@gmail.com
                 </a>
               </div>
             </div>
@@ -145,10 +145,10 @@ export const ContactPage = () => {
                 <PhoneCall className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-sm mb-1">Toll-Free Helpline</h3>
+                <h3 className="font-bold text-white text-sm mb-1">Direct Mobile & Helpline</h3>
                 <p className="text-xs text-slate-300 mb-3">Mon–Sat: 09:00 AM – 07:00 PM IST</p>
-                <a href="tel:18004259920" className="text-sm font-bold text-[#F2C868] hover:underline">
-                  +91 1800-425-9920
+                <a href="tel:+917639130497" className="text-sm font-bold text-[#F2C868] hover:underline">
+                  +91 76391 30497
                 </a>
               </div>
             </div>
@@ -159,10 +159,12 @@ export const ContactPage = () => {
                 <MapPin className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-sm mb-1">Registered Office</h3>
-                <p className="text-xs text-slate-300 mb-3">Hyderabad, India</p>
-                <p className="text-xs font-bold text-slate-200">
-                  Cyber City Tower B, Floor 14<br/>Financial District, Hyderabad 500032
+                <h3 className="font-bold text-white text-sm mb-1">Registered Address</h3>
+                <p className="text-xs text-slate-300 mb-3">Tamil Nadu, India</p>
+                <p className="text-xs font-bold text-slate-200 leading-relaxed">
+                  11-1-43J, ARASAMARA STREET,<br/>
+                  NILAKOTTAI, Nilakkottai(ho),<br/>
+                  Dindigul, Tamil Nadu - 624208
                 </p>
               </div>
             </div>
@@ -172,9 +174,9 @@ export const ContactPage = () => {
           {/* Map Graphic */}
           <div className="rounded-3xl bg-[#0D3B43] p-0 overflow-hidden h-72 md:h-[400px] border border-[#E1A238]/30 shadow-2xl">
             
-            {/* Interactive Google Map Iframe */}
+            {/* Interactive Google Map Iframe for Nilakottai Dindigul */}
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.8272226612307!2d78.3418653!3d17.4124317!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb93a2f8fc7085%3A0x6fbdbf0bf05bb658!2sFinancial%20District%2C%20Nanakramguda%2C%20Hyderabad%2C%20Telangana!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" 
+              src="https://maps.google.com/maps?q=11-1-43J%2C+ARASAMARA+STREET%2C+NILAKOTTAI%2C+Dindigul%2C+Tamil+Nadu+624208&t=&z=15&ie=UTF8&iwloc=&output=embed" 
               width="100%" 
               height="100%" 
               style={{ border: 0 }} 

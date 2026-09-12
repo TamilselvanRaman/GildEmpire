@@ -137,9 +137,9 @@ export const AboutPage = () => {
               <div className="w-14 h-14 rounded-2xl bg-[#00C2B8]/20 text-[#00C2B8] group-hover:bg-[#00C2B8] group-hover:text-[#081E26] flex items-center justify-center mb-6 group-hover:scale-110 shadow-inner transition-all duration-300">
                 <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-[15px] font-black text-white mb-3 tracking-tight">1. ₹5,000 Deposit Reconciliation</h3>
+              <h3 className="text-[15px] font-black text-white mb-3 tracking-tight">1. ₹10,000 Deposit Reconciliation</h3>
               <p className="text-[13px] text-slate-300 leading-relaxed font-medium">
-                Every member submits a ₹5,000 deposit via UPI or IMPS. Our banking team verifies official bank UTR reference codes before assigning the user to a verified 50-member group slot.
+                Every member submits a ₹10,000 deposit via UPI or IMPS. Our banking team verifies official bank UTR reference codes before assigning the user to a verified 50-member group slot.
               </p>
             </motion.div>
 

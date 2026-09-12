@@ -22,7 +22,7 @@ import {
 import { motion } from 'framer-motion';
 
 export const UserDashboardPage = () => {
-  const { user, group, deposits, setCurrentView } = useApp();
+  const { user, group, deposits, referrals, setCurrentView } = useApp();
   const [copied, setCopied] = useState(false);
 
   const handleCopyCode = () => {
@@ -49,11 +49,11 @@ export const UserDashboardPage = () => {
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-[10px] font-black bg-[#00C2B8]/20 text-[#00C2B8] border border-[#00C2B8]/40 px-3.5 py-1 rounded-full uppercase tracking-widest flex items-center space-x-1.5 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-[#00C2B8] animate-ping"></span>
-              <span>Batch A: Active 50-Day Cycle</span>
+              <span>{group.groupName}</span>
             </span>
             <span className="text-xs font-mono font-extrabold text-[#F2C868] bg-[#E1A238]/20 border border-[#E1A238]/40 px-3 py-1 rounded-full flex items-center space-x-1">
               <Sparkles className="w-3 h-3 text-[#E1A238]" />
-              <span>Assigned Slot #14</span>
+              <span>{user.slotNumber ? `Assigned Slot #${user.slotNumber}` : 'Unassigned Slot'}</span>
             </span>
           </div>
 
@@ -62,8 +62,8 @@ export const UserDashboardPage = () => {
               Good Morning, {user.fullName}
             </h1>
             <p className="text-sm text-slate-300 mt-2 font-medium leading-relaxed">
-              You are an active participant in <strong className="text-[#F2C868] font-extrabold">{group.groupName}</strong>. 
-              14 members have received 1 Gram 24K Gold over 14 days. 36 members remain in today's active pool.
+              Welcome to <strong className="text-[#F2C868] font-extrabold">{group.groupName}</strong>. 
+              {group.totalGoldDistributedGrams} members have received 1 Gram 24K Gold. {group.activePoolCount} members remain in active selection pool.
             </p>
           </div>
         </div>
@@ -121,9 +121,11 @@ export const UserDashboardPage = () => {
         >
           <div className="space-y-1">
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Deposit Status</p>
-            <h3 className="text-xl font-black text-white tracking-tight">₹5,000 Verified</h3>
+            <h3 className="text-xl font-black text-white tracking-tight">
+              {user.depositStatus === 'Verified' ? '₹10,000 Verified' : 'Deposit Required'}
+            </h3>
             <p className="text-[10px] text-[#F2C868] font-mono font-bold tracking-tight pt-1">
-              Ref: {deposits[0]?.referenceId.substring(0, 14)}...
+              {user.depositStatus === 'Verified' ? 'Confirmed Slot' : 'Pending Membership Deposit'}
             </p>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-[#081E26] text-[#E1A238] flex items-center justify-center shrink-0 border border-[#E1A238]/40 group-hover:scale-110 group-hover:bg-[#E1A238] group-hover:text-[#081E26] transition-all duration-300 shadow-xs">
@@ -140,11 +142,11 @@ export const UserDashboardPage = () => {
         >
           <div className="space-y-1">
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">50-Member Group</p>
-            <h3 className="text-xl font-black text-white tracking-tight">36 Active / 50</h3>
+            <h3 className="text-xl font-black text-white tracking-tight">{group.activePoolCount} Active / {group.totalMembers}</h3>
             <div className="pt-1">
               <span className="text-[10px] text-[#F2C868] font-extrabold inline-flex items-center space-x-1 bg-[#081E26] px-2.5 py-1 rounded-full border border-[#E1A238]/40">
                 <Users className="w-3 h-3 text-[#E1A238]" />
-                <span>14 Winners Awarded</span>
+                <span>{group.totalGoldDistributedGrams} Winners Awarded</span>
               </span>
             </div>
           </div>
@@ -163,10 +165,12 @@ export const UserDashboardPage = () => {
           <div className="absolute top-0 right-0 w-28 h-28 bg-[#E1A238]/20 rounded-full blur-[25px] pointer-events-none"></div>
           <div className="space-y-1 relative z-10">
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Gold Reward Status</p>
-            <h3 className="text-xl font-black text-white tracking-tight">In Active Pool</h3>
+            <h3 className="text-xl font-black text-white tracking-tight">
+              {user.depositStatus === 'Verified' ? 'In Active Pool' : 'Deposit Pending'}
+            </h3>
             <p className="text-[10px] text-[#F2C868] font-black pt-1 flex items-center space-x-1">
               <Sparkles className="w-3.5 h-3.5 text-[#E1A238] fill-[#E1A238]" />
-              <span>Eligible for Day 15 Spin</span>
+              <span>{user.depositStatus === 'Verified' ? 'Eligible for Daily Spin' : 'Complete Deposit to Enter'}</span>
             </p>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E1A238] to-[#F2C868] text-[#081E26] flex items-center justify-center shrink-0 shadow-[0_10px_20px_-10px_rgba(225,162,56,0.5)] group-hover:scale-110 transition-all duration-300 relative z-10">
@@ -188,11 +192,11 @@ export const UserDashboardPage = () => {
             <div className="flex items-center space-x-2.5 mb-1">
               <h3 className="text-lg font-black text-white">50-Day 1 Gram Gold Cycle Progression</h3>
               <span className="text-[10px] font-mono font-black bg-[#081E26] text-[#F2C868] px-3 py-1 rounded-full border border-[#E1A238]/40 uppercase tracking-wider">
-                Day 15 of 50
+                Day {group.currentCycleDay} of 50
               </span>
             </div>
             <p className="text-xs text-slate-300 font-medium">
-              14 members have received 1 Gram 24K Gold. 36 members remain in active selection pool.
+              {group.totalGoldDistributedGrams} members have received 1 Gram 24K Gold. {group.activePoolCount} members remain in active selection pool.
             </p>
           </div>
 
@@ -213,7 +217,7 @@ export const UserDashboardPage = () => {
               <span>Day 1 (50 Members Pool)</span>
             </span>
             <span className="font-mono font-black text-[#F2C868] bg-[#081E26] px-3 py-1 rounded-full border border-[#E1A238]/30">
-              14 Grams Awarded (28%)
+              {group.totalGoldDistributedGrams} Grams Awarded ({Math.round((group.totalGoldDistributedGrams / 50) * 100)}%)
             </span>
             <span className="flex items-center space-x-1.5">
               <span>Day 50 (Final Member)</span>
@@ -224,7 +228,7 @@ export const UserDashboardPage = () => {
           <div className="h-5 w-full bg-[#081E26] rounded-full overflow-hidden border border-[#0D3B43] p-1 flex shadow-inner relative">
             <div 
               className="h-full bg-gradient-to-r from-[#00C2B8] via-[#E1A238] to-[#F2C868] rounded-full transition-all duration-1000 shadow-md relative"
-              style={{ width: '28%' }}
+              style={{ width: `${Math.max((group.totalGoldDistributedGrams / 50) * 100, 4)}%` }}
             >
               <div className="absolute right-0 top-0 bottom-0 w-3 bg-white/40 animate-pulse rounded-full"></div>
             </div>
@@ -237,12 +241,12 @@ export const UserDashboardPage = () => {
               <p className="text-[9px] text-slate-300 font-medium">Cycle Initiated</p>
             </div>
             <div className="text-left border-l-2 border-[#00C2B8] pl-2">
-              <p className="text-[#00C2B8] font-extrabold">Day 14 (Won)</p>
-              <p className="text-[9px] text-slate-300 font-medium">Sneha R. Awarded</p>
+              <p className="text-[#00C2B8] font-extrabold">Group Pool</p>
+              <p className="text-[9px] text-slate-300 font-medium">{group.activePoolCount} Members Active</p>
             </div>
             <div className="text-left border-l-2 border-[#E1A238] pl-2">
-              <p className="text-[#F2C868] font-extrabold">Day 15 (Live)</p>
-              <p className="text-[9px] text-[#F2C868] font-medium">Today's Active Selection</p>
+              <p className="text-[#F2C868] font-extrabold">Selection Pool</p>
+              <p className="text-[9px] text-[#F2C868] font-medium">Daily Transparent Draw</p>
             </div>
             <div className="text-right border-r-2 border-[#0D3B43] pr-2">
               <p className="text-white font-extrabold">Day 50</p>
@@ -274,32 +278,38 @@ export const UserDashboardPage = () => {
             
             {/* Timeline Item 1 */}
             <div className="flex items-start space-x-4 group">
-              <div className="w-11 h-11 rounded-2xl bg-[#081E26] text-[#E1A238] flex items-center justify-center shrink-0 font-bold border border-[#E1A238]/40 shadow-xs group-hover:scale-110 transition-transform">
-                <Sparkles className="w-5.5 h-5.5 text-[#E1A238] fill-[#E1A238]" />
+              <div className="w-11 h-11 rounded-2xl bg-[#081E26] text-[#00C2B8] flex items-center justify-center shrink-0 font-bold border border-[#00C2B8]/40 shadow-xs group-hover:scale-110 transition-transform">
+                <CheckCircle2 className="w-5.5 h-5.5 text-[#00C2B8]" />
               </div>
               <div className="flex-1 pt-0.5">
                 <div className="flex items-center justify-between">
-                  <p className="font-extrabold text-white text-sm">Day 14 Gold Reward Selection Completed</p>
-                  <span className="text-[10px] text-slate-400 font-mono font-bold">06:05 PM</span>
+                  <p className="font-extrabold text-white text-sm">Member Account Activated</p>
+                  <span className="text-[10px] text-slate-400 font-mono font-bold">{user.registrationDate || 'Today'}</span>
                 </div>
                 <p className="text-slate-300 mt-1 leading-relaxed">
-                  Member #MB-1014 (<strong className="text-[#F2C868]">Sneha Reddy</strong>) was awarded 1 Gram 24K Gold. Active selection pool updated to 36 members.
+                  Member profile registered for <strong className="text-[#F2C868]">{user.fullName}</strong> (<code className="bg-[#081E26] px-1.5 py-0.5 rounded text-[11px] font-mono text-[#00C2B8] font-bold border border-[#00C2B8]/30">{user.memberId}</code>). Account status set to {user.accountStatus}.
                 </p>
               </div>
             </div>
 
             {/* Timeline Item 2 */}
             <div className="flex items-start space-x-4 group">
-              <div className="w-11 h-11 rounded-2xl bg-[#081E26] text-[#00C2B8] flex items-center justify-center shrink-0 font-bold border border-[#00C2B8]/40 shadow-xs group-hover:scale-110 transition-transform">
-                <CheckCircle2 className="w-5.5 h-5.5 text-[#00C2B8]" />
+              <div className="w-11 h-11 rounded-2xl bg-[#081E26] text-[#E1A238] flex items-center justify-center shrink-0 font-bold border border-[#E1A238]/40 shadow-xs group-hover:scale-110 transition-transform">
+                <Wallet className="w-5.5 h-5.5 text-[#E1A238]" />
               </div>
               <div className="flex-1 pt-0.5">
                 <div className="flex items-center justify-between">
-                  <p className="font-extrabold text-white text-sm">Deposit Reference Verified</p>
-                  <span className="text-[10px] text-slate-400 font-mono font-bold">14 Aug 2026</span>
+                  <p className="font-extrabold text-white text-sm">Membership Deposit Status</p>
+                  <span className="text-[10px] text-slate-400 font-mono font-bold">{deposits.length > 0 ? deposits[0].transactionDate : 'Pending'}</span>
                 </div>
                 <p className="text-slate-300 mt-1 leading-relaxed">
-                  ₹5,000 UPI reference <code className="bg-[#081E26] px-1.5 py-0.5 rounded text-[11px] font-mono text-[#00C2B8] font-bold border border-[#00C2B8]/30">#UPI-982341209384</code> verified by financial desk.
+                  {user.depositStatus === 'Verified' ? (
+                    <span>₹10,000 group membership deposit verified by financial desk.</span>
+                  ) : deposits.length > 0 ? (
+                    <span>₹10,000 deposit submitted with reference <code className="bg-[#081E26] px-1.5 py-0.5 rounded text-[11px] font-mono text-[#00C2B8] font-bold border border-[#00C2B8]/30">#{deposits[0].referenceId}</code>. Verification in progress.</span>
+                  ) : (
+                    <span>Single ₹10,000 group deposit required to activate slot and enter daily 1g Gold selection pool.</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -311,11 +321,15 @@ export const UserDashboardPage = () => {
               </div>
               <div className="flex-1 pt-0.5">
                 <div className="flex items-center justify-between">
-                  <p className="font-extrabold text-white text-sm">Assigned to Slot #14 in Batch A</p>
-                  <span className="text-[10px] text-slate-400 font-mono font-bold">14 Aug 2026</span>
+                  <p className="font-extrabold text-white text-sm">{user.slotNumber ? `Assigned to Slot #${user.slotNumber}` : 'Group Allocation Status'}</p>
+                  <span className="text-[10px] text-slate-400 font-mono font-bold">{group.groupName}</span>
                 </div>
                 <p className="text-slate-300 mt-1 leading-relaxed">
-                  Successfully added to <strong className="text-[#F2C868]">InfinityGram 50 Gold Club</strong> structured group cycle.
+                  {user.slotNumber ? (
+                    <span>Successfully assigned to Slot #{user.slotNumber} in <strong className="text-[#F2C868]">{group.groupName}</strong>.</span>
+                  ) : (
+                    <span>Registered in <strong className="text-[#F2C868]">{group.groupName}</strong>. Complete membership deposit to confirm slot assignment.</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -367,11 +381,11 @@ export const UserDashboardPage = () => {
             <div className="grid grid-cols-2 gap-4 text-center text-xs">
               <div className="bg-[#081E26] p-4 rounded-2xl border border-[#0D3B43] shadow-xs">
                 <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest mb-1">Total Invites</p>
-                <p className="text-2xl font-black text-white">4</p>
+                <p className="text-2xl font-black text-white">{referrals.length}</p>
               </div>
               <div className="bg-[#081E26] p-4 rounded-2xl border border-[#00C2B8]/30 shadow-xs">
                 <p className="text-[10px] text-[#00C2B8] font-extrabold uppercase tracking-widest mb-1">Verified Members</p>
-                <p className="text-2xl font-black text-[#00C2B8]">2</p>
+                <p className="text-2xl font-black text-[#00C2B8]">{referrals.filter(r => r.depositStatus === 'Verified').length}</p>
               </div>
             </div>
 

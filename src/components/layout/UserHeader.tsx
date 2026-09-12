@@ -5,7 +5,8 @@ import { useApp } from '../../context/AppContext';
 import { ChevronRight, ArrowLeft, Wallet, LogOut } from 'lucide-react';
 
 export const UserHeader = () => {
-  const { currentView, setCurrentView, user, logout } = useApp();
+  const { currentView, setCurrentView, user, deposits, logout } = useApp();
+  const userBalance = deposits.filter(d => d.status === 'Verified' && d.memberId === user.memberId).reduce((acc, curr) => acc + curr.amount, 0);
 
   const getViewTitle = (view: string) => {
     switch (view) {
@@ -74,7 +75,7 @@ export const UserHeader = () => {
           <div className="text-left hidden sm:block">
             <p className="text-[9px] text-[#F2C868] font-extrabold uppercase tracking-widest leading-tight font-mono">Digital Wallet</p>
             <p className="text-xs font-black text-white font-mono leading-tight group-hover:text-[#00C2B8] transition-colors">
-              ₹3,500.00
+              ₹{userBalance.toLocaleString('en-IN')}.00
             </p>
           </div>
         </div>

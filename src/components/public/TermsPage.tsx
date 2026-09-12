@@ -59,8 +59,8 @@ export const TermsPage = () => {
           </section>
 
           <section id="deposits" className="space-y-3 pt-2 border-t border-[#081E26] scroll-mt-28">
-            <h2 className="text-lg font-extrabold text-white border-b border-[#081E26] pb-2">3. ₹5,000 Deposit & UTR Verification</h2>
-            <p>Membership participation requires a one-time verified deposit of ₹5,000 per 50-member group cycle. Payments are accepted exclusively through official Instant UPI (GPay, PhonePe, Paytm, BHIM) or Direct Bank Transfer (NEFT/IMPS).</p>
+            <h2 className="text-lg font-extrabold text-white border-b border-[#081E26] pb-2">3. ₹10,000 Deposit & UTR Verification</h2>
+            <p>Membership participation requires a one-time verified deposit of ₹10,000 per 50-member group cycle. Payments are accepted exclusively through official Instant UPI (GPay, PhonePe, Paytm, BHIM) or Direct Bank Transfer (NEFT/IMPS).</p>
             <p>Members must upload the exact 12-digit UTR bank reference code for financial reconciliation. Deposits are verified by our operations desk prior to group assignment.</p>
           </section>
 

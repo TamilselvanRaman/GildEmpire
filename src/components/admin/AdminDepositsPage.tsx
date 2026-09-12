@@ -16,7 +16,7 @@ export const AdminDepositsPage = () => {
             <Wallet className="w-5 h-5 text-blue-600" />
             <span>Deposit Management & Verification Queue</span>
           </h1>
-          <p className="text-xs text-slate-500">Reconcile membership ₹5,000 deposits against bank UTR statements.</p>
+          <p className="text-xs text-slate-500">Reconcile membership ₹10,000 deposits against bank UTR statements.</p>
         </div>
 
         <button
@@ -41,42 +41,52 @@ export const AdminDepositsPage = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium">
-            {deposits.map(dep => (
-              <tr key={dep.id} className="hover:bg-slate-50">
-                <td className="p-3.5 font-mono text-slate-500">{dep.id}</td>
-                <td className="p-3.5 font-bold text-slate-900">{dep.memberName} ({dep.memberId})</td>
-                <td className="p-3.5 font-bold text-slate-900">₹{dep.amount.toLocaleString('en-IN')}</td>
-                <td className="p-3.5 text-slate-600">{dep.paymentMethod}</td>
-                <td className="p-3.5 font-mono font-bold text-blue-600">{dep.referenceId}</td>
-                <td className="p-3.5">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                    dep.status === 'Verified' ? 'bg-emerald-100 text-emerald-800' : dep.status === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
-                  }`}>
-                    {dep.status}
-                  </span>
-                </td>
-                <td className="p-3.5 text-right space-x-2">
-                  {dep.status === 'Pending' ? (
-                    <>
-                      <button
-                        onClick={() => reviewDeposit(dep.id, 'Verified', 'Approved by Admin Desk')}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-[11px]"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => reviewDeposit(dep.id, 'Rejected', 'Invalid UTR reference')}
-                        className="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1 rounded-lg text-[11px]"
-                      >
-                        Reject
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-[10px] text-slate-400 font-mono">Reviewed</span>
-                  )}
+            {deposits.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-slate-500 font-medium">
+                  No deposits in queue. Submitted member deposits will appear here for verification.
                 </td>
               </tr>
-            ))}
+            ) : (
+              deposits.map(dep => (
+                <tr key={dep.id} className="hover:bg-slate-50">
+                  <td className="p-3.5 font-mono text-slate-500">{dep.id}</td>
+                  <td className="p-3.5 font-bold text-slate-900">{dep.memberName} ({dep.memberId})</td>
+                  <td className="p-3.5 font-bold text-slate-900">₹{dep.amount.toLocaleString('en-IN')}</td>
+                  <td className="p-3.5 text-slate-600">{dep.paymentMethod}</td>
+                  <td className="p-3.5 font-mono font-bold text-blue-600">{dep.referenceId}</td>
+                  <td className="p-3.5">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      dep.status === 'Verified' ? 'bg-emerald-100 text-emerald-800' : dep.status === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {dep.status}
+                    </span>
+                  </td>
+                  <td className="p-3.5 text-right space-x-2">
+                    {dep.status === 'Pending' ? (
+                      <>
+                        <button
+                          onClick={() => reviewDeposit(dep.id, 'Verified', 'Verified by Admin')}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white p-1 rounded font-bold transition-colors cursor-pointer"
+                          title="Verify Deposit"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => reviewDeposit(dep.id, 'Rejected', 'Rejected by Admin')}
+                          className="bg-rose-600 hover:bg-rose-500 text-white p-1 rounded font-bold transition-colors cursor-pointer"
+                          title="Reject Deposit"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-slate-400 text-[11px]">Reviewed</span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

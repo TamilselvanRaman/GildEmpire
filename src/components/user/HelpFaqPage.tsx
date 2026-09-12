@@ -33,7 +33,7 @@ export const HelpFaqPage = () => {
     {
       category: 'cycle',
       question: 'How does the 50-Member 1 Gram Gold Group work?',
-      answer: 'Each structured group consists of 50 verified members. Every member makes a single ₹5,000 deposit. For 50 consecutive days, exactly 1 member is awarded 1 Gram of 24K Gold daily through an audited selection process until all 50 members have received their 1 Gram Gold coin.'
+      answer: 'Each structured group consists of 50 verified members. Every member makes a single ₹10,000 deposit. For 50 consecutive days, exactly 1 member is awarded 1 Gram of 24K Gold daily through an audited selection process until all 50 members have received their 1 Gram Gold coin.'
     },
     {
       category: 'draw',
@@ -42,7 +42,7 @@ export const HelpFaqPage = () => {
     },
     {
       category: 'deposit',
-      question: 'How is my ₹5,000 deposit verified?',
+      question: 'How is my ₹10,000 deposit verified?',
       answer: 'Upon submitting your UPI/Bank transaction reference (UTR ID), our financial desk verifies the credit against banking logs within 2 to 4 business hours. Once verified, your status updates to "Active" and you are assigned a slot number.'
     },
     {
@@ -53,7 +53,7 @@ export const HelpFaqPage = () => {
     {
       category: 'referral',
       question: 'How does the 5% Referral Bonus work?',
-      answer: 'When you invite friends or colleagues using your unique referral link, you receive an instant 5% cash bonus (₹250 per verified member) credited to your digital wallet upon their deposit confirmation. You can withdraw your earnings anytime.'
+      answer: 'When you invite friends or colleagues using your unique referral link, you receive an instant 5% cash bonus (₹500 per verified member) credited to your digital wallet upon their deposit confirmation. You can withdraw your earnings anytime.'
     },
     {
       category: 'security',

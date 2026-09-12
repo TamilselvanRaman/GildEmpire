@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       joinedDate: r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Aug 2026',
       depositStatus: r.deposit_status || 'Verified',
       eligibility: r.deposit_status === 'Verified' ? 'Eligible' : 'Pending Deposit',
-      bonusEarnedAmount: r.bonus_amount || 250, // 5% of ₹5,000 = ₹250
+      bonusEarnedAmount: r.bonus_amount || 500, // 5% of ₹10,000 = ₹500
     })) : [
       {
         id: 'ref_1',
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
         joinedDate: '15 Aug 2026',
         depositStatus: 'Verified',
         eligibility: 'Eligible',
-        bonusEarnedAmount: 250,
+        bonusEarnedAmount: 500,
       },
       {
         id: 'ref_2',
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
         joinedDate: '18 Aug 2026',
         depositStatus: 'Verified',
         eligibility: 'Eligible',
-        bonusEarnedAmount: 250,
+        bonusEarnedAmount: 500,
       },
       {
         id: 'ref_3',
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
 
     const totalBonusEarned = referralList
       .filter((r: any) => r.depositStatus === 'Verified')
-      .reduce((sum: number, r: any) => sum + (r.bonusEarnedAmount || 250), 0);
+      .reduce((sum: number, r: any) => sum + (r.bonusEarnedAmount || 500), 0);
 
     return NextResponse.json({
       success: true,
@@ -80,7 +80,7 @@ export async function GET(request: Request) {
       totalReferrals: referralList.length,
       verifiedCount: referralList.filter((r: any) => r.depositStatus === 'Verified').length,
       commissionRatePercent: 5, // 5% instant bonus
-      totalBonusEarned, // e.g. ₹500
+      totalBonusEarned, // e.g. ₹1,000
     });
   } catch (error: any) {
     return NextResponse.json(
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
           referred_name: referredName,
           referred_member_id: referredMemberId,
           deposit_status: 'Not Started',
-          bonus_amount: 250, // 5% of ₹5,000 = ₹250
+          bonus_amount: 500, // 5% of ₹10,000 = ₹500
         },
       ])
       .select()
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
         referredName,
         referredMemberId,
         depositStatus: 'Not Started',
-        bonusAmount: 250,
+        bonusAmount: 500,
       },
     }, { status: 201 });
 

@@ -27,14 +27,26 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminSlotsControlPage = () => {
-  const { group, deposits, setCurrentView } = useApp();
-  const [selectedBatch, setSelectedBatch] = useState<'batchA' | 'batchB' | 'batchC' | 'batchD' | 'batchE'>('batchC');
+  const { group, allGroups, deposits, setCurrentView } = useApp();
+  const [selectedBatch, setSelectedBatch] = useState<'batchA' | 'batchB' | 'batchC' | 'batchD' | 'batchE'>('batchA');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'occupied' | 'available'>('all');
   const [viewFormat, setViewFormat] = useState<'table' | 'grid'>('table');
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [targetSlotNum, setTargetSlotNum] = useState<number | null>(null);
   const [selectedMemberModal, setSelectedMemberModal] = useState<any>(null);
+
+  const getGroupStats = (groupId: string) => {
+    const target = (allGroups || []).find(g => g.groupId === groupId);
+    const filled = target ? target.slots.filter(s => s.status === 'Occupied').length : 0;
+    return { filled, available: 50 - filled };
+  };
+
+  const statsA = getGroupStats('GROUP-001');
+  const statsB = getGroupStats('GROUP-002');
+  const statsC = getGroupStats('GROUP-003');
+  const statsD = getGroupStats('GROUP-004');
+  const statsE = getGroupStats('GROUP-005');
 
   // 5 Batch Slot Pipelines
   const batchData = {
@@ -43,53 +55,53 @@ export const AdminSlotsControlPage = () => {
       name: 'InfinityGram 50 Gold Club - Batch A',
       status: '1. Live 50-Day Cycle Active',
       statusType: 'live',
-      filled: 50,
+      filled: statsA.filled,
       total: 50,
-      available: 0,
+      available: statsA.available,
       waiting: 0,
-      description: 'Day 2 Live Cycle running. 1g 24K Gold awarded daily. 50/50 Filled.',
+      description: `Active Group Cycle. 1g 24K Gold awarded daily. ${statsA.filled}/50 Members Enrolled.`,
     },
     batchB: {
       groupId: 'GROUP-002',
       name: 'InfinityGram 50 Gold Club - Batch B',
-      status: '2. Full - Schedule Ready',
-      statusType: 'full',
-      filled: 50,
+      status: statsB.filled === 50 ? '2. Full - Schedule Ready' : '2. Recruiting Active',
+      statusType: statsB.filled === 50 ? 'full' : 'recruiting',
+      filled: statsB.filled,
       total: 50,
-      available: 0,
+      available: statsB.available,
       waiting: 0,
-      description: 'Batch 50/50 filled! Ready to schedule start date & time.',
+      description: `${statsB.filled}/50 Members Enrolled. Awaiting member deposits to complete group.`,
     },
     batchC: {
       groupId: 'GROUP-003',
       name: 'InfinityGram 50 Gold Club - Batch C',
-      status: '3. Recruiting Active (10 Open Slots)',
+      status: '3. Recruiting Active',
       statusType: 'recruiting',
-      filled: 40,
+      filled: statsC.filled,
       total: 50,
-      available: 10,
+      available: statsC.available,
       waiting: 0,
-      description: 'Active recruiting batch. 10 available open slots (#41 to #50). Automatic slot assignment active on deposit verification.',
+      description: `Active recruiting batch. ${statsC.available} available open slots. Automatic slot assignment active on deposit verification.`,
     },
     batchD: {
       groupId: 'GROUP-004',
       name: 'InfinityGram 50 Gold Club - Batch D',
-      status: '4. Reserve Queue (50 Open Slots)',
+      status: '4. Reserve Queue',
       statusType: 'empty',
-      filled: 0,
+      filled: statsD.filled,
       total: 50,
-      available: 50,
+      available: statsD.available,
       waiting: 0,
-      description: 'Upcoming batch. Opens automatically when Batch C reaches 50/50.',
+      description: 'Upcoming batch queue. Opens automatically as active batches fill.',
     },
     batchE: {
       groupId: 'GROUP-005',
       name: 'InfinityGram 50 Gold Club - Batch E',
-      status: '5. Reserve Queue (50 Open Slots)',
+      status: '5. Reserve Queue',
       statusType: 'empty',
-      filled: 0,
+      filled: statsE.filled,
       total: 50,
-      available: 50,
+      available: statsE.available,
       waiting: 0,
       description: 'Reserve batch queue for upcoming deposits.',
     },

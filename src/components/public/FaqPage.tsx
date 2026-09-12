@@ -40,7 +40,7 @@ export const FaqPage = () => {
     { 
       cat: 'Groups', 
       q: 'How are 50-member groups formed and assigned?', 
-      a: 'Once your deposit of ₹5,000 is verified, you are automatically assigned to the next available 50-member group batch. Member slots (#1 to #50) are filled sequentially in real time.' 
+      a: 'Once your deposit of ₹10,000 is verified, you are automatically assigned to the next available 50-member group batch. Member slots (#1 to #50) are filled sequentially in real time.' 
     },
     { 
       cat: 'Groups', 
@@ -92,7 +92,7 @@ export const FaqPage = () => {
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Searchable Help & FAQ Center</h1>
           <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xl mx-auto">
-            Clear, transparent answers regarding account verification, ₹5,000 deposits, 50-member groups, and daily 1g 24K Gold distribution.
+            Clear, transparent answers regarding account verification, ₹10,000 deposits, 50-member groups, and daily 1g 24K Gold distribution.
           </p>
         </motion.div>
 

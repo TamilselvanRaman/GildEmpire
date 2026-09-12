@@ -24,7 +24,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const WalletPage = () => {
-  const { user, deposits, setCurrentView } = useApp();
+  const { user, deposits, referrals, setCurrentView } = useApp();
   const [activeTab, setActiveTab] = useState<'all' | 'deposit' | 'referral' | 'withdrawal'>('all');
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
@@ -37,69 +37,24 @@ export const WalletPage = () => {
     payoutMethod: 'upi',
   });
 
-  // Mock Ledger Data
-  const walletTransactions = [
-    {
-      id: 'tx-101',
-      date: '14 Aug 2026, 02:15 PM',
-      type: 'Membership Deposit',
-      category: 'deposit',
-      refId: deposits[0]?.referenceId || 'UPI-982341209384',
-      method: 'UPI AutoPay (PhonePe)',
-      amount: 5000,
-      direction: 'in',
-      status: 'Verified',
-      balanceAfter: 5000,
-    },
-    {
-      id: 'tx-102',
-      date: '18 Aug 2026, 05:40 PM',
-      type: 'Referral Bonus (Suresh Raina)',
-      category: 'referral',
-      refId: 'REF-9901-BONUS',
-      method: 'Instant Referral Wallet Credit',
-      amount: 250,
-      direction: 'in',
-      status: 'Completed',
-      balanceAfter: 5250,
-    },
-    {
-      id: 'tx-103',
-      date: '22 Aug 2026, 06:10 PM',
-      type: 'Referral Bonus (Meera Nambiar)',
-      category: 'referral',
-      refId: 'REF-9902-BONUS',
-      method: 'Instant Referral Wallet Credit',
-      amount: 250,
-      direction: 'in',
-      status: 'Completed',
-      balanceAfter: 5500,
-    },
-    {
-      id: 'tx-104',
-      date: '25 Aug 2026, 11:30 AM',
-      type: 'Bank Withdrawal Payout',
-      category: 'withdrawal',
-      refId: 'WTH-89240192',
-      method: 'HDFC Bank IMPS Transfer',
-      amount: 2000,
-      direction: 'out',
-      status: 'Completed',
-      balanceAfter: 3500,
-    },
-    {
-      id: 'tx-105',
-      date: '10 Sep 2026, 06:05 PM',
-      type: '1g 24K Gold Coin Dispatch Token',
-      category: 'gold',
-      refId: 'GLD-TOKEN-DAY14',
-      method: 'Sovereign Vault Ledger',
-      amount: 0,
-      direction: 'in',
-      status: 'Verified & Shipped',
-      balanceAfter: 3500,
-    }
-  ];
+  const userVerifiedDeposits = deposits.filter(d => d.memberId === user.memberId);
+  const depositTotal = userVerifiedDeposits.filter(d => d.status === 'Verified').reduce((acc, curr) => acc + curr.amount, 0);
+  const referralBonus = (referrals || []).filter(r => r.depositStatus === 'Verified').length * 500;
+  const userBalance = depositTotal + referralBonus;
+
+  // Dynamic Ledger Data from actual user state
+  const walletTransactions = userVerifiedDeposits.map((d, index) => ({
+    id: d.id || `tx-${index}`,
+    date: d.transactionDate,
+    type: 'Membership Deposit',
+    category: 'deposit' as const,
+    refId: d.referenceId,
+    method: d.paymentMethod,
+    amount: d.amount,
+    direction: 'in' as const,
+    status: d.status,
+    balanceAfter: d.status === 'Verified' ? d.amount : 0,
+  }));
 
   const filteredTransactions = walletTransactions.filter(tx => {
     if (activeTab === 'all') return true;
@@ -144,7 +99,7 @@ export const WalletPage = () => {
               Wallet Statement & Financial Report
             </h1>
             <p className="text-xs text-slate-300 font-medium max-w-xl leading-relaxed">
-              Complete audit ledger tracking your ₹5,000 group deposit, 5% referral bonuses, instant withdrawals, and 1g Gold coin allocations.
+              Complete audit ledger tracking your ₹10,000 group deposit, 5% referral bonuses, instant withdrawals, and 1g Gold coin allocations.
             </p>
           </div>
 
@@ -172,19 +127,19 @@ export const WalletPage = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-[#0D3B43] relative z-10 text-xs">
           <div>
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Available Wallet Balance</p>
-            <p className="text-2xl font-black text-[#F2C868] font-mono tracking-tight mt-0.5">₹3,500.00</p>
+            <p className="text-2xl font-black text-[#F2C868] font-mono tracking-tight mt-0.5">₹{userBalance.toLocaleString('en-IN')}.00</p>
           </div>
           <div>
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Verified Group Deposit</p>
-            <p className="text-2xl font-black text-white font-mono tracking-tight mt-0.5">₹5,000.00</p>
+            <p className="text-2xl font-black text-white font-mono tracking-tight mt-0.5">₹{depositTotal.toLocaleString('en-IN')}.00</p>
           </div>
           <div>
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">5% Referral Bonus Earned</p>
-            <p className="text-2xl font-black text-[#00C2B8] font-mono tracking-tight mt-0.5">₹500.00</p>
+            <p className="text-2xl font-black text-[#00C2B8] font-mono tracking-tight mt-0.5">₹{referralBonus.toLocaleString('en-IN')}.00</p>
           </div>
           <div>
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Total Payouts Processed</p>
-            <p className="text-2xl font-black text-[#E1A238] font-mono tracking-tight mt-0.5">₹2,000.00</p>
+            <p className="text-2xl font-black text-[#E1A238] font-mono tracking-tight mt-0.5">₹0.00</p>
           </div>
         </div>
 
@@ -255,37 +210,39 @@ export const WalletPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#081E26] font-medium">
-              {filteredTransactions.map(tx => (
-                <tr key={tx.id} className="hover:bg-[#081E26]/50 transition-colors">
-                  <td className="p-4 font-mono text-slate-400">{tx.date}</td>
-                  <td className="p-4 font-extrabold text-white">
-                    <div className="flex items-center space-x-2.5">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold shrink-0 ${
-                        tx.direction === 'in' ? 'bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/30' : 'bg-[#081E26] text-[#E1A238] border border-[#E1A238]/30'
-                      }`}>
-                        {tx.direction === 'in' ? <ArrowDownLeft className="w-4 h-4 text-[#00C2B8]" /> : <ArrowUpRight className="w-4 h-4 text-[#E1A238]" />}
-                      </div>
-                      <span>{tx.type}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 font-mono font-bold text-[#00C2B8]">{tx.refId}</td>
-                  <td className="p-4 text-slate-300 font-medium">{tx.method}</td>
-                  <td className="p-4 font-mono font-black text-sm">
-                    {tx.amount === 0 ? (
-                      <span className="text-[#F2C868]">1 Gram 24K Gold</span>
-                    ) : tx.direction === 'in' ? (
-                      <span className="text-[#00C2B8]">+₹{tx.amount.toLocaleString()}</span>
-                    ) : (
-                      <span className="text-[#E1A238]">-₹{tx.amount.toLocaleString()}</span>
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <span className="bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/40 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                      {tx.status}
-                    </span>
+              {filteredTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-400 font-medium">
+                    No transactions recorded. Verified membership deposits will appear here.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredTransactions.map(tx => (
+                  <tr key={tx.id} className="hover:bg-[#081E26]/50 transition-colors">
+                    <td className="p-4 font-mono text-slate-400">{tx.date}</td>
+                    <td className="p-4 font-extrabold text-white">
+                      <div className="flex items-center space-x-2.5">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold shrink-0 ${
+                          tx.direction === 'in' ? 'bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/30' : 'bg-[#081E26] text-[#E1A238] border border-[#E1A238]/30'
+                        }`}>
+                          {tx.direction === 'in' ? <ArrowDownLeft className="w-4 h-4 text-[#00C2B8]" /> : <ArrowUpRight className="w-4 h-4 text-[#E1A238]" />}
+                        </div>
+                        <span>{tx.type}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 font-mono font-black text-[#00C2B8]">{tx.refId}</td>
+                    <td className="p-4 text-slate-300 font-semibold">{tx.method}</td>
+                    <td className="p-4 font-mono font-black text-white">
+                      {tx.direction === 'in' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
+                    </td>
+                    <td className="p-4">
+                      <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/40">
+                        {tx.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

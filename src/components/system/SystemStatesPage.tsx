@@ -119,7 +119,7 @@ export const SystemStatesPage = () => {
           <div className="space-y-4 text-center">
             <p className="text-xs text-slate-600 font-medium">Click buttons below to trigger toast notification banners:</p>
             <div className="flex flex-wrap justify-center gap-2">
-              <button onClick={() => triggerToast('success', '₹5,000 Deposit verified successfully!')} className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Success Toast</button>
+              <button onClick={() => triggerToast('success', '₹10,000 Deposit verified successfully!')} className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Success Toast</button>
               <button onClick={() => triggerToast('error', 'Invalid UTR reference number entered.')} className="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Error Toast</button>
               <button onClick={() => triggerToast('warning', 'Group filling fast: 3 slots remaining!')} className="bg-amber-500 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold">Warning Toast</button>
               <button onClick={() => triggerToast('info', 'Day 15 daily gold spin scheduled for 18:00 IST.')} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Info Toast</button>

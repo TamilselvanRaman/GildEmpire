@@ -28,7 +28,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminUsersPage = () => {
-  const { setCurrentView } = useApp();
+  const { setCurrentView, dbUsers } = useApp();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -48,17 +48,13 @@ export const AdminUsersPage = () => {
   const [accessDraw, setAccessDraw] = useState(true);
   const [accessSettings, setAccessSettings] = useState(false);
 
-  const initialUsersList = [
-    { id: 'usr_101', memberId: 'MB-8924', name: 'Rajesh Kumar Sharma', mobile: '+91 98765 43210', email: 'rajesh@example.com', regDate: '12 Aug 2026', deposit: 'Verified', group: 'GROUP-001', slot: '14', status: 'Active', role: 'Member' },
-    { id: 'usr_102', memberId: 'MB-4029', name: 'Priya Sundaram', mobile: '+91 98765 11223', email: 'priya@example.com', regDate: '15 Aug 2026', deposit: 'Verified', group: 'GROUP-001', slot: '2', status: 'Active', role: 'Member' },
-    { id: 'usr_103', memberId: 'MB-7712', name: 'Vikramaditya Singh', mobile: '+91 98765 44332', email: 'vikram@example.com', regDate: '10 Sep 2026', deposit: 'Pending', group: 'GROUP-003', slot: '41', status: 'Pending Verification', role: 'Member' },
-    { id: 'usr_104', memberId: 'MB-1092', name: 'Ananya Deshmukh', mobile: '+91 98765 99887', email: 'ananya@example.com', regDate: '09 Sep 2026', deposit: 'Rejected', group: 'Unassigned', slot: '-', status: 'Deactivated', role: 'Member' },
-    { id: 'adm_201', memberId: 'ADM-001', name: 'Vikram Roy', mobile: '+91 98765 00001', email: 'superadmin@infinitygram.in', regDate: '01 Aug 2026', deposit: 'Verified', group: 'ALL GROUPS', slot: 'ADMIN', status: 'Active', role: 'Super Admin' },
-    { id: 'adm_202', memberId: 'ADM-002', name: 'Ananya Sen', mobile: '+91 98765 00002', email: 'admin.op@infinitygram.in', regDate: '05 Aug 2026', deposit: 'Verified', group: 'ALL GROUPS', slot: 'STAFF', status: 'Active', role: 'Operations' },
-    { id: 'adm_203', memberId: 'ADM-003', name: 'Karthik Raja', mobile: '+91 98765 00003', email: 'admin.verify@infinitygram.in', regDate: '10 Aug 2026', deposit: 'Verified', group: 'VERIFY DESK', slot: 'STAFF', status: 'Active', role: 'Reviewer' },
-  ];
+  const [usersList, setUsersList] = useState<any[]>([]);
 
-  const [usersList, setUsersList] = useState(initialUsersList);
+  React.useEffect(() => {
+    if (dbUsers && dbUsers.length > 0) {
+      setUsersList(dbUsers.filter(u => u.role === 'Member'));
+    }
+  }, [dbUsers]);
 
   const filteredUsers = usersList.filter(u => {
     const matchesStatus = 
@@ -146,25 +142,25 @@ export const AdminUsersPage = () => {
         
         <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs space-y-2">
           <span className="text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">Total Enrolled Members</span>
-          <p className="text-3xl font-black text-[#0B1E39] font-mono">140 Members</p>
-          <span className="text-slate-500 font-semibold">Across 5 Group Batches</span>
+          <p className="text-3xl font-black text-[#0B1E39] font-mono">{usersList.filter(u => u.role === 'Member').length} Members</p>
+          <span className="text-slate-500 font-semibold">Across Active Group Batches</span>
         </div>
 
         <div className="bg-emerald-50/80 p-6 rounded-3xl border border-emerald-200/90 space-y-2">
           <span className="text-emerald-900 font-extrabold uppercase tracking-wider text-[10px]">Verified Depositors</span>
-          <p className="text-3xl font-black text-emerald-700 font-mono">140 Members</p>
-          <span className="text-emerald-800 font-extrabold">₹10,000 Deposit Verified</span>
+          <p className="text-3xl font-black text-emerald-700 font-mono">{usersList.filter(u => u.deposit === 'Verified' && u.role === 'Member').length} Members</p>
+          <span className="text-emerald-800 font-extrabold">₹10,000 Scheme Verified</span>
         </div>
 
         <div className="bg-amber-50/80 p-6 rounded-3xl border border-amber-200/90 space-y-2">
           <span className="text-amber-900 font-extrabold uppercase tracking-wider text-[10px]">Sub-Admins & Roles</span>
-          <p className="text-3xl font-black text-amber-800 font-mono">3 Staff Users</p>
+          <p className="text-3xl font-black text-amber-800 font-mono">{usersList.filter(u => u.role !== 'Member').length} Staff Users</p>
           <span className="text-amber-900 font-bold">Super Admin • Operations • Reviewer</span>
         </div>
 
         <div className="bg-blue-50/80 p-6 rounded-3xl border border-blue-200/90 space-y-2">
           <span className="text-blue-900 font-extrabold uppercase tracking-wider text-[10px]">Pending Verification</span>
-          <p className="text-3xl font-black text-[#2F6FED] font-mono">1 In Queue</p>
+          <p className="text-3xl font-black text-[#2F6FED] font-mono">{usersList.filter(u => u.status === 'Pending Verification').length} In Queue</p>
           <span className="text-blue-900 font-bold">Awaiting Bank UTR Review</span>
         </div>
 
@@ -555,6 +551,14 @@ export const AdminUsersPage = () => {
                   <span className="text-slate-500 font-medium">Registration Date:</span>
                   <span className="font-semibold text-slate-800">{selectedUserModal.regDate}</span>
                 </div>
+                {selectedUserModal.idDocumentUrl && (
+                  <div className="pt-3 border-t border-slate-200 space-y-1.5">
+                    <span className="text-slate-700 font-bold block text-[11px]">📄 Uploaded KYC Legal ID Document:</span>
+                    <a href={selectedUserModal.idDocumentUrl} target="_blank" rel="noopener noreferrer" className="block rounded-xl overflow-hidden border border-amber-300 shadow-sm hover:opacity-90 transition-opacity">
+                      <img src={selectedUserModal.idDocumentUrl} alt="Legal ID Document" className="w-full h-36 object-cover bg-slate-900" />
+                    </a>
+                  </div>
+                )}
               </div>
 
               <button

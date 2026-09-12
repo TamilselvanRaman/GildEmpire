@@ -139,7 +139,7 @@ export const LegalSuitePage: React.FC<Props> = ({ docType = 'privacy' }) => {
             {activeTab === 'terms' && (
               <div className="space-y-4">
                 <h3 className="text-sm font-black text-[#F2C868]">1. 50-Member Group Execution Invariants</h3>
-                <p>Each group consists of exactly 50 verified members who have submitted their ₹5,000 deposit. Group cycles run for 50 active days, during which 1 Gram of 24K Gold Coin is awarded daily via automated audited selection.</p>
+                <p>Each group consists of exactly 50 verified members who have submitted their ₹10,000 deposit. Group cycles run for 50 active days, during which 1 Gram of 24K Gold Coin is awarded daily via automated audited selection.</p>
                 <h3 className="text-sm font-black text-[#F2C868]">2. Deposit & Refund Conditions</h3>
                 <p>Deposits are held in locked asset vaults. Member principal deposits are 100% refundable upon group cycle completion or per defined program rules.</p>
               </div>

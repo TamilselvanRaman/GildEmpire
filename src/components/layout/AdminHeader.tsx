@@ -16,7 +16,7 @@ export const AdminHeader = () => {
         <span className="w-2 h-2 rounded-full bg-[#00C2B8] animate-pulse shrink-0"></span>
         <span className="text-[#F2C868] font-bold">INFINITYGRAM SOVEREIGN</span>
         <span className="text-slate-500">•</span>
-        <span className="text-slate-200 text-[11px]">BATCH A (DAY 15 ACTIVE)</span>
+        <span className="text-slate-200 text-[11px]">50-GOLD CLUB</span>
       </div>
 
       {/* Admin Actions */}
@@ -44,7 +44,7 @@ export const AdminHeader = () => {
           <img src="/logo.png" alt="InfinityGram Logo" className="w-7 h-7 object-contain" />
           <div className="text-left hidden sm:block">
             <p className="text-xs font-black text-[#081E26] leading-tight">Super Admin</p>
-            <p className="text-[10px] text-slate-500 font-medium leading-tight">admin.op@infinitygram.in</p>
+            <p className="text-[10px] text-slate-500 font-medium leading-tight">admin.op@infinitygram.net</p>
           </div>
         </div>
 

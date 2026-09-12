@@ -19,18 +19,20 @@ import {
 } from 'lucide-react';
 
 export const UserSidebar = () => {
-  const { currentView, setCurrentView } = useApp();
+  const { currentView, setCurrentView, user, logout } = useApp();
 
   const menuItems = [
     { id: 'user-dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'user-wallet', label: 'Digital Wallet', icon: Wallet, badge: '₹3.5k' },
+    { id: 'user-wallet', label: 'Digital Wallet', icon: Wallet },
     { id: 'user-deposit-overview', label: 'Deposit Module', icon: Wallet },
-    { id: 'user-my-group', label: '50-Slot Group', icon: Users, badge: 'Day 15' },
+    { id: 'user-my-group', label: '50-Slot Group', icon: Users },
     { id: 'user-rewards-overview', label: '1g Gold Rewards', icon: Award, highlight: true },
     { id: 'user-referral-dashboard', label: 'Referral System', icon: Share2, badge: '5%' },
     { id: 'user-settings', label: 'Settings', icon: Settings },
     { id: 'user-help', label: 'Help / FAQ', icon: HelpCircle },
   ];
+
+  const userInitial = user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'N';
 
   return (
     <aside className="w-68 bg-[#081E26] text-white min-h-screen border-r border-[#0D3B43] flex flex-col justify-between p-5 hidden md:flex sticky top-0 shrink-0 select-none">
@@ -97,18 +99,22 @@ export const UserSidebar = () => {
       </div>
 
       {/* Trust Badge & Logout */}
-      <div className="pt-4 border-t border-[#0D3B43] space-y-3">
-        <div className="flex items-center space-x-2 px-3 py-1 text-[11px] text-[#00C2B8] font-medium">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#00C2B8] shrink-0" />
+      <div className="pt-4 border-t border-[#0D3B43] space-y-3.5">
+        <div className="flex items-center space-x-2.5 px-2 py-0.5 text-xs text-[#00C2B8] font-semibold tracking-tight">
+          <ShieldCheck className="w-4 h-4 text-[#00C2B8] shrink-0" />
           <span className="truncate">256-Bit Encrypted Portal</span>
         </div>
 
         <button
-          onClick={() => setCurrentView('auth-login')}
-          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-2xl text-xs font-extrabold text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 transition-all border border-transparent hover:border-rose-900/40 cursor-pointer"
+          onClick={logout}
+          className="w-full flex items-center space-x-3 px-2 py-2 rounded-2xl hover:bg-[#0D3B43]/60 transition-all duration-200 cursor-pointer group text-left border border-transparent hover:border-[#0D3B43]/80"
         >
-          <LogOut className="w-4 h-4 shrink-0" />
-          <span>Logout Account</span>
+          <div className="w-9 h-9 rounded-full bg-[#030F13] border border-slate-700/80 flex items-center justify-center font-black text-sm text-white shadow-md group-hover:scale-105 transition-transform shrink-0">
+            {userInitial}
+          </div>
+          <span className="text-[#FF5252] font-black text-sm tracking-wide group-hover:text-red-400 transition-colors">
+            Logout Account
+          </span>
         </button>
       </div>
 

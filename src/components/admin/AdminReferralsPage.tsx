@@ -48,84 +48,8 @@ export const AdminReferralsPage: React.FC = () => {
   const [selectedReferral, setSelectedReferral] = useState<ReferralRecord | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Mock comprehensive admin referral database using 5% deposit cash commission rule
-  const [referrals, setReferrals] = useState<ReferralRecord[]>([
-    {
-      id: 'REF-8801',
-      referrerId: 'MB-1002',
-      referrerName: 'Tamil Selvan',
-      referrerEmail: 'tamil@infinitygram.in',
-      refereeId: 'MB-2041',
-      refereeName: 'Vikram Seth',
-      refereeEmail: 'vikram.seth@gmail.com',
-      joinedDate: '10 Sep 2026',
-      depositAmount: 10000,
-      depositStatus: 'Verified',
-      commissionRate: '5%',
-      bonusAmount: 500,
-      payoutStatus: 'Instant Wallet Credit',
-    },
-    {
-      id: 'REF-8802',
-      referrerId: 'MB-1002',
-      referrerName: 'Tamil Selvan',
-      referrerEmail: 'tamil@infinitygram.in',
-      refereeId: 'MB-2044',
-      refereeName: 'Priya Sharma',
-      refereeEmail: 'priya.sharma@yahoo.com',
-      joinedDate: '09 Sep 2026',
-      depositAmount: 10000,
-      depositStatus: 'Verified',
-      commissionRate: '5%',
-      bonusAmount: 500,
-      payoutStatus: 'Instant Wallet Credit',
-    },
-    {
-      id: 'REF-8803',
-      referrerId: 'MB-1008',
-      referrerName: 'Rajesh Kumar',
-      referrerEmail: 'rajesh.k@gmail.com',
-      refereeId: 'MB-2050',
-      refereeName: 'Amitabh Patel',
-      refereeEmail: 'amit.patel@corp.in',
-      joinedDate: '08 Sep 2026',
-      depositAmount: 10000,
-      depositStatus: 'Pending Review',
-      commissionRate: '5%',
-      bonusAmount: 500,
-      payoutStatus: 'Pending Verification',
-    },
-    {
-      id: 'REF-8804',
-      referrerId: 'MB-1015',
-      referrerName: 'Sneha Reddy',
-      referrerEmail: 'sneha.reddy@outlook.com',
-      refereeId: 'MB-2059',
-      refereeName: 'Kavita Menon',
-      refereeEmail: 'kavita.m@gmail.com',
-      joinedDate: '07 Sep 2026',
-      depositAmount: 0,
-      depositStatus: 'Not Deposited',
-      commissionRate: '5%',
-      bonusAmount: 0,
-      payoutStatus: 'Ineligible',
-    },
-    {
-      id: 'REF-8805',
-      referrerId: 'MB-1020',
-      referrerName: 'Arjun Mehta',
-      referrerEmail: 'arjun.mehta@gmail.com',
-      refereeId: 'MB-2062',
-      refereeName: 'Rahul Verma',
-      refereeEmail: 'rahul.v@techcorp.io',
-      joinedDate: '06 Sep 2026',
-      depositAmount: 5000,
-      depositStatus: 'Verified',
-      commissionRate: '5%',
-      bonusAmount: 250,
-      payoutStatus: 'Instant Wallet Credit',
-    },
-  ]);
+  // Dynamic admin referral database (starts clean)
+  const [referrals, setReferrals] = useState<ReferralRecord[]>([]);
 
   const filteredReferrals = referrals.filter(item => {
     const matchesSearch = 
@@ -139,6 +63,11 @@ export const AdminReferralsPage: React.FC = () => {
     return matchesSearch && matchesFilter;
   });
 
+  const totalInvites = referrals.length;
+  const verifiedCount = referrals.filter(r => r.depositStatus === 'Verified').length;
+  const totalCommissionINR = referrals.filter(r => r.depositStatus === 'Verified').reduce((acc, r) => acc + (r.bonusAmount || 500), 0);
+  const pendingCount = referrals.filter(r => r.depositStatus === 'Pending Review').length;
+
   const handleApprovePayout = (id: string) => {
     const target = referrals.find(r => r.id === id);
     if (!target) return;
@@ -148,15 +77,13 @@ export const AdminReferralsPage: React.FC = () => {
     setReferrals(prev => prev.map(ref => 
       ref.id === id ? { 
         ...ref, 
-        payoutStatus: 'Instant Wallet Credit', 
-        depositStatus: 'Verified',
-        depositAmount: ref.depositAmount || 10000,
-        bonusAmount: calculatedBonus
+        depositStatus: 'Verified' as const, 
+        payoutStatus: 'Instant Wallet Credit' as const,
+        bonusAmount: calculatedBonus,
       } : ref
     ));
 
-    setSelectedReferral(null);
-    setToastMessage(`₹${calculatedBonus} (5% Cash Bonus) successfully added to Sponsor Wallet (${target.referrerId} - ${target.referrerName})!`);
+    setToastMessage(`₹${calculatedBonus.toLocaleString('en-IN')} cash bonus verified for sponsor ${target.referrerName} (${target.referrerId})`);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
@@ -234,10 +161,10 @@ export const AdminReferralsPage: React.FC = () => {
               <UserPlus className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">1,248 Invites</p>
+          <p className="text-2xl font-black text-slate-900 mt-2">{totalInvites} Invites</p>
           <div className="flex items-center space-x-1.5 text-[11px] font-bold text-emerald-600 mt-2">
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>+18.4% this month</span>
+            <span>Active Referral Network</span>
           </div>
         </div>
 
@@ -248,8 +175,8 @@ export const AdminReferralsPage: React.FC = () => {
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">942 Active</p>
-          <p className="text-[11px] font-semibold text-slate-500 mt-2">75.4% deposit conversion rate</p>
+          <p className="text-2xl font-black text-slate-900 mt-2">{verifiedCount} Active</p>
+          <p className="text-[11px] font-semibold text-slate-500 mt-2">Deposits verified by desk</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow">
@@ -259,7 +186,7 @@ export const AdminReferralsPage: React.FC = () => {
               <Wallet className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">₹4,71,000</p>
+          <p className="text-2xl font-black text-slate-900 mt-2">₹{totalCommissionINR.toLocaleString('en-IN')}</p>
           <p className="text-[11px] font-bold text-emerald-600 mt-2">Instant Wallet Disbursed</p>
         </div>
 
@@ -270,7 +197,7 @@ export const AdminReferralsPage: React.FC = () => {
               <Clock className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">14 Pending</p>
+          <p className="text-2xl font-black text-slate-900 mt-2">{pendingCount} Pending</p>
           <p className="text-[11px] font-semibold text-purple-700 mt-2">Requires Deposit Review</p>
         </div>
       </div>

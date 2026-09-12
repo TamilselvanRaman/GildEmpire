@@ -28,7 +28,7 @@ export const LandingPage = () => {
 
   const steps = [
     { num: '01', title: 'Register Account', desc: 'Create your secure member profile with verified mobile OTP & email identification.' },
-    { num: '02', title: 'Complete Deposit', desc: 'Submit ₹5,000 membership deposit with instant UPI or Bank IMPS UTR proof.' },
+    { num: '02', title: 'Complete Deposit', desc: 'Submit ₹10,000 membership deposit with instant UPI or Bank IMPS UTR proof.' },
     { num: '03', title: 'Join 50-Member Group', desc: 'Automatically assigned to a verified 50-member group cycle.' },
     { num: '04', title: 'Daily 1g Gold Selection', desc: '50-day cycle distributes 1 Gram 24K Gold daily (1 winner/day).' },
     { num: '05', title: 'Complete 50-Day Rewards', desc: 'Every single member receives 1 Gram Gold by Day 50 of the group.' },
@@ -45,7 +45,7 @@ export const LandingPage = () => {
 
   const faqs = [
     { q: 'How does the 50-day 1 Gram Gold distribution process work?', a: 'Each group consists of exactly 50 verified members. Over a 50-day cycle, 1 Gram 24K Gold is awarded each day. Day 1 selects 1 winner from 50 members. Day 2 removes the Day 1 winner, leaving 49 members in the spin pool. This continues daily until all 50 members receive 1 Gram Gold by Day 50.' },
-    { q: 'Is my ₹5,000 deposit secure and verified?', a: 'Yes. All deposits are verified by our bank reconciliation team against official transaction UTR numbers before group allocation.' },
+    { q: 'Is my ₹10,000 deposit secure and verified?', a: 'Yes. All deposits are verified by our bank reconciliation team against official transaction UTR numbers before group allocation.' },
     { q: 'What happens after I receive my 1 Gram Gold coin?', a: 'Your reward coin is shipped via insured BlueDart express courier with tracking details provided on your member dashboard.' },
     { q: 'Can I refer friends to join a group?', a: 'Yes, your unique referral link is available on your dashboard to invite colleagues and track their deposit eligibility.' },
   ];
@@ -347,7 +347,7 @@ export const LandingPage = () => {
               </h2>
               
               <p className="text-[15px] text-slate-300 leading-relaxed max-w-xl font-medium">
-                When your referred contacts join the platform and complete their ₹5,000 membership deposit, you instantly receive 5% (₹250) credited to your secure digital wallet. Withdraw your earnings at any time.
+                When your referred contacts join the platform and complete their ₹10,000 membership deposit, you instantly receive 5% (₹500) credited to your secure digital wallet. Withdraw your earnings at any time.
               </p>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-5 sm:space-y-0 sm:space-x-10 pt-4 border-t border-[#081E26]">

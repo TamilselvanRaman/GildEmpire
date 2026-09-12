@@ -66,6 +66,9 @@ export const DepositOverviewPage = () => {
     setTimeout(() => setCopiedUpi(false), 2000);
   };
 
+  const userVerifiedDeposits = deposits.filter(d => d.status === 'Verified' && d.memberId === user.memberId);
+  const userBalance = userVerifiedDeposits.reduce((acc, curr) => acc + curr.amount, 0);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans relative z-10 text-white">
       
@@ -94,7 +97,7 @@ export const DepositOverviewPage = () => {
               className="bg-[#081E26] hover:bg-[#081E26]/80 border border-[#00C2B8]/40 px-3.5 py-1.5 rounded-full flex items-center space-x-2 cursor-pointer transition-colors"
             >
               <Wallet className="w-3.5 h-3.5 text-[#00C2B8]" />
-              <span className="text-[11px] font-mono font-black text-[#F2C868]">₹3,500.00</span>
+              <span className="text-[11px] font-mono font-black text-[#F2C868]">₹{userBalance.toLocaleString('en-IN')}.00</span>
             </div>
 
             {/* Profile badge */}
@@ -121,23 +124,40 @@ export const DepositOverviewPage = () => {
             </h1>
 
             <p className="text-xs text-slate-300 font-medium leading-relaxed">
-              Complete your single ₹5,000 group deposit to secure your active slot in the 50-member cycle. Instant auto-verification available via Razorpay.
+              Complete your single ₹10,000 group deposit to secure your active slot in the 50-member cycle. Instant auto-verification available via Razorpay.
             </p>
           </div>
 
           {/* Active Slot Status Pill */}
           <div className="bg-[#081E26]/90 backdrop-blur-md border border-[#E1A238]/40 p-5 rounded-2xl shrink-0 space-y-2 w-full sm:w-auto shadow-inner">
             <div className="flex items-center justify-between space-x-4">
-              <span className="text-[10px] font-black uppercase text-[#F2C868] tracking-wider">Assigned Slot #14</span>
-              <span className="text-[10px] font-black text-[#00C2B8] bg-[#00C2B8]/20 px-2.5 py-0.5 rounded-full border border-[#00C2B8]/40">
-                ACTIVE
+              <span className="text-[10px] font-black uppercase text-[#F2C868] tracking-wider">
+                {user.slotNumber ? `Assigned Slot #${user.slotNumber}` : 'Unassigned Slot'}
+              </span>
+              <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                user.depositStatus === 'Verified' 
+                  ? 'text-[#00C2B8] bg-[#00C2B8]/20 border-[#00C2B8]/40' 
+                  : 'text-[#F2C868] bg-[#E1A238]/20 border-[#E1A238]/40'
+              }`}>
+                {user.depositStatus === 'Verified' ? 'ACTIVE' : 'PENDING'}
               </span>
             </div>
-            <p className="text-xl font-black text-white font-mono">₹5,000 Deposit Confirmed</p>
-            <p className="text-[11px] text-slate-300 font-bold">Royal 50 Gold Club Batch A</p>
+            <p className="text-xl font-black text-white font-mono">
+              {user.depositStatus === 'Verified' ? '₹10,000 Deposit Confirmed' : '₹10,000 Deposit Required'}
+            </p>
+            <p className="text-[11px] text-slate-300 font-bold">InfinityGram 50 Gold Club</p>
           </div>
         </div>
       </motion.div>
+
+      {/* Design Mode Disabled Banner */}
+      <div className="bg-[#081E26] border border-[#F2C868]/40 p-4 rounded-2xl flex items-center space-x-3 text-xs text-[#F2C868] font-bold shadow-inner">
+        <Lock className="w-5 h-5 text-[#F2C868] shrink-0" />
+        <div>
+          <p className="font-extrabold text-[#F2C868] text-sm">Deposit Action Buttons Disabled (Design Mode)</p>
+          <p className="text-[11px] text-slate-300 font-medium">Payment gateway and deposit submission buttons are currently disabled for design preview.</p>
+        </div>
+      </div>
 
       {/* Featured Payment Methods Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -147,11 +167,10 @@ export const DepositOverviewPage = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          onClick={() => setSelectedMethod('Razorpay')}
-          className={`p-6 rounded-[2.5rem] border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between space-y-5 ${
+          className={`p-6 rounded-[2.5rem] border transition-all relative overflow-hidden flex flex-col justify-between space-y-5 ${
             selectedMethod === 'Razorpay'
               ? 'bg-[#0D3B43] text-white border-[#00C2B8] shadow-2xl ring-2 ring-[#00C2B8]/40'
-              : 'bg-[#0D3B43]/80 text-slate-200 border-[#E1A238]/30 hover:border-[#E1A238]/60 shadow-md'
+              : 'bg-[#0D3B43]/80 text-slate-200 border-[#E1A238]/30 shadow-md'
           }`}
         >
           <div className="flex items-start justify-between">
@@ -173,11 +192,11 @@ export const DepositOverviewPage = () => {
 
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); setSelectedMethod('Razorpay'); handleRazorpayPay(); }}
-            className="w-full btn-infinity-cyan text-xs font-black py-3.5 px-4 rounded-2xl shadow-lg transition-all flex items-center justify-center space-x-2 cursor-pointer active:scale-[0.99]"
+            disabled={true}
+            className="w-full bg-[#081E26]/90 text-slate-400 border border-slate-700/60 opacity-60 cursor-not-allowed text-xs font-black py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-2 shadow-xs"
           >
-            <ShieldCheck className="w-4 h-4 text-[#081E26]" />
-            <span>Pay ₹5,000 via Razorpay</span>
+            <Lock className="w-4 h-4 text-slate-400" />
+            <span>Pay ₹10,000 via Razorpay (Disabled)</span>
           </button>
         </motion.div>
 
@@ -186,11 +205,10 @@ export const DepositOverviewPage = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15 }}
-          onClick={() => setSelectedMethod('UPI')}
-          className={`p-6 rounded-[2.5rem] border transition-all cursor-pointer flex flex-col justify-between space-y-5 ${
+          className={`p-6 rounded-[2.5rem] border transition-all flex flex-col justify-between space-y-5 ${
             selectedMethod === 'UPI'
               ? 'bg-[#0D3B43] text-white border-[#00C2B8] shadow-2xl ring-2 ring-[#00C2B8]/40'
-              : 'bg-[#0D3B43]/80 text-slate-200 border-[#E1A238]/30 hover:border-[#E1A238]/60 shadow-md'
+              : 'bg-[#0D3B43]/80 text-slate-200 border-[#E1A238]/30 shadow-md'
           }`}
         >
           <div className="flex items-start justify-between">
@@ -206,18 +224,18 @@ export const DepositOverviewPage = () => {
           </div>
 
           <p className="text-xs font-medium text-slate-300 leading-relaxed">
-            Transfer ₹5,000 to official VPA <strong className="text-[#00C2B8] font-bold">infinitygram@icici</strong> and enter 12-digit UTR reference.
+            Transfer ₹10,000 to official VPA <strong className="text-[#00C2B8] font-bold">infinitygram@icici</strong> and enter 12-digit UTR reference.
           </p>
 
           <div className="flex items-center justify-between text-xs font-mono font-bold pt-2 border-t border-[#081E26] text-slate-300">
             <span className="truncate">VPA: infinitygram@icici</span>
             <button
               type="button"
-              onClick={handleCopyUpi}
-              className="text-[#00C2B8] hover:text-white flex items-center space-x-1 shrink-0 cursor-pointer font-sans"
+              disabled={true}
+              className="text-slate-500 opacity-60 cursor-not-allowed flex items-center space-x-1 shrink-0 font-sans"
             >
-              {copiedUpi ? <Check className="w-3.5 h-3.5 text-[#00C2B8]" /> : <Copy className="w-3.5 h-3.5 text-[#00C2B8]" />}
-              <span>{copiedUpi ? 'Copied' : 'Copy'}</span>
+              <Copy className="w-3.5 h-3.5 text-slate-500" />
+              <span>Copy (Disabled)</span>
             </button>
           </div>
         </motion.div>
@@ -227,11 +245,10 @@ export const DepositOverviewPage = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          onClick={() => setSelectedMethod('Bank Transfer')}
-          className={`p-6 rounded-[2.5rem] border transition-all cursor-pointer flex flex-col justify-between space-y-5 ${
+          className={`p-6 rounded-[2.5rem] border transition-all flex flex-col justify-between space-y-5 ${
             selectedMethod === 'Bank Transfer'
               ? 'bg-[#0D3B43] text-white border-[#E1A238] shadow-2xl ring-2 ring-[#E1A238]/40'
-              : 'bg-[#0D3B43]/80 text-slate-200 border-[#E1A238]/30 hover:border-[#E1A238]/60 shadow-md'
+              : 'bg-[#0D3B43]/80 text-slate-200 border-[#E1A238]/30 shadow-md'
           }`}
         >
           <div className="flex items-start justify-between">
@@ -269,7 +286,7 @@ export const DepositOverviewPage = () => {
           <div>
             <h2 className="text-lg font-black text-white">Submit Payment Reference for Audit Verification</h2>
             <p className="text-xs text-slate-300 font-medium mt-0.5">
-              Enter your 12-digit transaction UTR code after transferring ₹5,000 via UPI or Bank IMPS.
+              Enter your 12-digit transaction UTR code after transferring ₹10,000 via UPI or Bank IMPS.
             </p>
           </div>
 
@@ -288,7 +305,7 @@ export const DepositOverviewPage = () => {
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmitManual} className="space-y-6 text-xs font-medium">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6 text-xs font-medium">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               
               <div>
@@ -313,8 +330,9 @@ export const DepositOverviewPage = () => {
                 <div className="relative">
                   <select
                     value={selectedMethod}
+                    disabled={true}
                     onChange={(e) => setSelectedMethod(e.target.value as any)}
-                    className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-extrabold text-xs px-4 py-4 rounded-2xl focus:outline-none focus:border-[#00C2B8] appearance-none cursor-pointer shadow-xs"
+                    className="w-full bg-[#081E26] border border-[#0D3B43] text-slate-400 font-extrabold text-xs px-4 py-4 rounded-2xl focus:outline-none opacity-60 cursor-not-allowed appearance-none shadow-xs"
                   >
                     <option value="Razorpay">Razorpay Auto Gateway (Instant Verified)</option>
                     <option value="UPI">UPI (GPay / PhonePe / Paytm / BHIM)</option>
@@ -329,11 +347,11 @@ export const DepositOverviewPage = () => {
                 </label>
                 <input
                   type="text"
-                  required
+                  disabled={true}
                   value={refId}
                   onChange={(e) => setRefId(e.target.value)}
                   placeholder="e.g. UPI-982341209384 or RZP-901824"
-                  className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-mono font-bold text-xs p-4 rounded-2xl focus:outline-none focus:border-[#00C2B8] shadow-xs"
+                  className="w-full bg-[#081E26] border border-[#0D3B43] text-slate-400 font-mono font-bold text-xs p-4 rounded-2xl focus:outline-none opacity-60 cursor-not-allowed shadow-xs"
                 />
               </div>
 
@@ -341,27 +359,28 @@ export const DepositOverviewPage = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
               <p className="text-[11px] text-slate-400 font-medium">
-                * Note: If paying via Razorpay, your deposit is auto-verified instantly without waiting.
+                * Note: All deposit buttons are currently disabled for design and layout preview.
               </p>
 
               <div className="flex items-center space-x-3 w-full sm:w-auto">
                 {selectedMethod === 'Razorpay' && (
                   <button
                     type="button"
-                    onClick={handleRazorpayPay}
-                    className="flex-1 sm:flex-initial btn-infinity-cyan text-xs font-black px-8 py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                    disabled={true}
+                    className="flex-1 sm:flex-initial bg-[#081E26] text-slate-400 border border-slate-700/60 opacity-60 cursor-not-allowed text-xs font-black px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2"
                   >
-                    <Zap className="w-4 h-4 fill-current" />
-                    <span>Launch Razorpay Gateway</span>
+                    <Lock className="w-4 h-4 text-slate-400" />
+                    <span>Launch Razorpay Gateway (Disabled)</span>
                   </button>
                 )}
 
                 <button
-                  type="submit"
-                  className="flex-1 sm:flex-initial bg-[#081E26] hover:bg-[#081E26]/80 text-[#F2C868] border border-[#E1A238]/40 text-xs font-black px-8 py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                  type="button"
+                  disabled={true}
+                  className="flex-1 sm:flex-initial bg-[#081E26] text-slate-400 border border-slate-700/60 opacity-60 cursor-not-allowed text-xs font-black px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2"
                 >
-                  <Upload className="w-4 h-4 text-[#F2C868]" />
-                  <span>Submit UTR for Reconciliation</span>
+                  <Lock className="w-4 h-4 text-slate-400" />
+                  <span>Submit UTR for Reconciliation (Disabled)</span>
                 </button>
               </div>
             </div>
@@ -474,7 +493,7 @@ export const DepositOverviewPage = () => {
                     <div className="bg-[#081E26] p-5 rounded-2xl border border-[#00C2B8]/40 flex items-center justify-between">
                       <div>
                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Total Amount Payable</p>
-                        <p className="text-2xl font-black text-white font-mono mt-0.5">₹5,000.00</p>
+                        <p className="text-2xl font-black text-white font-mono mt-0.5">₹10,000.00</p>
                       </div>
                       <div className="text-right text-xs font-bold text-slate-300">
                         <p className="text-[#F2C868] font-black">Group Slot #14</p>
@@ -600,7 +619,7 @@ export const DepositOverviewPage = () => {
                       className="w-full btn-infinity-cyan font-black py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all text-xs uppercase tracking-wider flex items-center justify-center space-x-2 cursor-pointer"
                     >
                       <Lock className="w-4 h-4 stroke-[2.5]" />
-                      <span>Proceed to Pay ₹5,000 via Razorpay</span>
+                      <span>Proceed to Pay ₹10,000 via Razorpay</span>
                     </button>
                   </div>
                 )}
@@ -625,7 +644,7 @@ export const DepositOverviewPage = () => {
                       Razorpay Txn Reference ID: RZP-DEPOSIT-892401
                     </p>
                     <p className="text-xs text-slate-300 font-medium max-w-xs mx-auto leading-relaxed">
-                      Your ₹5,000 group deposit has been confirmed and assigned to Royal 50 Gold Club Batch A (Slot #14).
+                      Your ₹10,000 group deposit has been confirmed and assigned to Royal 50 Gold Club Batch A (Slot #14).
                     </p>
                   </div>
                 )}

@@ -21,8 +21,8 @@ import { motion } from 'framer-motion';
 
 export const LoginPage = () => {
   const { setCurrentView, loginUser } = useApp();
-  const [mobileEmail, setMobileEmail] = useState('rajesh.sharma@infinitygram.in');
-  const [password, setPassword] = useState('UserPass#2026');
+  const [mobileEmail, setMobileEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -88,7 +88,7 @@ export const LoginPage = () => {
               </h2>
 
               <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                Log in to monitor your verified ₹5,000 deposit, view your 50-member slot position, and track daily 1 Gram Gold reward dispatches.
+                Log in to monitor your verified ₹10,000 deposit, view your 50-member slot position, and track daily 1 Gram Gold reward dispatches.
               </p>
             </div>
 
@@ -126,28 +126,6 @@ export const LoginPage = () => {
               </button>
             </div>
             <p className="text-xs text-slate-500 font-medium">Enter your registered mobile or email to access dashboard</p>
-          </div>
-
-          {/* Quick Demo Fill Pill */}
-          <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-3.5 flex items-center justify-between">
-            <div>
-              <div className="flex items-center space-x-1.5 text-xs font-bold text-[#0B1E39]">
-                <Sparkles className="w-3.5 h-3.5 text-[#2F6FED]" />
-                <span>Demo Account Available</span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-mono">rajesh.sharma@infinitygram.in</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileEmail('rajesh.sharma@infinitygram.in');
-                setPassword('UserPass#2026');
-                setErrorMessage('');
-              }}
-              className="bg-[#2F6FED] hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-sm shadow-blue-500/20"
-            >
-              Fill Demo
-            </button>
           </div>
 
           {/* Error Message */}

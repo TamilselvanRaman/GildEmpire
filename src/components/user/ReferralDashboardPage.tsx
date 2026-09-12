@@ -10,10 +10,8 @@ export const ReferralDashboardPage = () => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
-  const referralCode = user.referralId || `REF-${user.memberId?.slice(-6) || 'AMIT99'}`;
-  const referralLink = typeof window !== 'undefined'
-    ? `${window.location.origin}/register?ref=${referralCode}`
-    : `https://infinitygram.in/register?ref=${referralCode}`;
+  const referralCode = user.referralId || `REF-${user.memberId?.slice(-6) || 'USER'}`;
+  const referralLink = `https://infinitygram.net/register?ref=${referralCode}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -29,7 +27,7 @@ export const ReferralDashboardPage = () => {
 
   const verifiedCount = referrals.filter(r => r.depositStatus === 'Verified').length;
   const pendingCount = referrals.filter(r => r.depositStatus === 'Pending' || r.depositStatus === 'Not Started').length;
-  const total5PercentEarnings = verifiedCount * 250; // 5% of ₹5,000 = ₹250 per verified member
+  const total5PercentEarnings = verifiedCount * 500; // 5% of ₹10,000 = ₹500 per verified member
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 font-sans text-white">
@@ -51,7 +49,7 @@ export const ReferralDashboardPage = () => {
               <span>InfinityGram 5% Referral Program</span>
             </span>
             <span className="text-[10px] font-black text-[#00C2B8] bg-[#00C2B8]/20 border border-[#00C2B8]/40 px-3 py-1 rounded-full uppercase tracking-wider">
-              5% Instant Bonus (₹250 / Verified Deposit)
+              5% Instant Bonus (₹500 / Verified Deposit)
             </span>
           </div>
 
@@ -59,7 +57,7 @@ export const ReferralDashboardPage = () => {
             Invite Members & Earn 5% Instant Cash Rewards
           </h1>
           <p className="text-sm text-slate-300 max-w-2xl leading-relaxed font-medium">
-            Share your unique referral code or link. For every member who joins and completes their ₹5,000 scheme deposit, you earn an instant 5% commission (₹250) credited to your wallet.
+            Share your unique referral code or link. For every member who joins and completes their ₹10,000 scheme deposit, you earn an instant 5% commission (₹500) credited to your wallet.
           </p>
         </div>
 
@@ -171,7 +169,7 @@ export const ReferralDashboardPage = () => {
             <p className="text-xs text-slate-300 font-medium mt-0.5">Real-time deposit verification log and 5% bonus tracking.</p>
           </div>
           <span className="text-[10px] font-mono font-black text-[#00C2B8] bg-[#081E26] px-3.5 py-1.5 rounded-full border border-[#00C2B8]/40">
-            Total Commission: ₹{total5PercentEarnings} (5% on ₹5,000)
+            Total Commission: ₹{total5PercentEarnings} (5% on ₹10,000)
           </span>
         </div>
 
@@ -210,7 +208,7 @@ export const ReferralDashboardPage = () => {
                     </span>
                   </td>
                   <td className="p-4 font-mono font-black text-[#00C2B8]">
-                    {ref.depositStatus === 'Verified' ? '+₹250 (5%)' : '₹0 (Pending)'}
+                    {ref.depositStatus === 'Verified' ? '+₹500 (5%)' : '₹0 (Pending)'}
                   </td>
                   <td className="p-4 font-extrabold text-slate-300">{ref.eligibility}</td>
                 </tr>

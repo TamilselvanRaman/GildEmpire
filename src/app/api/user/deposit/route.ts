@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         .update({ deposit_status: 'Under Review' })
         .eq('id', userId);
 
-      // Calculate 5% referral bonus (5% of deposit amount, e.g., 5% of ₹5,000 = ₹250)
+      // Calculate 5% referral bonus (5% of deposit amount, e.g., 5% of ₹10,000 = ₹500)
       const referralBonusAmount = Math.round(Number(amount) * 0.05);
 
       await supabase

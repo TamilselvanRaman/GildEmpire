@@ -63,11 +63,11 @@ export const Footer = () => {
             <div className="space-y-3 text-xs text-slate-300 font-medium">
               <div className="flex items-center space-x-2.5">
                 <Mail className="w-4 h-4 text-[#00C2B8]" />
-                <span>support@infinitygram.in</span>
+                <a href="mailto:gildemphire07@gmail.com" className="hover:text-[#00C2B8] transition-colors break-all">gildemphire07@gmail.com</a>
               </div>
               <div className="flex items-center space-x-2.5">
                 <PhoneCall className="w-4 h-4 text-[#00C2B8]" />
-                <span>+91 1800-425-9920 (Toll Free)</span>
+                <a href="tel:+917639130497" className="hover:text-[#00C2B8] transition-colors">+91 76391 30497</a>
               </div>
               <p className="text-[11px] text-slate-400 pt-2">
                 Operational Hours: Mon–Sat, 09:00 AM – 07:00 PM IST
