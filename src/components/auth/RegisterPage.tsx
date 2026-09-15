@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   ShieldCheck, 
@@ -18,21 +18,39 @@ import {
   RefreshCw,
   Phone,
   Mail,
-  CheckCircle2
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const RegisterPage = () => {
-  const { setCurrentView, registerUser } = useApp();
+  const { setCurrentView, registerUser, dbUsers = [] } = useApp();
 
   // Form Field States
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
+  const [panNumber, setPanNumber] = useState('');
+  const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(true);
+
+  // Auto-fill referral code from URL search params (e.g. ?ref=REF-635880)
+  const [isAutoFilledRef, setIsAutoFilledRef] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlRef = searchParams.get('ref') || searchParams.get('referral') || searchParams.get('code');
+      if (urlRef) {
+        const cleanRef = urlRef.trim().toUpperCase();
+        setReferralCode(cleanRef);
+        setIsAutoFilledRef(true);
+      }
+    }
+  }, []);
 
   // Eye Toggle States for Show/Hide Password
   const [showPassword, setShowPassword] = useState(false);
@@ -48,12 +66,32 @@ export const RegisterPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Live Duplicate Email & Mobile Check Flags
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanMobile = mobile.replace(/\D/g, '');
+
+  const registeredEmailsList = [
+    'tamilselvan@infinitygram.net',
+    'navin@infinitygram.net',
+    'ceittamilselvanr26@gmail.com',
+    'rajesh@gmail.com',
+    ...(Array.isArray(dbUsers) ? dbUsers.map(u => u.email?.toLowerCase()).filter(Boolean) : [])
+  ];
+
+  const registeredMobilesList = [
+    '9876543210',
+    ...(Array.isArray(dbUsers) ? dbUsers.map(u => u.mobile).filter(Boolean) : [])
+  ];
+
+  const isEmailTaken = cleanEmail.length > 3 && registeredEmailsList.includes(cleanEmail);
+  const isMobileTaken = cleanMobile.length === 10 && registeredMobilesList.includes(cleanMobile);
+
   // Mobile input handler (Only allow 10 numeric digits)
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const numericValue = e.target.value.replace(/\D/g, '');
     if (numericValue.length <= 10) {
       setMobile(numericValue);
-      if (errorMessage.includes('mobile')) {
+      if (errorMessage) {
         setErrorMessage('');
       }
     }
@@ -150,7 +188,7 @@ export const RegisterPage = () => {
     });
   };
 
-  // Form Registration Submit Handler with All Type Checks
+  // Form Registration Submit Handler with All Type & Duplicate Checks
   const handleRegister = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorMessage('');
@@ -161,17 +199,26 @@ export const RegisterPage = () => {
       return;
     }
 
-    // Check 2: Mobile Number (10 digits only)
-    const cleanMobile = mobile.replace(/\D/g, '');
+    // Check 2: Mobile Number (10 digits only & Duplicate Check)
     if (cleanMobile.length !== 10) {
       setErrorMessage('Please enter a valid 10-digit mobile number (e.g. 9876543210).');
       return;
     }
 
-    // Check 3: Email Address Format
+    if (isMobileTaken) {
+      setErrorMessage(`❌ Mobile Number Already Registered: This mobile number (${cleanMobile}) is already linked to an existing member account. Please log in or use another number.`);
+      return;
+    }
+
+    // Check 3: Email Address Format & Duplicate Check
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim() || !emailPattern.test(email.trim())) {
       setErrorMessage('Please enter a valid email address (e.g. name@domain.com).');
+      return;
+    }
+
+    if (isEmailTaken) {
+      setErrorMessage(`❌ Email Already Registered: An account with this email address (${cleanEmail}) already exists. Please log in instead.`);
       return;
     }
 
@@ -220,11 +267,11 @@ export const RegisterPage = () => {
       if (res && res.success) {
         setCurrentView('user-dashboard');
       } else {
-        setErrorMessage(res?.error || 'Registration failed. Please try again.');
+        setErrorMessage(res?.error || 'Registration failed. Please check your details.');
       }
     } catch (err: any) {
       setIsSubmitting(false);
-      setErrorMessage(err?.message || 'Registration failed. Please try again.');
+      setErrorMessage(err?.message || 'Registration failed. Please check your details.');
     }
   };
 
@@ -301,6 +348,34 @@ export const RegisterPage = () => {
                 <span>5% Instant Wallet Referral Bonus</span>
               </div>
             </div>
+
+            {/* 3-STEP MEMBER ALLOCATION & 24HR KYC VERIFICATION GUIDANCE BANNER */}
+            <div className="mt-4 bg-[#081E26]/90 border border-blue-400/30 p-3.5 rounded-2xl space-y-2 shadow-lg">
+              <div className="flex items-center justify-between text-[10px] font-black text-white">
+                <span className="flex items-center space-x-1.5 text-[#00C2B8]">
+                  <Sparkles className="w-3.5 h-3.5 text-[#00C2B8] animate-pulse" />
+                  <span className="uppercase tracking-wider">REGISTRATION WORKFLOW</span>
+                </span>
+                <span className="text-[9px] text-[#F2C868] font-extrabold bg-[#E1A238]/20 px-2 py-0.5 rounded-full border border-[#E1A238]/30">
+                  ⏱ 24h Admin KYC Review
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5 text-[9.5px] font-bold">
+                <div className="bg-[#0D3B43] p-2 rounded-xl border border-[#00C2B8]/40 text-white flex flex-col items-center text-center">
+                  <span className="text-[#00C2B8] font-black text-[10px] mb-0.5">1. Register</span>
+                  <span className="text-slate-300 text-[8.5px]">Upload Legal ID</span>
+                </div>
+                <div className="bg-[#0D3B43] p-2 rounded-xl border border-[#E1A238]/40 text-[#F2C868] flex flex-col items-center text-center">
+                  <span className="text-[#F2C868] font-black text-[10px] mb-0.5">2. 24h KYC</span>
+                  <span className="text-slate-300 text-[8.5px]">Admin Review</span>
+                </div>
+                <div className="bg-[#0D3B43] p-2 rounded-xl border border-emerald-400/40 text-emerald-300 flex flex-col items-center text-center">
+                  <span className="text-emerald-400 font-black text-[10px] mb-0.5">3. Deposit</span>
+                  <span className="text-slate-300 text-[8.5px]">₹10k Buy Slot</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="pt-6 border-t border-white/10 text-xs text-slate-300 flex items-center space-x-2 font-medium relative z-10 mt-6">
@@ -327,6 +402,34 @@ export const RegisterPage = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
               <span>ACCOUNT REGISTRATION</span>
             </span>
+          </div>
+
+          {/* 3-STEP MEMBER ALLOCATION & 24HR KYC VERIFICATION GUIDANCE BANNER */}
+          <div className="bg-gradient-to-r from-blue-900/10 via-slate-900/5 to-amber-900/10 border border-blue-200/80 p-3.5 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between text-[11px] font-black text-[#0B1E39]">
+              <span className="flex items-center space-x-1.5 text-blue-700">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+                <span className="uppercase tracking-wider">MEMBER REGISTRATION NEXT STEPS</span>
+              </span>
+              <span className="text-[10px] text-amber-700 font-extrabold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
+                ⏱ 24-Hour Admin KYC Review
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-[10px] font-bold">
+              <div className="bg-white p-2 rounded-xl border border-blue-200 text-slate-800 shadow-xs flex flex-col items-center text-center">
+                <span className="text-blue-700 font-black text-[11px] mb-0.5">Step 1: Register</span>
+                <span className="text-slate-500 text-[9.5px]">Upload ID Document</span>
+              </div>
+              <div className="bg-amber-50 p-2 rounded-xl border border-amber-300 text-amber-950 shadow-xs flex flex-col items-center text-center">
+                <span className="text-amber-800 font-black text-[11px] mb-0.5">Step 2: 24h KYC</span>
+                <span className="text-amber-700 text-[9.5px]">Admin Document Review</span>
+              </div>
+              <div className="bg-emerald-50 p-2 rounded-xl border border-emerald-300 text-emerald-950 shadow-xs flex flex-col items-center text-center">
+                <span className="text-emerald-800 font-black text-[11px] mb-0.5">Step 3: Deposit & Buy</span>
+                <span className="text-emerald-700 text-[9.5px]">₹10,000 Group Slot</span>
+              </div>
+            </div>
           </div>
 
           {/* Validation Error Alert Banner */}
@@ -423,6 +526,63 @@ export const RegisterPage = () => {
                   }}
                   placeholder="e.g. rajesh@gmail.com"
                   className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
+                />
+              </div>
+            </div>
+
+            {/* 3. Mandatory Identity Credentials (PAN Card & Aadhaar Number) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* PAN Card Number */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5">
+                    <FileText className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>PAN CARD NUMBER</span>
+                  </span>
+                  {panNumber.trim().length === 10 && (
+                    <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <span>Valid PAN</span>
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  maxLength={10}
+                  value={panNumber}
+                  onChange={(e) => {
+                    setPanNumber(e.target.value.toUpperCase());
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  placeholder="e.g. ABCDE1234F"
+                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs uppercase"
+                />
+              </div>
+
+              {/* Aadhaar Number */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>AADHAAR NUMBER (12 DIGITS)</span>
+                  </span>
+                  {aadhaarNumber.replace(/\D/g, '').length === 12 && (
+                    <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <span>Valid 12-Digit</span>
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  maxLength={12}
+                  value={aadhaarNumber}
+                  onChange={(e) => {
+                    setAadhaarNumber(e.target.value.replace(/\D/g, ''));
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  placeholder="e.g. 1234 5678 9012"
+                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
                 />
               </div>
             </div>

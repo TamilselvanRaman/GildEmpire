@@ -139,17 +139,17 @@ export const ContactPage = () => {
               </div>
             </div>
 
-            {/* Phone Card */}
+            {/* Phone & Support Card */}
             <div className="bg-[#0D3B43] rounded-2xl border border-[#E1A238]/30 p-6 text-center space-y-4 shadow-xl">
               <div className="w-12 h-12 rounded-2xl bg-[#081E26] text-[#E1A238] border border-[#E1A238]/40 flex items-center justify-center mx-auto">
                 <PhoneCall className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-sm mb-1">Direct Mobile & Helpline</h3>
+                <h3 className="font-bold text-white text-sm mb-1">Online Desk & Support</h3>
                 <p className="text-xs text-slate-300 mb-3">Mon–Sat: 09:00 AM – 07:00 PM IST</p>
-                <a href="tel:+917639130497" className="text-sm font-bold text-[#F2C868] hover:underline">
-                  +91 76391 30497
-                </a>
+                <span className="text-xs font-bold text-[#F2C868]">
+                  Available via Email & Live Ticketing
+                </span>
               </div>
             </div>
 

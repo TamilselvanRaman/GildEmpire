@@ -67,7 +67,7 @@ export const Footer = () => {
               </div>
               <div className="flex items-center space-x-2.5">
                 <PhoneCall className="w-4 h-4 text-[#00C2B8]" />
-                <a href="tel:+917639130497" className="hover:text-[#00C2B8] transition-colors">+91 76391 30497</a>
+                <span className="hover:text-[#00C2B8] transition-colors">Mon–Sat, 09:00 AM – 07:00 PM IST</span>
               </div>
               <p className="text-[11px] text-slate-400 pt-2">
                 Operational Hours: Mon–Sat, 09:00 AM – 07:00 PM IST

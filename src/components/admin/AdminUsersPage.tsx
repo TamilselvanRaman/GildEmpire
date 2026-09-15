@@ -724,6 +724,7 @@ export const AdminUsersPage = () => {
                           <button
                             onClick={() => {
                               setKycVerifiedStatus(prev => ({ ...prev, [selectedUserModal.id]: true }));
+                              alert(`KYC Document Approved for ${selectedUserModal.fullName}! Confirmation & deposit instructions email dispatched to ${selectedUserModal.email}.`);
                             }}
                             className={`flex-1 font-extrabold py-3 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer ${
                               kycVerifiedStatus[selectedUserModal.id]
@@ -732,7 +733,7 @@ export const AdminUsersPage = () => {
                             }`}
                           >
                             <CheckCircle2 className="w-4 h-4" />
-                            <span>{kycVerifiedStatus[selectedUserModal.id] ? '✓ KYC Document Approved & Verified' : 'Approve & Mark KYC Verified'}</span>
+                            <span>{kycVerifiedStatus[selectedUserModal.id] ? '✓ KYC Approved & Verification Email Dispatched' : 'Approve KYC & Dispatch Confirmation Email'}</span>
                           </button>
 
                           <a

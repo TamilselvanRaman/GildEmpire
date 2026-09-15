@@ -595,7 +595,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
 
     setDeposits(prev => [newDep, ...prev]);
-    setUser(prev => ({ ...prev, depositStatus: 'Verified', accountStatus: 'Active' }));
+    const currentOwned = user.slotsOwned || (user.slotNumber ? 1 : 0);
+    const newOwned = Math.min(3, currentOwned + 1);
+    setUser(prev => ({ 
+      ...prev, 
+      depositStatus: 'Verified', 
+      accountStatus: 'Active',
+      slotsOwned: newOwned 
+    }));
 
     // AUTOMATICALLY ASSIGN TO NEXT AVAILABLE SLOT!
     autoAssignSlot(user.memberId, user.fullName);

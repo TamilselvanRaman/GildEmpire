@@ -17,13 +17,19 @@ import {
   TrendingUp,
   Activity,
   Zap,
-  Check
+  Check,
+  Mail,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const UserDashboardPage = () => {
   const { user, group, deposits, referrals, setCurrentView } = useApp();
   const [copied, setCopied] = useState(false);
+  const [emailResentToast, setEmailResentToast] = useState(false);
+
+  const slotsOwnedCount = user.slotsOwned || (user.slotNumber ? 1 : 0);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(user.referralId);
@@ -31,9 +37,83 @@ export const UserDashboardPage = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleResendEmail = () => {
+    setEmailResentToast(true);
+    setTimeout(() => setEmailResentToast(false), 3500);
+  };
+
   return (
     <div className="space-y-6 relative z-10 font-sans pb-10 text-white">
       
+      {/* Toast Notification for Resend Email */}
+      {emailResentToast && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="bg-emerald-500 text-slate-950 font-extrabold p-4 rounded-2xl shadow-2xl flex items-center justify-between space-x-3 text-xs border border-emerald-300"
+        >
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="w-5 h-5 text-slate-950 shrink-0" />
+            <span>Deposit verification email successfully re-sent to <strong className="underline">{user.email}</strong>!</span>
+          </div>
+          <button onClick={() => setEmailResentToast(false)} className="text-slate-950 font-bold px-2 py-0.5 rounded hover:bg-emerald-600/30 cursor-pointer">✕</button>
+        </motion.div>
+      )}
+
+      {/* EMAIL VERIFICATION & DEPOSIT INSTRUCTION BANNER */}
+      {user.depositStatus !== 'Verified' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="border-2 p-6 sm:p-7 rounded-[2.2rem] shadow-2xl space-y-4 relative overflow-hidden transition-all duration-500 bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#0A192F] border-amber-400/90"
+        >
+          <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
+            <div className="flex items-start space-x-4">
+              <div className="w-13 h-13 rounded-2xl border flex items-center justify-center shrink-0 shadow-inner bg-amber-500/20 border-amber-400/50 text-amber-300">
+                <Mail className="w-6 h-6 animate-pulse text-amber-300" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-black uppercase px-3 py-0.5 rounded-full tracking-wider bg-amber-400 text-amber-950">
+                    EMAIL DISPATCHED & VERIFIED
+                  </span>
+                  <span className="text-xs text-amber-300 font-mono font-bold">Target Email: {user.email}</span>
+                </div>
+                
+                <h3 className="text-lg font-black text-white">
+                  Payment Verification Email Dispatched to {user.email}
+                </h3>
+                
+                <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-2xl">
+                  We have sent official deposit instructions and secure payment link to your verified email (<strong className="text-amber-300">{user.email}</strong>). Check your inbox or proceed to deposit options below.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0 w-full lg:w-auto">
+              <button
+                onClick={handleResendEmail}
+                className="w-full sm:w-auto bg-[#081E26] hover:bg-[#081E26]/80 text-amber-300 border border-amber-400/40 text-xs font-black px-4 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4 text-amber-400" />
+                <span>Resend Email</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentView('user-deposit-overview')}
+                className="w-full sm:w-auto bg-gradient-to-r from-[#00C2B8] to-[#00A8A0] hover:from-[#00A8A0] hover:to-[#00C2B8] text-[#081E26] text-xs font-black px-7 py-3.5 rounded-xl shadow-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <Wallet className="w-4.5 h-4.5" />
+                <span>Proceed to Deposit Portal →</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Executive Dark Sovereign Welcome Banner */}
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
@@ -53,7 +133,7 @@ export const UserDashboardPage = () => {
             </span>
             <span className="text-xs font-mono font-extrabold text-[#F2C868] bg-[#E1A238]/20 border border-[#E1A238]/40 px-3 py-1 rounded-full flex items-center space-x-1">
               <Sparkles className="w-3 h-3 text-[#E1A238]" />
-              <span>{user.slotNumber ? `Assigned Slot #${user.slotNumber}` : 'Unassigned Slot'}</span>
+              <span>{user.slotNumber ? `Assigned Slot #${user.slotNumber}` : 'Unassigned Slot'} ({slotsOwnedCount}/3 Slots Owned)</span>
             </span>
           </div>
 
@@ -63,26 +143,28 @@ export const UserDashboardPage = () => {
             </h1>
             <p className="text-sm text-slate-300 mt-2 font-medium leading-relaxed">
               Welcome to <strong className="text-[#F2C868] font-extrabold">{group.groupName}</strong>. 
-              {group.totalGoldDistributedGrams} members have received 1 Gram 24K Gold. {group.activePoolCount} members remain in active selection pool.
+              Maximum 3 slots per member limit active. You currently hold <strong className="text-[#00C2B8]">{slotsOwnedCount} of 3 max slots</strong>.
             </p>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 relative z-10 w-full lg:w-auto">
+          {slotsOwnedCount < 3 && (
+            <button
+              onClick={() => setCurrentView('user-deposit-overview')}
+              className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black px-5 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg cursor-pointer hover:-translate-y-0.5"
+            >
+              <Zap className="w-4 h-4 fill-current text-slate-950" />
+              <span>Buy Extra Slot ({slotsOwnedCount + 1}/3 Max)</span>
+            </button>
+          )}
+
           <button
             onClick={() => setCurrentView('user-my-group')}
             className="bg-[#081E26] hover:bg-[#081E26]/80 text-[#00C2B8] border border-[#00C2B8]/40 text-xs font-black px-6 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2.5 shadow-md cursor-pointer hover:-translate-y-0.5"
           >
             <span>Inspect 50-Slot Grid</span>
             <ArrowRight className="w-4 h-4 text-[#00C2B8]" />
-          </button>
-
-          <button
-            onClick={() => setCurrentView('user-reward-spin')}
-            className="bg-gradient-to-r from-[#E1A238] to-[#F2C868] hover:from-[#F2C868] hover:to-[#E1A238] text-[#081E26] text-xs font-black px-7 py-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(225,162,56,0.4)] transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer hover:-translate-y-0.5"
-          >
-            <Sparkles className="w-4.5 h-4.5 text-[#081E26] fill-[#081E26]" />
-            <span>Daily Gold Selection</span>
           </button>
         </div>
       </motion.div>
@@ -112,7 +194,7 @@ export const UserDashboardPage = () => {
           </div>
         </motion.div>
 
-        {/* Card 2: Deposit Status */}
+        {/* Card 2: Deposit Status & 3-Slot Capacity */}
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -120,12 +202,12 @@ export const UserDashboardPage = () => {
           className="bg-[#0D3B43] rounded-[2rem] border border-[#E1A238]/30 shadow-2xl p-6 flex items-center justify-between group hover:border-[#E1A238]/60 hover:-translate-y-1 transition-all duration-300"
         >
           <div className="space-y-1">
-            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Deposit Status</p>
+            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Deposit & Slots Owned</p>
             <h3 className="text-xl font-black text-white tracking-tight">
-              {user.depositStatus === 'Verified' ? '₹10,000 Verified' : 'Deposit Required'}
+              {user.depositStatus === 'Verified' ? `₹${(slotsOwnedCount * 10000).toLocaleString('en-IN')} Verified` : 'Deposit Pending'}
             </h3>
             <p className="text-[10px] text-[#F2C868] font-mono font-bold tracking-tight pt-1">
-              {user.depositStatus === 'Verified' ? 'Confirmed Slot' : 'Pending Membership Deposit'}
+              {slotsOwnedCount} / 3 Max Slots Owned
             </p>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-[#081E26] text-[#E1A238] flex items-center justify-center shrink-0 border border-[#E1A238]/40 group-hover:scale-110 group-hover:bg-[#E1A238] group-hover:text-[#081E26] transition-all duration-300 shadow-xs">

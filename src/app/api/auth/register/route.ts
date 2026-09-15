@@ -5,7 +5,7 @@ import crypto from 'crypto';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { fullName, email, mobile, password, referralCode, idDocumentBase64, idDocumentName } = body;
+    const { fullName, email, mobile, password, referralCode, idDocumentBase64, idDocumentName, panNumber, aadhaarNumber } = body;
 
     if (!email || !password || !fullName || !mobile) {
       return NextResponse.json(
@@ -21,29 +21,43 @@ export async function POST(request: Request) {
 
     const dbClient = supabaseAdmin || supabase;
 
-    // 0. Check for existing duplicate email or mobile number in public.profiles table
+    // 0. Check for existing duplicate email, mobile number, PAN, or Aadhaar in public.profiles table
     const cleanEmail = email.trim().toLowerCase();
     const cleanMobile = mobile.trim();
+    const cleanPan = panNumber ? panNumber.trim().toUpperCase() : null;
+    const cleanAadhaar = aadhaarNumber ? aadhaarNumber.replace(/\D/g, '') : null;
 
     try {
-      const { data: existingUser } = await dbClient
+      const { data: existingUsers } = await dbClient
         .from('profiles')
-        .select('email, mobile')
-        .or(`email.ilike.${cleanEmail},mobile.eq.${cleanMobile}`)
-        .maybeSingle();
+        .select('email, mobile, pan_number, aadhaar_number');
 
-      if (existingUser) {
-        if (existingUser.email?.toLowerCase() === cleanEmail) {
-          return NextResponse.json(
-            { success: false, error: 'An account with this email address already exists. Please log in.' },
-            { status: 400 }
-          );
-        }
-        if (existingUser.mobile === cleanMobile) {
-          return NextResponse.json(
-            { success: false, error: 'This mobile number is already registered. Please log in or use another number.' },
-            { status: 400 }
-          );
+      if (Array.isArray(existingUsers)) {
+        for (const u of existingUsers) {
+          if (u.email?.toLowerCase() === cleanEmail) {
+            return NextResponse.json(
+              { success: false, error: '❌ Email Already Registered: An account with this email address already exists. Please log in.' },
+              { status: 400 }
+            );
+          }
+          if (u.mobile === cleanMobile) {
+            return NextResponse.json(
+              { success: false, error: '❌ Mobile Number Already Registered: This mobile number is already linked to an existing member.' },
+              { status: 400 }
+            );
+          }
+          if (cleanPan && u.pan_number?.toUpperCase() === cleanPan) {
+            return NextResponse.json(
+              { success: false, error: '❌ PAN Card Already Registered: A member account with this PAN Card Number already exists.' },
+              { status: 400 }
+            );
+          }
+          if (cleanAadhaar && u.aadhaar_number?.replace(/\D/g, '') === cleanAadhaar) {
+            return NextResponse.json(
+              { success: false, error: '❌ Aadhaar Number Already Registered: A member account with this Aadhaar Number already exists.' },
+              { status: 400 }
+            );
+          }
         }
       }
     } catch (checkErr) {

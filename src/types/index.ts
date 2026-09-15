@@ -94,6 +94,8 @@ export interface UserProfile {
   fullName: string;
   email: string;
   mobile: string;
+  panNumber?: string;
+  aadhaarNumber?: string;
   avatar: string;
   registrationDate: string;
   accountStatus: 'Active' | 'Pending Verification' | 'Suspended' | 'Deactivated';
@@ -102,6 +104,8 @@ export interface UserProfile {
   depositStatus: 'Not Started' | 'Submitted' | 'Under Review' | 'Verified' | 'Rejected';
   groupId?: string;
   slotNumber?: number;
+  slotsOwned?: number; // Max 3 slots per member in 1 group
+  assignedSlots?: number[]; // e.g. [1, 14, 28]
   rewardStatus: 'In Selection Pool' | 'Won 1g Gold' | 'Pending Group Formation' | 'Completed';
   wonDay?: number;
   wonDate?: string;

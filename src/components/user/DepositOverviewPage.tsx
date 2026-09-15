@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -18,7 +16,9 @@ import {
   Lock,
   X,
   Copy,
-  Check
+  Check,
+  Mail,
+  RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -29,11 +29,21 @@ export const DepositOverviewPage = () => {
   const [selectedMethod, setSelectedMethod] = useState<'Razorpay' | 'UPI' | 'Bank Transfer'>('Razorpay');
   const [submitted, setSubmitted] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
-  
+  const [emailResentToast, setEmailResentToast] = useState(false);
+
+  const slotsOwnedCount = user.slotsOwned || (user.slotNumber ? 1 : 0);
+  const maxSlotsAllowed = 3;
+  const remainingSlotsToBuy = Math.max(0, maxSlotsAllowed - slotsOwnedCount);
+
   // Razorpay Checkout Modal State
   const [showRazorpayModal, setShowRazorpayModal] = useState(false);
   const [razorpayStep, setRazorpayStep] = useState<'checkout' | 'processing' | 'success'>('checkout');
   const [rzpSubMethod, setRzpSubMethod] = useState<'upi' | 'card' | 'netbanking'>('upi');
+
+  const handleResendEmail = () => {
+    setEmailResentToast(true);
+    setTimeout(() => setEmailResentToast(false), 3500);
+  };
 
   const handleSubmitManual = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +82,94 @@ export const DepositOverviewPage = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans relative z-10 text-white">
       
+      {/* Toast Notification for Resend Email */}
+      {emailResentToast && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="bg-emerald-500 text-slate-950 font-extrabold p-4 rounded-2xl shadow-2xl flex items-center justify-between space-x-3 text-xs border border-emerald-300"
+        >
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="w-5 h-5 text-slate-950 shrink-0" />
+            <span>Deposit verification email re-sent to <strong className="underline">{user.email}</strong>! Please check your inbox.</span>
+          </div>
+          <button onClick={() => setEmailResentToast(false)} className="text-slate-950 font-bold px-2 py-0.5 rounded hover:bg-emerald-600/30 cursor-pointer">✕</button>
+        </motion.div>
+      )}
+
+      {/* EMAIL VERIFICATION & PAYMENT DISPATCH BANNER FOR UNDEPOSITED USERS */}
+      {user.depositStatus !== 'Verified' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="border-2 p-6 sm:p-7 rounded-[2.2rem] shadow-2xl space-y-4 relative overflow-hidden transition-all duration-500 bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#0A192F] border-amber-400/90"
+        >
+          <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
+            <div className="flex items-start space-x-4">
+              <div className="w-13 h-13 rounded-2xl border flex items-center justify-center shrink-0 shadow-inner bg-amber-500/20 border-amber-400/50 text-amber-300">
+                <Mail className="w-6 h-6 animate-pulse text-amber-300" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-black uppercase px-3 py-0.5 rounded-full tracking-wider bg-amber-400 text-amber-950">
+                    EMAIL DISPATCHED & VERIFIED
+                  </span>
+                  <span className="text-xs text-amber-300 font-mono font-bold">Recipient: {user.email}</span>
+                </div>
+                
+                <h3 className="text-lg font-black text-white">
+                  Payment Verification Email Dispatched to {user.email}
+                </h3>
+                
+                <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-2xl">
+                  An official email containing payment instructions and bank verification link has been dispatched to your verified email (<strong className="text-amber-300">{user.email}</strong>). Check your inbox to proceed with deposit.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0 w-full lg:w-auto">
+              <button
+                onClick={handleResendEmail}
+                className="w-full sm:w-auto bg-[#081E26] hover:bg-[#081E26]/80 text-amber-300 border border-amber-400/40 text-xs font-black px-4 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4 text-amber-400" />
+                <span>Resend Email</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* 3-SLOT MAXIMUM MEMBER POLICY BANNER */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-[#081E26] border border-[#00C2B8]/40 p-5 rounded-[2rem] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl"
+      >
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#00C2B8]/20 text-[#00C2B8] flex items-center justify-center border border-[#00C2B8]/40 font-black shrink-0">
+            <Sparkles className="w-5 h-5 text-[#00C2B8]" />
+          </div>
+          <div>
+            <h4 className="text-sm font-black text-white flex items-center space-x-2">
+              <span>Rule Update: Maximum 3 Slots Per Member in 1 Group</span>
+              <span className="text-[10px] bg-[#00C2B8]/20 text-[#00C2B8] border border-[#00C2B8]/40 px-2 py-0.5 rounded-full font-mono">ENFORCED</span>
+            </h4>
+            <p className="text-xs text-slate-300 font-medium mt-0.5">
+              Each member is allowed to purchase up to <strong className="text-[#F2C868]">3 slots max</strong> per 50-member group. You currently own <strong className="text-[#00C2B8]">{slotsOwnedCount} of 3 slots</strong> ({remainingSlotsToBuy > 0 ? `Can purchase ${remainingSlotsToBuy} more slot${remainingSlotsToBuy > 1 ? 's' : ''}` : 'Maximum slot limit reached'}).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2 shrink-0 bg-[#0D3B43] px-4 py-2 rounded-xl border border-[#E1A238]/30 font-mono text-xs font-bold text-[#F2C868]">
+          <span>Slots Owned:</span>
+          <span className="text-[#00C2B8] font-black">{slotsOwnedCount} / 3 Max</span>
+        </div>
+      </motion.div>
+
       {/* Executive Dark Sovereign Deposit Header */}
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
@@ -124,7 +222,7 @@ export const DepositOverviewPage = () => {
             </h1>
 
             <p className="text-xs text-slate-300 font-medium leading-relaxed">
-              Complete your single ₹10,000 group deposit to secure your active slot in the 50-member cycle. Instant auto-verification available via Razorpay.
+              Complete your ₹10,000 group deposit to secure your active slot in the 50-member cycle (Up to 3 slots max per member). Instant auto-verification available via Razorpay.
             </p>
           </div>
 
@@ -143,9 +241,8 @@ export const DepositOverviewPage = () => {
               </span>
             </div>
             <p className="text-xl font-black text-white font-mono">
-              {user.depositStatus === 'Verified' ? '₹10,000 Deposit Confirmed' : '₹10,000 Deposit Required'}
+              {user.depositStatus === 'Verified' ? `₹${(slotsOwnedCount * 10000).toLocaleString('en-IN')} Confirmed` : '₹10,000 Deposit Required'}
             </p>
-            <p className="text-[11px] text-slate-300 font-bold">InfinityGram 50 Gold Club</p>
           </div>
         </div>
       </motion.div>

@@ -24,10 +24,16 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const WalletPage = () => {
-  const { user, deposits, referrals, setCurrentView } = useApp();
+  const { user, group, deposits, referrals, submitDeposit, setCurrentView } = useApp();
   const [activeTab, setActiveTab] = useState<'all' | 'deposit' | 'referral' | 'withdrawal'>('all');
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showAddFundsModal, setShowAddFundsModal] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
+  const [buySlotSuccess, setBuySlotSuccess] = useState<string | null>(null);
+  const [addFundsAmount, setAddFundsAmount] = useState(10000);
+
+  const slotsOwnedCount = user.slotsOwned || (user.slotNumber ? 1 : 0);
+  const maxSlots = 3;
 
   const [withdrawForm, setWithdrawForm] = useState({
     amount: '2500',
@@ -41,6 +47,32 @@ export const WalletPage = () => {
   const depositTotal = userVerifiedDeposits.filter(d => d.status === 'Verified').reduce((acc, curr) => acc + curr.amount, 0);
   const referralBonus = (referrals || []).filter(r => r.depositStatus === 'Verified').length * 500;
   const userBalance = depositTotal + referralBonus;
+
+  const handleAddFundsSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const generatedRzpId = 'RZP-WLT-' + Math.floor(10000000 + Math.random() * 90000000);
+    submitDeposit(addFundsAmount, generatedRzpId, 'Razorpay Instant Gateway');
+    setShowAddFundsModal(false);
+    setBuySlotSuccess(`₹${addFundsAmount.toLocaleString('en-IN')} successfully added to digital wallet balance!`);
+    setTimeout(() => setBuySlotSuccess(null), 4000);
+  };
+
+  const handleBuySlotWithWallet = () => {
+    if (slotsOwnedCount >= maxSlots) {
+      alert('Maximum 3 slots per member limit reached for this group!');
+      return;
+    }
+
+    if (userBalance < 10000) {
+      setShowAddFundsModal(true);
+      return;
+    }
+
+    const generatedTxId = 'WLT-SLOT-' + Math.floor(100000 + Math.random() * 900000);
+    submitDeposit(10000, generatedTxId, 'UPI (Manual UTR)');
+    setBuySlotSuccess(`🎉 Group Slot Successfully Purchased using Wallet Balance! Assigned to Slot #${user.slotNumber || 1}.`);
+    setTimeout(() => setBuySlotSuccess(null), 5000);
+  };
 
   // Dynamic Ledger Data from actual user state
   const walletTransactions = userVerifiedDeposits.map((d, index) => ({
@@ -73,6 +105,22 @@ export const WalletPage = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans relative z-10 text-white">
       
+      {/* Toast Banner for Wallet & Slot Purchase Success */}
+      {buySlotSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="bg-emerald-500 text-slate-950 font-black p-4 rounded-2xl shadow-2xl flex items-center justify-between space-x-3 text-xs border border-emerald-300"
+        >
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="w-5 h-5 text-slate-950 shrink-0" />
+            <span>{buySlotSuccess}</span>
+          </div>
+          <button onClick={() => setBuySlotSuccess(null)} className="text-slate-950 font-bold px-2 py-0.5 rounded hover:bg-emerald-600/30 cursor-pointer">✕</button>
+        </motion.div>
+      )}
+
       {/* Executive Dark Sovereign Wallet Header */}
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
@@ -103,22 +151,32 @@ export const WalletPage = () => {
             </p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 relative z-10 w-full lg:w-auto">
+          {/* Action Buttons: Add Funds, Buy Slot, Withdraw */}
+          <div className="flex flex-wrap items-center gap-3 shrink-0 relative z-10 w-full lg:w-auto">
             <button
-              onClick={() => setCurrentView('user-deposit-overview')}
-              className="bg-[#081E26] hover:bg-[#081E26]/80 text-[#00C2B8] border border-[#00C2B8]/40 text-xs font-black px-6 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-md cursor-pointer hover:-translate-y-0.5"
+              onClick={() => setShowAddFundsModal(true)}
+              className="bg-[#00C2B8] hover:bg-[#00C2B8]/80 text-[#081E26] text-xs font-black px-5 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg cursor-pointer hover:-translate-y-0.5"
             >
-              <Wallet className="w-4 h-4 text-[#00C2B8]" />
-              <span>Deposit Ledger</span>
+              <Sparkles className="w-4 h-4 fill-current text-[#081E26]" />
+              <span>+ Add Wallet Funds</span>
             </button>
+
+            {slotsOwnedCount < maxSlots && (
+              <button
+                onClick={handleBuySlotWithWallet}
+                className="bg-gradient-to-r from-[#E1A238] to-[#F2C868] hover:from-[#F2C868] hover:to-[#E1A238] text-[#081E26] text-xs font-black px-6 py-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(225,162,56,0.4)] transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer hover:-translate-y-0.5"
+              >
+                <Award className="w-4.5 h-4.5 text-[#081E26] fill-[#081E26]" />
+                <span>Buy Group Slot (₹10,000)</span>
+              </button>
+            )}
 
             <button
               onClick={() => setShowWithdrawModal(true)}
-              className="btn-infinity-cyan text-xs font-black px-7 py-4 rounded-2xl shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer hover:-translate-y-0.5"
+              className="bg-[#081E26] hover:bg-[#081E26]/80 text-white border border-[#E1A238]/40 text-xs font-black px-5 py-4 rounded-2xl shadow-md transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer hover:-translate-y-0.5"
             >
-              <ArrowUpRight className="w-4.5 h-4.5 stroke-[3]" />
-              <span>Instant Withdrawal</span>
+              <ArrowUpRight className="w-4 h-4 text-[#F2C868]" />
+              <span>Withdrawal</span>
             </button>
           </div>
         </div>
@@ -138,8 +196,8 @@ export const WalletPage = () => {
             <p className="text-2xl font-black text-[#00C2B8] font-mono tracking-tight mt-0.5">₹{referralBonus.toLocaleString('en-IN')}.00</p>
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Total Payouts Processed</p>
-            <p className="text-2xl font-black text-[#E1A238] font-mono tracking-tight mt-0.5">₹0.00</p>
+            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Group Slots Owned</p>
+            <p className="text-2xl font-black text-[#00C2B8] font-mono tracking-tight mt-0.5">{slotsOwnedCount} / 3 Max</p>
           </div>
         </div>
 
