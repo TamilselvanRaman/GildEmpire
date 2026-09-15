@@ -349,30 +349,47 @@ export const RegisterPage = () => {
               </div>
             </div>
 
-            {/* 3-STEP MEMBER ALLOCATION & 24HR KYC VERIFICATION GUIDANCE BANNER */}
-            <div className="mt-4 bg-[#081E26]/90 border border-blue-400/30 p-3.5 rounded-2xl space-y-2 shadow-lg">
-              <div className="flex items-center justify-between text-[10px] font-black text-white">
-                <span className="flex items-center space-x-1.5 text-[#00C2B8]">
-                  <Sparkles className="w-3.5 h-3.5 text-[#00C2B8] animate-pulse" />
-                  <span className="uppercase tracking-wider">REGISTRATION WORKFLOW</span>
+            {/* EXECUTIVE 3-STEP MEMBER ACTIVATION WORKFLOW CARD */}
+            <div className="mt-4 bg-gradient-to-br from-[#081E26] via-[#0D3B43] to-[#081E26] border border-[#00C2B8]/40 p-4 rounded-2xl space-y-3 shadow-xl">
+              <div className="flex items-center justify-between pb-2 border-b border-[#0D3B43] gap-2">
+                <span className="flex items-center space-x-2 text-xs font-black text-[#00C2B8] uppercase tracking-wider min-w-0">
+                  <Sparkles className="w-3.5 h-3.5 text-[#00C2B8] animate-pulse shrink-0" />
+                  <span className="truncate">3-Step Activation</span>
                 </span>
-                <span className="text-[9px] text-[#F2C868] font-extrabold bg-[#E1A238]/20 px-2 py-0.5 rounded-full border border-[#E1A238]/30">
+                <span className="text-[9.5px] font-extrabold text-[#F2C868] bg-[#E1A238]/20 border border-[#E1A238]/40 px-2.5 py-1 rounded-full whitespace-nowrap shrink-0">
                   ⏱ 24h Admin KYC Review
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-1.5 text-[9.5px] font-bold">
-                <div className="bg-[#0D3B43] p-2 rounded-xl border border-[#00C2B8]/40 text-white flex flex-col items-center text-center">
-                  <span className="text-[#00C2B8] font-black text-[10px] mb-0.5">1. Register</span>
-                  <span className="text-slate-300 text-[8.5px]">Upload Legal ID</span>
+              <div className="space-y-2 text-xs font-medium">
+                <div className="flex items-center space-x-3 bg-[#081E26]/90 p-2.5 rounded-xl border border-[#00C2B8]/30">
+                  <div className="w-5 h-5 rounded-lg bg-[#00C2B8] text-[#081E26] font-black text-xs flex items-center justify-center shrink-0">
+                    1
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-white text-xs">Register Account & Upload ID</p>
+                    <p className="text-[10px] text-slate-300">Name, Mobile, Email, PAN & Aadhaar</p>
+                  </div>
                 </div>
-                <div className="bg-[#0D3B43] p-2 rounded-xl border border-[#E1A238]/40 text-[#F2C868] flex flex-col items-center text-center">
-                  <span className="text-[#F2C868] font-black text-[10px] mb-0.5">2. 24h KYC</span>
-                  <span className="text-slate-300 text-[8.5px]">Admin Review</span>
+
+                <div className="flex items-center space-x-3 bg-[#081E26]/90 p-2.5 rounded-xl border border-[#E1A238]/40">
+                  <div className="w-5 h-5 rounded-lg bg-[#E1A238] text-[#081E26] font-black text-xs flex items-center justify-center shrink-0">
+                    2
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-[#F2C868] text-xs">24-Hour Admin KYC Review</p>
+                    <p className="text-[10px] text-slate-300">Document review & email dispatch</p>
+                  </div>
                 </div>
-                <div className="bg-[#0D3B43] p-2 rounded-xl border border-emerald-400/40 text-emerald-300 flex flex-col items-center text-center">
-                  <span className="text-emerald-400 font-black text-[10px] mb-0.5">3. Deposit</span>
-                  <span className="text-slate-300 text-[8.5px]">₹10k Buy Slot</span>
+
+                <div className="flex items-center space-x-3 bg-[#081E26]/90 p-2.5 rounded-xl border border-emerald-400/40">
+                  <div className="w-5 h-5 rounded-lg bg-emerald-400 text-[#081E26] font-black text-xs flex items-center justify-center shrink-0">
+                    3
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-emerald-300 text-xs">Deposit & Buy Group Slot</p>
+                    <p className="text-[10px] text-slate-300">₹10,000 deposit unlocks 50-member slot</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -402,34 +419,6 @@ export const RegisterPage = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
               <span>ACCOUNT REGISTRATION</span>
             </span>
-          </div>
-
-          {/* 3-STEP MEMBER ALLOCATION & 24HR KYC VERIFICATION GUIDANCE BANNER */}
-          <div className="bg-gradient-to-r from-blue-900/10 via-slate-900/5 to-amber-900/10 border border-blue-200/80 p-3.5 rounded-2xl space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-black text-[#0B1E39]">
-              <span className="flex items-center space-x-1.5 text-blue-700">
-                <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-                <span className="uppercase tracking-wider">MEMBER REGISTRATION NEXT STEPS</span>
-              </span>
-              <span className="text-[10px] text-amber-700 font-extrabold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
-                ⏱ 24-Hour Admin KYC Review
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-[10px] font-bold">
-              <div className="bg-white p-2 rounded-xl border border-blue-200 text-slate-800 shadow-xs flex flex-col items-center text-center">
-                <span className="text-blue-700 font-black text-[11px] mb-0.5">Step 1: Register</span>
-                <span className="text-slate-500 text-[9.5px]">Upload ID Document</span>
-              </div>
-              <div className="bg-amber-50 p-2 rounded-xl border border-amber-300 text-amber-950 shadow-xs flex flex-col items-center text-center">
-                <span className="text-amber-800 font-black text-[11px] mb-0.5">Step 2: 24h KYC</span>
-                <span className="text-amber-700 text-[9.5px]">Admin Document Review</span>
-              </div>
-              <div className="bg-emerald-50 p-2 rounded-xl border border-emerald-300 text-emerald-950 shadow-xs flex flex-col items-center text-center">
-                <span className="text-emerald-800 font-black text-[11px] mb-0.5">Step 3: Deposit & Buy</span>
-                <span className="text-emerald-700 text-[9.5px]">₹10,000 Group Slot</span>
-              </div>
-            </div>
           </div>
 
           {/* Validation Error Alert Banner */}
