@@ -33,7 +33,8 @@ import {
   ArrowLeft,
   CreditCard,
   Network,
-  BadgeCheck
+  BadgeCheck,
+  MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -294,11 +295,11 @@ export const AdminUsersPage = () => {
             </a>
 
             <a
-              href="#sec-kyc-details"
+              href="#sec-address"
               className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#0D3B43]/80 text-slate-200 hover:text-white hover:bg-[#0D3B43] transition-all cursor-pointer whitespace-nowrap"
             >
-              <CreditCard className="w-4 h-4 text-emerald-400" />
-              <span>2. Gov KYC</span>
+              <MapPin className="w-4 h-4 text-emerald-400" />
+              <span>2. Delivery Address</span>
             </a>
 
             <a
@@ -318,19 +319,11 @@ export const AdminUsersPage = () => {
             </a>
 
             <a
-              href="#sec-kyc"
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#0D3B43]/80 text-slate-200 hover:text-white hover:bg-[#0D3B43] transition-all cursor-pointer whitespace-nowrap"
-            >
-              <FileCheck className="w-4 h-4 text-emerald-400" />
-              <span>5. KYC File</span>
-            </a>
-
-            <a
               href="#sec-logs"
               className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#0D3B43]/80 text-slate-200 hover:text-white hover:bg-[#0D3B43] transition-all cursor-pointer whitespace-nowrap"
             >
               <Clock className="w-4 h-4 text-blue-400" />
-              <span>6. Audit Trail</span>
+              <span>5. Audit Trail</span>
             </a>
           </div>
         </div>
@@ -389,35 +382,23 @@ export const AdminUsersPage = () => {
             </div>
           </div>
 
-          {/* 2. Government Legal KYC Details Card */}
-          <div id="sec-kyc-details" className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
+          {/* 2. Delivery & Shipping Address Card */}
+          <div id="sec-address" className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
             <div className="flex items-center space-x-3 pb-4 border-b border-slate-200">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                <CreditCard className="w-5 h-5 text-emerald-600" />
+                <MapPin className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <h3 className="text-base font-black text-[#0B1E39]">2. Government Legal KYC Verification Details</h3>
-                <p className="text-xs text-slate-500">Government identity records collected during member onboarding.</p>
+                <h3 className="text-base font-black text-[#0B1E39]">2. Delivery & Shipping Address</h3>
+                <p className="text-xs text-slate-500">Member residential shipping address for 916 gold reward coin dispatch.</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-xs">
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">PAN Card Number</span>
-                <p className="text-base font-mono font-black text-[#0B1E39] uppercase">{selectedUserModal.panNumber || 'ABCDE1234F'}</p>
-              </div>
-
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Aadhaar Card Number (12-Digits)</span>
-                <p className="text-base font-mono font-black text-slate-800">{selectedUserModal.aadhaarNumber || '9876 5432 1000'}</p>
-              </div>
-
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Government ID Verification</span>
-                <span className="text-xs font-mono font-extrabold text-emerald-700 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-full inline-block mt-1">
-                  ✓ Verified Resident Identification
-                </span>
-              </div>
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Full Shipping / Delivery Address</span>
+              <p className="text-sm font-semibold text-[#0B1E39] leading-relaxed">
+                {selectedUserModal.address || 'Flat 402, Royal Sovereign Heights, Bandra West, Mumbai, Maharashtra 400050'}
+              </p>
             </div>
           </div>
 
@@ -502,98 +483,14 @@ export const AdminUsersPage = () => {
             </div>
           </div>
 
-          {/* 5. Legal KYC Document Inspection Card (User Registration Upload Only) */}
-          <div id="sec-kyc" className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                  <FileCheck className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-[#0B1E39]">5. Legal KYC Document Inspection</h3>
-                  <p className="text-xs text-slate-500">Inspection view for member registration identity file (Aadhaar / PAN / Passport) uploaded during signup.</p>
-                </div>
-              </div>
-
-              {selectedUserModal.idDocumentUrl && (
-                <span className="bg-emerald-100 text-emerald-800 font-extrabold px-3.5 py-1 rounded-full text-xs flex items-center space-x-1.5 border border-emerald-300">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Document Submitted at Registration</span>
-                </span>
-              )}
-            </div>
-
-            {selectedUserModal.idDocumentUrl ? (
-              <div className="space-y-6">
-                {/* High-Resolution Document Image Display */}
-                <div className="relative rounded-3xl overflow-hidden border-2 border-amber-400/60 shadow-2xl bg-slate-950 group">
-                  <img 
-                    src={selectedUserModal.idDocumentUrl} 
-                    alt="User Registration Legal ID Document" 
-                    className="w-full max-h-[500px] object-contain mx-auto py-6 bg-slate-950" 
-                  />
-                  <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-4">
-                    <a 
-                      href={selectedUserModal.idDocumentUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="bg-white text-[#0B1E39] font-extrabold px-5 py-3 rounded-2xl text-xs shadow-xl hover:bg-amber-100 transition-colors flex items-center space-x-2"
-                    >
-                      <Maximize2 className="w-4.5 h-4.5" />
-                      <span>View Full Size Image</span>
-                    </a>
-                    <a 
-                      href={selectedUserModal.idDocumentUrl} 
-                      download
-                      className="bg-[#2F6FED] text-white font-extrabold px-5 py-3 rounded-2xl text-xs shadow-xl hover:bg-blue-600 transition-colors flex items-center space-x-2"
-                    >
-                      <Download className="w-4.5 h-4.5" />
-                      <span>Download Document</span>
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
-                  <button
-                    onClick={() => {
-                      setKycVerifiedStatus(prev => ({ ...prev, [selectedUserModal.id]: true }));
-                      alert(`✅ KYC Approved for ${selectedUserModal.name}! Confirmation email dispatched.`);
-                    }}
-                    className={`w-full font-extrabold py-4 px-6 rounded-2xl text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md ${
-                      kycVerifiedStatus[selectedUserModal.id]
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4.5 h-4.5" />
-                    <span>{kycVerifiedStatus[selectedUserModal.id] ? '✓ KYC Approved & Verification Email Dispatched' : 'Approve KYC & Dispatch Confirmation Email'}</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* No document uploaded during registration view */
-              <div className="bg-slate-50 p-10 sm:p-12 rounded-3xl border border-slate-200 text-center space-y-3">
-                <div className="w-16 h-16 rounded-2xl bg-slate-200 text-slate-500 flex items-center justify-center mx-auto border border-slate-300">
-                  <FileCheck className="w-8 h-8 text-slate-400" />
-                </div>
-                <div>
-                  <h4 className="text-base font-black text-slate-700">No Legal ID Document Submitted During Registration</h4>
-                  <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
-                    This user did not upload an Aadhaar Card, PAN Card, or Passport document file during registration. Admin view displays user-submitted registration files for inspection only.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 6. Audit Log & Activity Stream Card */}
+          {/* 5. Audit Log & Activity Stream Card */}
           <div id="sec-logs" className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
             <div className="flex items-center space-x-3 pb-4 border-b border-slate-200">
               <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
                 <Clock className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <h3 className="text-base font-black text-[#0B1E39]">6. Audit Log & Activity Stream Timeline</h3>
+                <h3 className="text-base font-black text-[#0B1E39]">5. Audit Log & Activity Stream Timeline</h3>
                 <p className="text-xs text-slate-500">Historical cryptographic audit entries logged for this user.</p>
               </div>
             </div>

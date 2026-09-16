@@ -185,7 +185,7 @@ export const UserDashboardPage = () => {
             <div className="pt-1">
               <span className="text-[10px] text-[#00C2B8] font-extrabold inline-flex items-center space-x-1 bg-[#081E26] px-2.5 py-1 rounded-full border border-[#00C2B8]/40">
                 <CheckCircle2 className="w-3 h-3 text-[#00C2B8]" />
-                <span>Audited KYC Verified</span>
+                <span>Audited Account Verified</span>
               </span>
             </div>
           </div>

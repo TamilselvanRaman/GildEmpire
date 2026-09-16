@@ -94,8 +94,7 @@ export interface UserProfile {
   fullName: string;
   email: string;
   mobile: string;
-  panNumber?: string;
-  aadhaarNumber?: string;
+  address?: string;
   avatar: string;
   registrationDate: string;
   accountStatus: 'Active' | 'Pending Verification' | 'Suspended' | 'Deactivated';

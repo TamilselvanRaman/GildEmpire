@@ -55,10 +55,9 @@ export async function GET() {
         status: p.account_status || 'Active',
         role: 'Member',
         idDocumentUrl: p.id_document_url || meta.idDocumentUrl || null,
+        address: p.address || meta.address || meta.deliveryAddress || 'Flat 402, Royal Sovereign Heights, Bandra West, Mumbai, Maharashtra 400050',
         referralCode: p.referral_code || meta.referralCode || meta.referral_code || `REF-${(p.member_id || `LOP-${501928 + idx}`).replace('LOP-', '')}`,
         referredBy: p.referred_by || meta.referredBy || meta.referred_by || (idx > 0 ? 'LOP-898859 (Tamilselvan R)' : 'Primary Sponsor (Direct Registration)'),
-        panNumber: p.pan_number || meta.panNumber || meta.pan_number || `ABCDE${1234 + idx}F`,
-        aadhaarNumber: p.aadhaar_number || meta.aadhaarNumber || meta.aadhaar_number || `9876 5432 ${1000 + idx}`,
         utr: p.utr || meta.utr || (p.deposit_status === 'Verified' ? `UPI-98234120${9810 + idx}` : 'Pending UTR Submission'),
         avatar: (p.avatar && (typeof p.avatar === 'string') && (p.avatar.startsWith('http') || p.avatar.startsWith('data:'))) ? p.avatar : null,
       };
@@ -83,10 +82,9 @@ export async function GET() {
           status: p.account_status || 'Active',
           role: 'Member',
           idDocumentUrl: p.id_document_url || null,
+          address: p.address || 'Flat 402, Royal Sovereign Heights, Bandra West, Mumbai, Maharashtra 400050',
           referralCode: p.referral_code || `REF-${(p.member_id || `LOP-${501928 + idx}`).replace('LOP-', '')}`,
           referredBy: p.referred_by || (idx > 0 ? 'LOP-898859 (Tamilselvan R)' : 'Primary Sponsor (Direct Registration)'),
-          panNumber: p.pan_number || `ABCDE${1234 + idx}F`,
-          aadhaarNumber: p.aadhaar_number || `9876 5432 ${1000 + idx}`,
           utr: p.utr || (p.deposit_status === 'Verified' ? `UPI-98234120${9810 + idx}` : 'Pending UTR Submission'),
           avatar: (p.avatar && (typeof p.avatar === 'string') && (p.avatar.startsWith('http') || p.avatar.startsWith('data:'))) ? p.avatar : null,
         });

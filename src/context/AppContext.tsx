@@ -71,7 +71,7 @@ interface AppContextType {
   
   // Interactive State Actions
   loginUser: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
-  registerUser: (fullName: string, email: string, mobile: string, pass: string, referralCode?: string, idDocumentBase64?: string, idDocumentName?: string) => Promise<{ success: boolean; error?: string }>;
+  registerUser: (fullName: string, email: string, mobile: string, pass: string, referralCode?: string, idDocumentBase64?: string, idDocumentName?: string, deliveryAddress?: string) => Promise<{ success: boolean; error?: string }>;
   loginAdmin: (email: string, key: string) => Promise<boolean>;
   logout: () => void;
   submitDeposit: (amount: number, refId: string, method: DepositRecord['paymentMethod']) => void;
@@ -519,7 +519,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     pass: string, 
     referralCode?: string, 
     idDocumentBase64?: string, 
-    idDocumentName?: string
+    idDocumentName?: string,
+    deliveryAddress?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       // Auto-logout any existing user session in this browser before creating new user session
@@ -541,7 +542,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           password: pass, 
           referralCode, 
           idDocumentBase64, 
-          idDocumentName 
+          idDocumentName,
+          deliveryAddress
         }),
       });
 

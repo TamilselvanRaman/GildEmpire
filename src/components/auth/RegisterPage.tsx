@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   ShieldCheck, 
@@ -11,18 +11,16 @@ import {
   Sparkles, 
   FileText, 
   AlertCircle, 
-  Upload, 
-  X, 
   Eye, 
   EyeOff, 
-  RefreshCw,
   Phone,
   Mail,
   CheckCircle2,
   ChevronLeft,
   BadgeCheck,
   UserCheck,
-  FileCheck
+  FileCheck,
+  MapPin
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -33,8 +31,7 @@ export const RegisterPage = () => {
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
-  const [panNumber, setPanNumber] = useState('');
-  const [aadhaarNumber, setAadhaarNumber] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
@@ -62,12 +59,6 @@ export const RegisterPage = () => {
   // Status & Feedback States
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // File Upload State
-  const [idDocument, setIdDocument] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Live Duplicate Email & Mobile Check Flags
   const cleanEmail = email.trim().toLowerCase();
@@ -100,98 +91,7 @@ export const RegisterPage = () => {
     }
   };
 
-  // File Change Handler
-  const handleFileChange = (file: File | undefined) => {
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage('File size exceeds 5MB limit. Please select a smaller image or document.');
-      return;
-    }
-    setErrorMessage('');
-    setIdDocument(file);
-    if (file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    } else {
-      setPreviewUrl(null);
-    }
-  };
-
-  // Drag and Drop Handlers
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleRemoveFile = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    setIdDocument(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-
-  // Canvas Image Compression Helper Function (Compresses heavy photos to lightweight ~150KB JPEG)
-  const compressImageFile = (file: File, maxWidth = 1024, quality = 0.75): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const resultStr = event.target?.result as string;
-        if (!resultStr) {
-          resolve('');
-          return;
-        }
-        if (file.type === 'application/pdf' || !file.type.startsWith('image/')) {
-          resolve(resultStr);
-          return;
-        }
-
-        const img = new Image();
-        img.onload = () => {
-          let width = img.width;
-          let height = img.height;
-
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-            resolve(compressedBase64);
-          } else {
-            resolve(resultStr);
-          }
-        };
-        img.onerror = () => {
-          resolve(resultStr);
-        };
-        img.src = resultStr;
-      };
-      reader.onerror = () => resolve('');
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // Form Registration Submit Handler with All Type & Duplicate Checks
+  // Form Registration Submit Handler with All Validation Checks
   const handleRegister = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorMessage('');
@@ -225,9 +125,9 @@ export const RegisterPage = () => {
       return;
     }
 
-    // Check 4: Legal ID Document Upload Check
-    if (!idDocument) {
-      setErrorMessage('Please upload your Legal ID Document (Aadhaar / PAN / Driving License) to proceed.');
+    // Check 4: Delivery Address Check
+    if (!deliveryAddress.trim() || deliveryAddress.trim().length < 5) {
+      setErrorMessage('Please enter your complete delivery address for gold coin dispatch.');
       return;
     }
 
@@ -251,10 +151,6 @@ export const RegisterPage = () => {
 
     try {
       setIsSubmitting(true);
-      let idDocumentBase64: string | undefined = undefined;
-      if (idDocument) {
-        idDocumentBase64 = await compressImageFile(idDocument);
-      }
 
       const res = await registerUser(
         fullName.trim(), 
@@ -262,8 +158,9 @@ export const RegisterPage = () => {
         cleanMobile, 
         password, 
         referralCode, 
-        idDocumentBase64, 
-        idDocument?.name
+        undefined, 
+        undefined,
+        deliveryAddress.trim()
       );
       setIsSubmitting(false);
 
@@ -382,8 +279,8 @@ export const RegisterPage = () => {
                     1
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-white text-xs">Register Account & Upload ID</p>
-                    <p className="text-[10px] text-slate-300">Name, Mobile, Email, PAN & Aadhaar</p>
+                    <p className="font-bold text-white text-xs">Register Account & Address</p>
+                    <p className="text-[10px] text-slate-300">Name, Mobile, Email & Address</p>
                   </div>
                 </div>
 
@@ -392,8 +289,8 @@ export const RegisterPage = () => {
                     2
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-[#F2C868] text-xs">24-Hour Admin KYC Review</p>
-                    <p className="text-[10px] text-slate-300">Document review & email dispatch</p>
+                    <p className="font-bold text-[#F2C868] text-xs">Account Verification</p>
+                    <p className="text-[10px] text-slate-300">Instant setup & email dispatch</p>
                   </div>
                 </div>
 
@@ -408,7 +305,6 @@ export const RegisterPage = () => {
                 </div>
               </div>
             </div>
-          </div>
 
           <div className="pt-6 border-t border-white/10 text-xs text-slate-300 flex items-center justify-between font-medium relative z-10 mt-6">
             <div className="flex items-center space-x-2">
@@ -451,7 +347,7 @@ export const RegisterPage = () => {
                   Create Member Account
                 </h2>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  Personal Identity & Mandatory KYC Verification
+                  Personal Details & Delivery Address Setup
                 </p>
               </div>
 
@@ -567,174 +463,38 @@ export const RegisterPage = () => {
               </div>
             </div>
 
-            {/* SECTION 2: KYC & GOVERNMENT IDENTIFICATION */}
+            {/* SECTION 2: DELIVERY ADDRESS */}
             <div className="space-y-3 pt-1">
               <div className="flex items-center space-x-2 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-                <FileCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>Government KYC Verification</span>
+                <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                <span>Delivery Address</span>
                 <div className="flex-1 h-px bg-slate-100 ml-2"></div>
               </div>
 
-              {/* Identity Credentials (PAN Card & Aadhaar Number) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* PAN Card Number */}
-                <div>
-                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span className="flex items-center space-x-1.5">
-                      <FileText className="w-3.5 h-3.5 text-[#2563EB]" />
-                      <span>PAN CARD NUMBER</span>
-                    </span>
-                    {panNumber.trim().length === 10 && (
-                      <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                        <span>Valid PAN</span>
-                      </span>
-                    )}
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={10}
-                    value={panNumber}
-                    onChange={(e) => {
-                      setPanNumber(e.target.value.toUpperCase());
-                      if (errorMessage) setErrorMessage('');
-                    }}
-                    placeholder="e.g. ABCDE1234F"
-                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs uppercase shadow-2xs"
-                  />
-                </div>
-
-                {/* Aadhaar Number */}
-                <div>
-                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span className="flex items-center space-x-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
-                      <span>AADHAAR NUMBER (12 DIGITS)</span>
-                    </span>
-                    {aadhaarNumber.replace(/\D/g, '').length === 12 && (
-                      <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                        <span>Valid 12-Digit</span>
-                      </span>
-                    )}
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={12}
-                    value={aadhaarNumber}
-                    onChange={(e) => {
-                      setAadhaarNumber(e.target.value.replace(/\D/g, ''));
-                      if (errorMessage) setErrorMessage('');
-                    }}
-                    placeholder="e.g. 1234 5678 9012"
-                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
-                  />
-                </div>
-              </div>
-
-              {/* Legal ID Document Upload Dropzone */}
               <div>
                 <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
                   <span className="flex items-center space-x-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>LEGAL ID DOCUMENT (AADHAAR / PAN / DRIVING LICENSE)</span>
+                    <MapPin className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>DELIVERY ADDRESS (FOR GOLD REWARD DISPATCH)</span>
                   </span>
-                  {idDocument && (
-                    <span className="text-[10px] text-emerald-600 font-bold flex items-center space-x-1">
-                      <Check className="w-3 h-3 text-emerald-500 stroke-[3]" />
-                      <span>Attached</span>
+                  {deliveryAddress.trim().length >= 5 && (
+                    <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <span>Valid Address</span>
                     </span>
                   )}
                 </label>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept="image/*,.pdf"
-                  onChange={(e) => handleFileChange(e.target.files?.[0])}
-                />
-
-                {!idDocument ? (
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleDrop}
-                    className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl px-3 transition-all group cursor-pointer ${
-                      isDragging
-                        ? 'bg-blue-50 border-blue-500 scale-[1.01]'
-                        : 'bg-[#F8FAFC] border-slate-300 hover:bg-blue-50/50 hover:border-[#2563EB]'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-9 h-9 rounded-full bg-blue-100/80 text-[#2563EB] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-2xs">
-                        <Upload className="w-4 h-4 stroke-[2.5]" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-[11px] text-slate-700 font-medium">
-                          <span className="font-extrabold text-[#2563EB] underline">Click to upload</span> or drag and drop document
-                        </p>
-                        <p className="text-[9.5px] text-slate-400 font-semibold mt-0.5">
-                          PNG, JPG, WEBP or PDF (Max 5MB)
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative bg-[#F8FAFC] border-2 border-emerald-500/40 rounded-xl p-3 flex items-center justify-between space-x-3 shadow-xs">
-                    <div className="flex items-center space-x-3 overflow-hidden">
-                      {previewUrl ? (
-                        <div className="relative shrink-0">
-                          <img
-                            src={previewUrl}
-                            alt="ID Document Preview"
-                            className="w-10 h-10 object-cover rounded-lg border border-slate-200 shadow-xs bg-white"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0">
-                          <FileText className="w-5 h-5" />
-                        </div>
-                      )}
-
-                      <div className="overflow-hidden">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs font-bold text-slate-800 truncate max-w-[150px] sm:max-w-[200px]">
-                            {idDocument.name}
-                          </span>
-                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 uppercase shrink-0">
-                            Uploaded
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-medium mt-0.5">
-                          Size: {formatFileSize(idDocument.size)} &bull; {idDocument.type.split('/')[1]?.toUpperCase() || 'DOCUMENT'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        title="Change file"
-                        className="px-2.5 py-1 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center space-x-1 text-[10px] font-extrabold border border-slate-200 bg-white cursor-pointer shadow-2xs"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        <span>Change</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleRemoveFile}
-                        title="Remove file"
-                        className="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-all hover:scale-105 cursor-pointer"
-                      >
-                        <X className="w-4 h-4 stroke-[2.5]" />
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <textarea
+                  rows={3}
+                  required
+                  value={deliveryAddress}
+                  onChange={(e) => {
+                    setDeliveryAddress(e.target.value);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  placeholder="Enter complete shipping address (House/Flat No., Street, City, State, PIN Code)"
+                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs resize-none"
+                ></textarea>
               </div>
             </div>
 

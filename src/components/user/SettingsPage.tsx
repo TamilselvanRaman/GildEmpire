@@ -15,9 +15,7 @@ export const SettingsPage = () => {
     fullName: user.fullName || 'Rajesh Kumar Sharma',
     email: user.email || 'rajesh@infinitygram.in',
     mobile: user.mobile || '+91 98765 43210',
-    address: 'Flat 402, Royal Sovereign Heights, Bandra West, Mumbai, Maharashtra 400050',
-    panNumber: 'ABCDE1234F',
-    aadharNumber: 'XXXX-XXXX-9823',
+    address: user.address || 'Flat 402, Royal Sovereign Heights, Bandra West, Mumbai, Maharashtra 400050',
   });
 
   const handleSaveProfile = () => {
@@ -66,7 +64,7 @@ export const SettingsPage = () => {
             <p className="text-xs text-slate-300 font-medium flex items-center space-x-2">
               <span className="text-[#00C2B8] font-bold flex items-center space-x-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#00C2B8]" />
-                <span>Audited KYC Verified</span>
+                <span>Audited Account Verified</span>
               </span>
               <span className="text-slate-500">•</span>
               <span>Account Active</span>
@@ -116,7 +114,7 @@ export const SettingsPage = () => {
             <div className="space-y-4 text-xs font-medium">
               <div>
                 <label className="block text-slate-400 font-extrabold mb-1.5 uppercase tracking-widest text-[10px]">
-                  Full Legal Name (Matching Aadhar / PAN)
+                  Full Legal Name
                 </label>
                 <input 
                   type="text" 
@@ -158,21 +156,6 @@ export const SettingsPage = () => {
                   onChange={(e) => setProfileData({...profileData, address: e.target.value})}
                   className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-medium p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8] focus:ring-2 focus:ring-[#00C2B8]/20 transition-all disabled:opacity-75 h-24 resize-none" 
                 ></textarea>
-              </div>
-
-              {/* Verified Documents Summary Box */}
-              <div className="bg-[#081E26] p-4 rounded-2xl border border-[#0D3B43] space-y-2">
-                <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Verified Identity Documents</p>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="bg-[#0D3B43] p-3 rounded-xl border border-[#0D3B43] flex justify-between items-center">
-                    <span className="text-slate-300 font-bold">PAN Card:</span>
-                    <span className="font-mono font-black text-[#F2C868]">{profileData.panNumber}</span>
-                  </div>
-                  <div className="bg-[#0D3B43] p-3 rounded-xl border border-[#0D3B43] flex justify-between items-center">
-                    <span className="text-slate-300 font-bold">Aadhar Card:</span>
-                    <span className="font-mono font-black text-[#F2C868]">{profileData.aadharNumber}</span>
-                  </div>
-                </div>
               </div>
 
               {isEditing && (
