@@ -305,6 +305,7 @@ export const RegisterPage = () => {
                 </div>
               </div>
             </div>
+          </div>
 
           <div className="pt-6 border-t border-white/10 text-xs text-slate-300 flex items-center justify-between font-medium relative z-10 mt-6">
             <div className="flex items-center space-x-2">

@@ -51,59 +51,7 @@ export async function POST(request: Request) {
       console.warn('Duplicate check notice:', checkErr);
     }
 
-    // 1. Upload Legal ID Document to Supabase Storage bucket if base64 provided
-    if (idDocumentBase64) {
-      try {
-        let contentType = 'image/jpeg';
-        let base64Data = idDocumentBase64;
-
-        if (idDocumentBase64.includes(';base64,')) {
-          const parts = idDocumentBase64.split(';base64,');
-          contentType = parts[0].replace('data:', '') || 'image/jpeg';
-          base64Data = parts[1];
-        }
-
-        const cleanBase64 = base64Data.replace(/\s/g, '');
-        const buffer = Buffer.from(cleanBase64, 'base64');
-        const ext = idDocumentName ? idDocumentName.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') || 'jpg' : 'jpg';
-        const filePath = `kyc/${memberId}_${Date.now()}.${ext}`;
-
-        // Ensure id_documents bucket exists
-        try {
-          await dbClient.storage.createBucket('id_documents', { public: true });
-        } catch (bErr) {}
-
-        // Upload directly to kyc/ folder inside id_documents bucket
-        const { data: uploadData, error: uploadErr } = await dbClient.storage
-          .from('id_documents')
-          .upload(filePath, buffer, {
-            contentType,
-            upsert: true,
-          });
-
-        if (!uploadErr && uploadData) {
-          const { data: urlData } = dbClient.storage.from('id_documents').getPublicUrl(filePath);
-          if (urlData?.publicUrl) {
-            idDocumentUrl = urlData.publicUrl;
-          }
-        } else if (uploadErr) {
-          console.warn('Storage upload notice, retrying with fallback client:', uploadErr.message);
-          const { data: uploadData2 } = await supabase.storage
-            .from('id_documents')
-            .upload(filePath, buffer, { contentType, upsert: true });
-          if (uploadData2) {
-            const { data: urlData } = supabase.storage.from('id_documents').getPublicUrl(filePath);
-            if (urlData?.publicUrl) {
-              idDocumentUrl = urlData.publicUrl;
-            }
-          }
-        }
-      } catch (storageErr) {
-        console.warn('Supabase Storage Upload Notice:', storageErr);
-      }
-    }
-
-    // 2. Attempt Supabase Auth Registration
+    // 1. Attempt Supabase Auth Registration
     try {
       let authData: any = null;
       let authError: any = null;
