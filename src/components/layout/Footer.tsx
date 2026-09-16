@@ -27,7 +27,7 @@ export const Footer = () => {
               </span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed font-medium">
-              InfinityGram Audited Sovereign digital platform for verified member registration, transparent deposit management, 50-member group progression, and daily 1 Gram 24K Gold reward status tracking.
+              InfinityGram Audited Sovereign digital platform for verified member registration, transparent deposit management, 50-member group progression, and daily 1 Gram 916 Gold reward status tracking.
             </p>
             <div className="flex items-center space-x-2 text-xs text-[#00C2B8] bg-[#0D3B43]/60 border border-[#00C2B8]/40 px-3 py-1.5 rounded-xl w-fit font-bold shadow-sm">
               <ShieldCheck className="w-4 h-4 text-[#00C2B8]" />

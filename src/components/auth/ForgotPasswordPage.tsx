@@ -47,10 +47,10 @@ export const ForgotPasswordPage = () => {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-xs"
+              className="w-full bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#3B82F6] hover:to-[#1E40AF] text-white font-extrabold py-3.5 px-6 rounded-xl shadow-[0_10px_25px_-5px_rgba(37,99,235,0.45)] border border-blue-400/30 flex items-center justify-center space-x-2 text-xs uppercase tracking-wider cursor-pointer hover:scale-[1.005] active:scale-[0.995] transition-all"
             >
-              <span>Send Reset Instructions</span>
-              <ArrowRight className="w-4 h-4" />
+              <span className="font-extrabold text-white">Send Reset Instructions</span>
+              <ArrowRight className="w-4 h-4 text-white" />
             </button>
           </form>
         )}

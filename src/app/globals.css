@@ -84,10 +84,52 @@
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.btn-infinity-gold:hover {
-  filter: brightness(1.1);
+.btn-sovereign-blue {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  color: #FFFFFF !important;
+  font-weight: 800;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-sovereign-blue:hover {
+  background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+  box-shadow: 0 14px 30px -4px rgba(37, 99, 235, 0.6);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(225, 162, 56, 0.45);
+}
+
+.btn-sovereign-gold {
+  background: linear-gradient(135deg, #F2C868 0%, #E1A238 100%);
+  color: #081E26 !important;
+  font-weight: 800;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(225, 162, 56, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-sovereign-gold:hover {
+  background: linear-gradient(135deg, #FFD875 0%, #EFA93B 100%);
+  box-shadow: 0 14px 30px -4px rgba(225, 162, 56, 0.6);
+  transform: translateY(-1px);
+}
+
+.btn-sovereign-cyan {
+  background: linear-gradient(135deg, #00C2B8 0%, #008B84 100%);
+  color: #081E26 !important;
+  font-weight: 800;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 194, 184, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-sovereign-cyan:hover {
+  background: linear-gradient(135deg, #17E7DD 0%, #009E96 100%);
+  box-shadow: 0 14px 30px -4px rgba(0, 194, 184, 0.6);
+  transform: translateY(-1px);
 }
 
 .badge-infinity-cyan {

@@ -10,6 +10,9 @@ export const MyGroupPage = () => {
   const [filter, setFilter] = useState<'All' | 'ActivePool' | 'WonGold'>('All');
   const [viewFormat, setViewFormat] = useState<'table' | 'grid'>('table');
 
+  const occupiedCount = group.slots.filter(s => s.status === 'Occupied' || s.status === 'Won 1g Gold').length;
+  const availableCount = 50 - occupiedCount;
+
   const filteredSlots = group.slots.filter(s => {
     if (filter === 'WonGold') return s.status === 'Won 1g Gold';
     if (filter === 'ActivePool') return s.status !== 'Won 1g Gold';
@@ -19,6 +22,29 @@ export const MyGroupPage = () => {
   return (
     <div className="space-y-6 text-white font-sans relative">
       
+      {/* Deposit Required Banner for Registered Unverified Users */}
+      {user.depositStatus !== 'Verified' && (
+        <div className="bg-gradient-to-r from-amber-500/20 via-[#E1A238]/15 to-transparent border border-[#E1A238]/50 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-medium text-amber-200 shadow-lg">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-[#E1A238] text-[#081E26] flex items-center justify-center font-black shrink-0 text-base shadow-md">
+              ⚡
+            </div>
+            <div>
+              <h4 className="font-extrabold text-[#F2C868] text-sm">₹10,000 Scheme Deposit & Slot Purchase Required</h4>
+              <p className="text-slate-200 text-xs mt-0.5">
+                Your account is registered. Complete your deposit to unlock and occupy your official slot in this 50-member group cycle.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setCurrentView('user-deposit-overview')}
+            className="bg-[#00C2B8] hover:bg-[#00a8a0] text-[#081E26] font-black px-4 py-2.5 rounded-xl transition-all shadow-md shrink-0 whitespace-nowrap cursor-pointer text-xs"
+          >
+            Deposit & Lock Slot →
+          </button>
+        </div>
+      )}
+
       {/* Group Header Card */}
       <div className="bg-[#0D3B43] rounded-3xl border border-[#E1A238]/30 shadow-2xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
@@ -28,9 +54,9 @@ export const MyGroupPage = () => {
             </span>
             <span className="text-xs font-mono text-[#F2C868] font-bold">{group.groupId}</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-white">InfinityGram 50 Gold Club - Batch A</h1>
+          <h1 className="text-2xl font-extrabold text-white">{group.groupName || 'InfinityGram 50 Gold Club - Batch A'}</h1>
           <p className="text-xs text-slate-300 mt-1">
-            Strict 50-Member Group Structure. Member allocation in progress <span className="text-[#00C2B8] font-bold">→</span> 1 Active Member registered, 49 Slots available.
+            Strict 50-Member Group Structure. <span className="text-[#00C2B8] font-bold">{occupiedCount} Verified Member{occupiedCount === 1 ? '' : 's'}</span> allocated, <span className="text-[#F2C868] font-bold">{availableCount} Slots available</span>.
           </p>
         </div>
 
@@ -42,11 +68,11 @@ export const MyGroupPage = () => {
           </div>
           <div className="text-center px-3 border-r border-[#0D3B43]">
             <p className="text-slate-400 font-medium">Occupied</p>
-            <p className="text-base font-bold text-[#00C2B8]">1 Slot</p>
+            <p className="text-base font-bold text-[#00C2B8]">{occupiedCount} Slot{occupiedCount === 1 ? '' : 's'}</p>
           </div>
           <div className="text-center px-3">
             <p className="text-slate-400 font-medium">Available</p>
-            <p className="text-base font-bold text-[#F2C868]">49 Slots</p>
+            <p className="text-base font-bold text-[#F2C868]">{availableCount} Slot{availableCount === 1 ? '' : 's'}</p>
           </div>
         </div>
       </div>
@@ -118,25 +144,24 @@ export const MyGroupPage = () => {
 
         {/* TABLE VIEW */}
         {viewFormat === 'table' ? (
-          <div className="overflow-x-auto rounded-2xl border border-[#081E26]">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto rounded-2xl border border-[#081E26] w-full">
+            <table className="w-full min-w-[620px] text-left text-xs">
               <thead className="bg-[#081E26] text-slate-300 uppercase tracking-wider font-mono text-[10px]">
                 <tr>
-                  <th className="p-3.5">Slot #</th>
-                  <th className="p-3.5">Member Name</th>
-                  <th className="p-3.5">Member ID</th>
-                  <th className="p-3.5">Cycle Status</th>
-                  <th className="p-3.5">Award / Pool Info</th>
+                  <th className="p-3.5 whitespace-nowrap">Slot #</th>
+                  <th className="p-3.5 whitespace-nowrap">Member Name</th>
+                  <th className="p-3.5 whitespace-nowrap">Member ID</th>
+                  <th className="p-3.5 whitespace-nowrap">Cycle Status</th>
+                  <th className="p-3.5 whitespace-nowrap">Award / Pool Info</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#081E26] font-medium">
                 {filteredSlots.map(slot => {
                   const isWon = slot.status === 'Won 1g Gold';
                   const isCurrentUser = 
-                    slot.slotNumber === user.slotNumber || 
-                    (user.memberId && slot.memberId === user.memberId) ||
-                    (user.fullName && slot.memberName && slot.memberName.toLowerCase() === user.fullName.toLowerCase()) ||
-                    slot.slotNumber === 1;
+                    user?.depositStatus === 'Verified' && 
+                    (((user.slotNumber ?? 0) > 0 && slot.slotNumber === user.slotNumber) || 
+                     (!!user.memberId && !!slot.memberId && slot.memberId === user.memberId));
 
                   return (
                     <tr
@@ -149,14 +174,18 @@ export const MyGroupPage = () => {
                             : 'text-slate-200'
                       }`}
                     >
-                      <td className="p-3.5 font-mono font-bold text-[#00C2B8]">
+                      <td className="p-3.5 font-mono font-bold text-[#00C2B8] whitespace-nowrap">
                         #{slot.slotNumber.toString().padStart(2, '0')}
                       </td>
 
                       {/* Member Name Field */}
-                      <td className="p-3.5 font-bold">
+                      <td className="p-3.5 font-bold whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          <span>{slot.memberName}</span>
+                          {slot.status === 'Available' ? (
+                            <span className="text-slate-400 font-normal italic">Slot Open for Member</span>
+                          ) : (
+                            <span>{slot.memberName}</span>
+                          )}
                           {isCurrentUser && (
                             <span className="text-[9px] bg-[#E1A238] text-[#081E26] font-black px-1.5 py-0.5 rounded uppercase shrink-0">YOU</span>
                           )}
@@ -164,34 +193,38 @@ export const MyGroupPage = () => {
                       </td>
 
                       {/* Member ID Field */}
-                      <td className="p-3.5 font-mono text-slate-300">
-                        <span>{slot.memberId}</span>
+                      <td className="p-3.5 font-mono text-slate-300 whitespace-nowrap">
+                        {slot.status === 'Available' ? (
+                          <span className="text-slate-500">—</span>
+                        ) : (
+                          <span>{slot.memberId}</span>
+                        )}
                       </td>
 
-                      <td className="p-3.5">
+                      <td className="p-3.5 whitespace-nowrap">
                         {isWon ? (
-                          <span className="inline-flex items-center space-x-1 bg-[#E1A238]/20 text-[#E1A238] border border-[#E1A238]/40 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
+                          <span className="inline-flex items-center space-x-1 bg-[#E1A238]/20 text-[#E1A238] border border-[#E1A238]/40 px-2.5 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap">
                             <Award className="w-3 h-3" />
-                            <span>Won 1g 24K Gold</span>
+                            <span>Won 1g 916 Gold</span>
                           </span>
-                        ) : isCurrentUser ? (
-                          <span className="inline-flex items-center space-x-1 bg-[#00C2B8]/10 text-[#00C2B8] border border-[#00C2B8]/30 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
+                        ) : slot.status === 'Occupied' ? (
+                          <span className="inline-flex items-center space-x-1 bg-[#00C2B8]/10 text-[#00C2B8] border border-[#00C2B8]/30 px-2.5 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#00C2B8]"></span>
                             <span>Active Pool</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center space-x-1 bg-slate-800/60 text-slate-400 border border-slate-700/60 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
-                            <span>Available Slot</span>
+                          <span className="inline-flex items-center space-x-1 bg-slate-800/60 text-slate-400 border border-slate-700/60 px-2.5 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap">
+                            <span>Slot Not Open Yet</span>
                           </span>
                         )}
                       </td>
-                      <td className="p-3.5 font-mono text-xs">
+                      <td className="p-3.5 font-mono text-xs whitespace-nowrap">
                         {isWon ? (
                           <span className="text-[#F2C868]">Awarded Day {slot.wonDay}</span>
-                        ) : isCurrentUser ? (
-                          <span className="text-slate-400">Eligible Daily Draw</span>
+                        ) : slot.status === 'Occupied' ? (
+                          <span className="text-[#00C2B8]">Eligible Daily Draw</span>
                         ) : (
-                          <span className="text-slate-500">Open for Allocation</span>
+                          <span className="text-slate-500">Unlocks Upon ₹10,000 Deposit</span>
                         )}
                       </td>
                     </tr>
@@ -206,10 +239,9 @@ export const MyGroupPage = () => {
             {filteredSlots.map(slot => {
               const isWon = slot.status === 'Won 1g Gold';
               const isCurrentUser = 
-                slot.slotNumber === user.slotNumber || 
-                (user.memberId && slot.memberId === user.memberId) ||
-                (user.fullName && slot.memberName && slot.memberName.toLowerCase() === user.fullName.toLowerCase()) ||
-                slot.slotNumber === 1;
+                user?.depositStatus === 'Verified' && 
+                (((user.slotNumber ?? 0) > 0 && slot.slotNumber === user.slotNumber) || 
+                 (!!user.memberId && !!slot.memberId && slot.memberId === user.memberId));
 
               return (
                 <motion.div
@@ -234,11 +266,11 @@ export const MyGroupPage = () => {
                   </div>
 
                   <div>
-                    <p className={`text-xs font-bold truncate ${isCurrentUser ? 'text-white' : isWon ? 'text-[#F2C868]' : 'text-slate-300'}`}>
-                      {slot.memberName}
+                    <p className={`text-xs font-bold truncate ${isCurrentUser ? 'text-white' : isWon ? 'text-[#F2C868]' : slot.status === 'Available' ? 'text-slate-400 font-normal italic' : 'text-slate-300'}`}>
+                      {slot.status === 'Available' ? 'Slot Open' : slot.memberName}
                     </p>
                     <p className={`text-[10px] font-mono ${isCurrentUser ? 'text-slate-200' : 'text-slate-400'}`}>
-                      {slot.memberId}
+                      {slot.status === 'Available' ? '—' : slot.memberId}
                     </p>
                   </div>
 
@@ -247,14 +279,14 @@ export const MyGroupPage = () => {
                       <span className="text-[9px] font-extrabold text-[#E1A238] uppercase">
                         Won Day {slot.wonDay}
                       </span>
-                    ) : isCurrentUser ? (
-                      <span className="text-[9px] font-bold flex items-center space-x-1 text-white">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-                        <span>In Active Pool</span>
+                    ) : slot.status === 'Occupied' ? (
+                      <span className="text-[9px] font-bold flex items-center space-x-1 text-[#00C2B8]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#00C2B8]"></span>
+                        <span>Active Pool</span>
                       </span>
                     ) : (
                       <span className="text-[9px] font-bold text-slate-500">
-                        Available
+                        Not Open Yet
                       </span>
                     )}
                   </div>

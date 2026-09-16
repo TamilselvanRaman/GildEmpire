@@ -67,7 +67,7 @@ export const LegalSuitePage: React.FC<Props> = ({ docType = 'privacy' }) => {
               Legal & Policy Governance Framework
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm max-w-2xl font-normal leading-relaxed">
-              Transparent governance standards protecting member deposits, 50-member group allocations, 24K gold disbursements, and data privacy.
+              Transparent governance standards protecting member deposits, 50-member group allocations, 916 gold disbursements, and data privacy.
             </p>
           </div>
 
@@ -128,18 +128,18 @@ export const LegalSuitePage: React.FC<Props> = ({ docType = 'privacy' }) => {
             {activeTab === 'privacy' && (
               <div className="space-y-4">
                 <h3 className="text-sm font-black text-[#F2C868]">1. Information We Collect</h3>
-                <p>InfinityGram collects verified personal information including full name, mobile number, email address, PAN/KYC identification documents, and bank UTR transaction details required for 50-member group seating and 24K gold coin shipment dispatch.</p>
+                <p>InfinityGram collects verified personal information including full name, mobile number, email address, PAN/KYC identification documents, and bank UTR transaction details required for 50-member group seating and 916 gold coin shipment dispatch.</p>
                 <h3 className="text-sm font-black text-[#F2C868]">2. Asset & Data Security Protocols</h3>
                 <p>All sensitive member data is protected using 256-Bit SSL transport layer encryption and stored in SOC-2 compliant isolated database vaults. We do not sell or rent member data to third-party advertisers.</p>
                 <h3 className="text-sm font-black text-[#F2C868]">3. User Privacy Rights</h3>
                 <p>Members maintain the right to inspect, update, or request data deletion of personal identification records subject to statutory financial audit retention mandates.</p>
               </div>
-            )}
+            )} 
 
             {activeTab === 'terms' && (
               <div className="space-y-4">
                 <h3 className="text-sm font-black text-[#F2C868]">1. 50-Member Group Execution Invariants</h3>
-                <p>Each group consists of exactly 50 verified members who have submitted their ₹10,000 deposit. Group cycles run for 50 active days, during which 1 Gram of 24K Gold Coin is awarded daily via automated audited selection.</p>
+                <p>Each group consists of exactly 50 verified members who have submitted their ₹10,000 deposit. Group cycles run for 50 active days, during which 1 Gram of 916 Gold Coin is awarded daily via automated audited selection.</p>
                 <h3 className="text-sm font-black text-[#F2C868]">2. Deposit & Refund Conditions</h3>
                 <p>Deposits are held in locked asset vaults. Member principal deposits are 100% refundable upon group cycle completion or per defined program rules.</p>
               </div>

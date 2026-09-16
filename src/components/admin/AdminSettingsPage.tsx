@@ -45,7 +45,7 @@ export const AdminSettingsPage = () => {
   const [platformTitle, setPlatformTitle] = useState('InfinityGram Sovereign Audit Engine');
   const [supportEmail, setSupportEmail] = useState('support@infinitygram.in');
   const [supportPhone, setSupportPhone] = useState('+91 98765 43210');
-  const [announcementBanner, setAnnouncementBanner] = useState('🎉 Batch A Day 2 Live - 1 Gram 24K Gold Awarded Daily to Enrolled Members!');
+  const [announcementBanner, setAnnouncementBanner] = useState('🎉 Batch A Day 2 Live - 1 Gram 916 Gold Awarded Daily to Enrolled Members!');
   const [currencySymbol, setCurrencySymbol] = useState('₹ INR (Indian Rupee)');
 
   // Tab 3: Security & Verification Controls
@@ -233,7 +233,7 @@ export const AdminSettingsPage = () => {
 
               <div className="space-y-2">
                 <label className="block text-[#0B1E39] font-extrabold uppercase text-[10px] tracking-wider">
-                  Gold Prize per Day (Grams 24K)
+                  Gold Prize per Day (Grams 916)
                 </label>
                 <div className="relative">
                   <input
@@ -243,10 +243,10 @@ export const AdminSettingsPage = () => {
                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-4 rounded-2xl font-mono font-black text-sm focus:outline-none focus:border-[#2F6FED]"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-amber-100 text-amber-900 text-[10px] font-mono font-black px-2.5 py-1 rounded-lg border border-amber-300">
-                    24K PURITY
+                    916 PURITY
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium">Quantity of 24K gold coin awarded each day to lucky paper chit winner.</p>
+                <p className="text-[11px] text-slate-500 font-medium">Quantity of 916 gold coin awarded each day to lucky paper chit winner.</p>
               </div>
 
               <div className="space-y-2">

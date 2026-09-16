@@ -31,7 +31,7 @@ export const AboutPage = () => {
             What is <span className="text-[#F2C868]">InfinityGram</span>?
           </h1>
           <p className="text-base text-slate-300 leading-relaxed font-medium pt-1">
-            InfinityGram is a high-trust Indian digital membership platform engineered for structured 50-member group progression. Every 50-day cycle guarantees <strong className="text-[#00C2B8]">1 Gram 24K Hallmarked Gold</strong> to all 50 registered members.
+            InfinityGram is a high-trust Indian digital membership platform engineered for structured 50-member group progression. Every 50-day cycle guarantees <strong className="text-[#00C2B8]">1 Gram 916 Hallmarked Gold</strong> to all 50 registered members.
           </p>
         </motion.div>
 
@@ -89,22 +89,22 @@ export const AboutPage = () => {
                   <tr>
                     <td className="py-2.5 pr-2 font-bold text-white">Day 01</td>
                     <td className="py-2.5 px-2 text-center text-slate-300">50 Members</td>
-                    <td className="py-2.5 pl-2 text-right text-[#F2C868] font-bold">1g 24K Gold Coin</td>
+                    <td className="py-2.5 pl-2 text-right text-[#F2C868] font-bold">1g 916 Gold Coin</td>
                   </tr>
                   <tr>
                     <td className="py-2.5 pr-2 font-bold text-white">Day 02</td>
                     <td className="py-2.5 px-2 text-center text-slate-300">49 Members</td>
-                    <td className="py-2.5 pl-2 text-right text-[#F2C868] font-bold">1g 24K Gold Coin</td>
+                    <td className="py-2.5 pl-2 text-right text-[#F2C868] font-bold">1g 916 Gold Coin</td>
                   </tr>
                   <tr className="bg-[#0D3B43]/80 font-bold">
                     <td className="py-2.5 pl-2 rounded-l-lg text-[#00C2B8]">Day 15 (Current)</td>
                     <td className="py-2.5 px-2 text-center text-[#00C2B8]">36 Members</td>
-                    <td className="py-2.5 pr-2 rounded-r-lg text-right text-[#00C2B8]">1g 24K Gold Coin</td>
+                    <td className="py-2.5 pr-2 rounded-r-lg text-right text-[#00C2B8]">1g 916 Gold Coin</td>
                   </tr>
                   <tr>
                     <td className="py-2.5 pr-2 font-bold text-white">Day 50 (Final)</td>
                     <td className="py-2.5 px-2 text-center text-slate-300">1 Member</td>
-                    <td className="py-2.5 pl-2 text-right text-[#F2C868] font-bold">1g 24K Gold Coin</td>
+                    <td className="py-2.5 pl-2 text-right text-[#F2C868] font-bold">1g 916 Gold Coin</td>
                   </tr>
                 </tbody>
               </table>
@@ -173,7 +173,7 @@ export const AboutPage = () => {
               </div>
               <h3 className="text-[15px] font-black text-white mb-3 tracking-tight">3. Insured BlueDart Gold Courier</h3>
               <p className="text-[13px] text-slate-300 leading-relaxed font-medium">
-                Prize winners receive 1 Gram 24K Hallmarked Gold coins packaged in tamper-evident security boxes and shipped directly via BlueDart insured express courier.
+                Prize winners receive 1 Gram 916 Hallmarked Gold coins packaged in tamper-evident security boxes and shipped directly via BlueDart insured express courier.
               </p>
             </motion.div>
 

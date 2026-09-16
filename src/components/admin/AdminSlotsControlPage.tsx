@@ -18,6 +18,7 @@ import {
   Phone, 
   Mail, 
   X,
+  Check,
   UserCheck,
   PlusCircle,
   ShieldCheck,
@@ -27,7 +28,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminSlotsControlPage = () => {
-  const { group, allGroups, deposits, setCurrentView } = useApp();
+  const { group, allGroups, deposits, setCurrentView, dbUsers = [], manualAssignSlot } = useApp();
   const [selectedBatch, setSelectedBatch] = useState<'batchA' | 'batchB' | 'batchC' | 'batchD' | 'batchE'>('batchA');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'occupied' | 'available'>('all');
@@ -35,6 +36,11 @@ export const AdminSlotsControlPage = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [targetSlotNum, setTargetSlotNum] = useState<number | null>(null);
   const [selectedMemberModal, setSelectedMemberModal] = useState<any>(null);
+
+  // Manual slot assignment states
+  const [selectedUserForSlot, setSelectedUserForSlot] = useState<string>('');
+  const [userSearchTerm, setUserSearchTerm] = useState<string>('');
+  const [isAssigning, setIsAssigning] = useState<boolean>(false);
 
   const getGroupStats = (groupId: string) => {
     const target = (allGroups || []).find(g => g.groupId === groupId);
@@ -59,7 +65,7 @@ export const AdminSlotsControlPage = () => {
       total: 50,
       available: statsA.available,
       waiting: 0,
-      description: `Active Group Cycle. 1g 24K Gold awarded daily. ${statsA.filled}/50 Members Enrolled.`,
+      description: `Active Group Cycle. 1g 916 Gold awarded daily. ${statsA.filled}/50 Members Enrolled.`,
     },
     batchB: {
       groupId: 'GROUP-002',
@@ -115,17 +121,21 @@ export const AdminSlotsControlPage = () => {
 
   // Global aggregate stats across all 5 batches
   const totalSystemSlots = 250;
-  const totalSystemFilled = 140; // 50 + 50 + 40
-  const totalSystemAvailable = 110; // 10 + 50 + 50
-  const totalSystemWaiting = 0; // Verified deposits auto-assigned directly upon verification
+  const totalSystemFilled = (allGroups || []).reduce((acc, g) => acc + g.slots.filter(s => s.status === 'Occupied').length, 0);
+  const totalSystemAvailable = 250 - totalSystemFilled;
+  const totalSystemWaiting = dbUsers.filter(u => u.deposit !== 'Verified' && u.depositStatus !== 'Verified').length;
 
-  // Mock pending queue members waiting for slot assignment
-  const waitingQueueMembers = [
-    { id: 'DEP-9081', name: 'Rajesh Sharma', phone: '+91 98765 99012', utr: 'UPI-982341209811', amount: '₹10,000', depositTime: '10 mins ago' },
-    { id: 'DEP-9082', name: 'Ananya Roy', phone: '+91 98765 99013', utr: 'UPI-982341209812', amount: '₹10,000', depositTime: '25 mins ago' },
-    { id: 'DEP-9083', name: 'Vikram Seth', phone: '+91 98765 99014', utr: 'UPI-982341209813', amount: '₹10,000', depositTime: '1 hour ago' },
-    { id: 'DEP-9084', name: 'Kavita Pillai', phone: '+91 98765 99015', utr: 'UPI-982341209814', amount: '₹10,000', depositTime: '2 hours ago' },
-  ];
+  // Real pending queue members derived from dbUsers
+  const waitingQueueMembers = dbUsers
+    .filter(u => u.deposit !== 'Verified' && u.depositStatus !== 'Verified')
+    .map(u => ({
+      id: u.memberId || u.id || 'DEP-NEW',
+      name: u.name || u.email,
+      phone: u.mobile || '—',
+      utr: u.utr || 'Pending Verification',
+      amount: '₹10,000',
+      depositTime: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recently'
+    }));
 
   // Generate 50 Slots Representation for selected batch
   const generateBatchSlots = () => {
@@ -696,14 +706,77 @@ export const AdminSlotsControlPage = () => {
               </div>
 
               <div className="space-y-3">
-                <label className="block text-xs font-extrabold text-[#0B1E39]">Select Waiting Depositor:</label>
-                <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs text-slate-900 font-bold focus:outline-none focus:border-[#2F6FED]">
-                  {waitingQueueMembers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.phone}) — {m.amount} Verified ({m.utr})
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-extrabold text-[#0B1E39]">Search Registered User by Name, Member ID, Email, or Ref ID:</label>
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Type Name, LOP-ID, Email or Ref ID..."
+                    value={userSearchTerm}
+                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-3.5 py-3 text-xs text-slate-900 font-semibold focus:outline-none focus:border-[#2F6FED]"
+                  />
+                </div>
+
+                <label className="block text-xs font-extrabold text-[#0B1E39] pt-1">Select Registered User to Assign:</label>
+                <div className="max-h-56 overflow-y-auto space-y-2 border border-slate-200 rounded-2xl p-2 bg-slate-50/80">
+                  {dbUsers
+                    .filter((u) => {
+                      if (!userSearchTerm.trim()) return true;
+                      const q = userSearchTerm.toLowerCase();
+                      return (
+                        (u.name && u.name.toLowerCase().includes(q)) ||
+                        (u.email && u.email.toLowerCase().includes(q)) ||
+                        (u.memberId && u.memberId.toLowerCase().includes(q)) ||
+                        (u.mobile && u.mobile.includes(q))
+                      );
+                    })
+                    .map((u) => {
+                      const val = u.email || u.memberId;
+                      const isSelected = selectedUserForSlot === val;
+                      const initial = u.name ? u.name.charAt(0).toUpperCase() : 'M';
+                      const isVerified = u.deposit === 'Verified';
+
+                      return (
+                        <div
+                          key={u.id || u.email}
+                          onClick={() => setSelectedUserForSlot(val)}
+                          className={`p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+                            isSelected
+                              ? 'bg-blue-50 border-[#2F6FED] ring-2 ring-blue-500/20 shadow-xs'
+                              : 'bg-white border-slate-200/80 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3 min-w-0">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs uppercase shrink-0 border ${
+                              isSelected ? 'bg-[#00C2B8] text-[#081E26] border-[#00C2B8]' : 'bg-gradient-to-br from-[#00C2B8] to-[#0B1E39] text-[#F2C868] border-amber-300/40'
+                            }`}>
+                              {initial}
+                            </div>
+                            <div className="truncate">
+                              <p className="font-extrabold text-[#0B1E39] text-xs truncate">
+                                {u.name || u.email}
+                              </p>
+                              <p className="text-[10px] font-mono text-slate-500 font-bold">
+                                {u.memberId || 'LOP-NEW'} &bull; {u.email}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2 shrink-0 ml-2">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              isVerified ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-300'
+                            }`}>
+                              {isVerified ? '✓ Verified Paid' : 'Payment Pending'}
+                            </span>
+                            {isSelected && (
+                              <Check className="w-4 h-4 text-[#2F6FED]" />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
               </div>
 
               <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 space-y-1 text-xs">
@@ -712,7 +785,7 @@ export const AdminSlotsControlPage = () => {
                   <span>Slot #{targetSlotNum} Occupied</span>
                 </div>
                 <p className="text-[11px] text-emerald-700">
-                  Once assigned, deposit will be locked and user will be placed in active draw pool.
+                  Once confirmed, this member will be verified and seated in Slot #{targetSlotNum} of {currentBatchInfo.name}.
                 </p>
               </div>
 
@@ -724,13 +797,24 @@ export const AdminSlotsControlPage = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
+                  disabled={!selectedUserForSlot || isAssigning}
+                  onClick={async () => {
+                    if (!selectedUserForSlot || !targetSlotNum) return;
+                    setIsAssigning(true);
+                    const res = await manualAssignSlot(selectedUserForSlot, targetSlotNum, currentBatchInfo.groupId);
+                    setIsAssigning(false);
                     setShowAssignModal(false);
-                    alert(`Slot #${targetSlotNum} successfully filled and assigned!`);
+                    setSelectedUserForSlot('');
+                    setUserSearchTerm('');
+                    if (res?.success) {
+                      alert(`✅ Slot #${targetSlotNum} successfully assigned to ${selectedUserForSlot}!`);
+                    } else {
+                      alert(`❌ Slot assignment error: ${res?.error || 'Failed to assign slot.'}`);
+                    }
                   }}
-                  className="w-1/2 bg-[#2F6FED] hover:bg-blue-700 text-white font-black py-3.5 rounded-2xl text-xs cursor-pointer shadow-lg shadow-blue-500/20"
+                  className="w-1/2 bg-[#2F6FED] hover:bg-blue-700 text-white font-black py-3.5 rounded-2xl text-xs cursor-pointer shadow-lg shadow-blue-500/20 disabled:opacity-50"
                 >
-                  Confirm Slot Assignment
+                  {isAssigning ? 'Assigning...' : 'Confirm Slot Assignment'}
                 </button>
               </div>
             </motion.div>

@@ -208,9 +208,9 @@ export const WalletPage = () => {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="bg-[#0D3B43] rounded-[2.5rem] border border-[#E1A238]/30 shadow-2xl p-8 sm:p-10 space-y-6"
+        className="bg-[#0D3B43] rounded-[2.5rem] border border-[#E1A238]/30 shadow-2xl p-4 sm:p-8 space-y-6 overflow-hidden"
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#081E26]">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-[#081E26]">
           <div>
             <h3 className="text-lg font-black text-white flex items-center space-x-2">
               <FileText className="w-5 h-5 text-[#00C2B8]" />
@@ -222,8 +222,8 @@ export const WalletPage = () => {
           </div>
 
           {/* Statement Filters & Export */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center space-x-1 bg-[#081E26] p-1 rounded-2xl border border-[#0D3B43] text-xs font-black">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <div className="flex flex-wrap items-center gap-1 bg-[#081E26] p-1.5 rounded-2xl border border-[#0D3B43] text-xs font-black w-full sm:w-auto">
               {[
                 { id: 'all', label: 'All Logs' },
                 { id: 'deposit', label: 'Deposits' },
@@ -233,7 +233,7 @@ export const WalletPage = () => {
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id as any)}
-                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer text-[11px] ${
                     activeTab === t.id 
                       ? 'bg-[#00C2B8] text-[#081E26] shadow-xs' 
                       : 'text-slate-300 hover:text-white'
@@ -246,7 +246,7 @@ export const WalletPage = () => {
 
             <button 
               onClick={() => alert('Downloading official PDF statement...')}
-              className="bg-[#081E26] hover:bg-[#081E26]/80 text-[#00C2B8] text-xs font-black px-4 py-2 rounded-xl border border-[#00C2B8]/30 transition-colors flex items-center space-x-1.5 cursor-pointer"
+              className="bg-[#081E26] hover:bg-[#081E26]/80 text-[#00C2B8] text-xs font-black px-4 py-2.5 rounded-xl border border-[#00C2B8]/30 transition-colors flex items-center space-x-1.5 cursor-pointer whitespace-nowrap"
             >
               <Download className="w-3.5 h-3.5" />
               <span>PDF Statement</span>
@@ -255,16 +255,16 @@ export const WalletPage = () => {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto w-full -mx-4 sm:mx-0 px-4 sm:px-0">
+          <table className="w-full min-w-[640px] text-left text-xs">
             <thead className="bg-[#081E26] border-b border-[#0D3B43] text-[#F2C868] uppercase text-[10px] font-black tracking-wider">
               <tr>
-                <th className="p-4 rounded-l-xl">Transaction Date</th>
-                <th className="p-4">Type & Description</th>
-                <th className="p-4">Reference / UTR Code</th>
-                <th className="p-4">Payment Method</th>
-                <th className="p-4">Amount (INR)</th>
-                <th className="p-4 rounded-r-xl">Audit Status</th>
+                <th className="p-3.5 rounded-l-xl whitespace-nowrap">Transaction Date</th>
+                <th className="p-3.5 whitespace-nowrap">Type & Description</th>
+                <th className="p-3.5 whitespace-nowrap">Reference / UTR Code</th>
+                <th className="p-3.5 whitespace-nowrap">Payment Method</th>
+                <th className="p-3.5 whitespace-nowrap">Amount (INR)</th>
+                <th className="p-3.5 rounded-r-xl whitespace-nowrap">Audit Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#081E26] font-medium">
@@ -277,8 +277,8 @@ export const WalletPage = () => {
               ) : (
                 filteredTransactions.map(tx => (
                   <tr key={tx.id} className="hover:bg-[#081E26]/50 transition-colors">
-                    <td className="p-4 font-mono text-slate-400">{tx.date}</td>
-                    <td className="p-4 font-extrabold text-white">
+                    <td className="p-3.5 font-mono text-slate-400 whitespace-nowrap">{tx.date}</td>
+                    <td className="p-3.5 font-extrabold text-white whitespace-nowrap">
                       <div className="flex items-center space-x-2.5">
                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold shrink-0 ${
                           tx.direction === 'in' ? 'bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/30' : 'bg-[#081E26] text-[#E1A238] border border-[#E1A238]/30'
@@ -288,12 +288,12 @@ export const WalletPage = () => {
                         <span>{tx.type}</span>
                       </div>
                     </td>
-                    <td className="p-4 font-mono font-black text-[#00C2B8]">{tx.refId}</td>
-                    <td className="p-4 text-slate-300 font-semibold">{tx.method}</td>
-                    <td className="p-4 font-mono font-black text-white">
+                    <td className="p-3.5 font-mono font-black text-[#00C2B8] whitespace-nowrap">{tx.refId}</td>
+                    <td className="p-3.5 text-slate-300 font-semibold whitespace-nowrap">{tx.method}</td>
+                    <td className="p-3.5 font-mono font-black text-white whitespace-nowrap">
                       {tx.direction === 'in' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
                     </td>
-                    <td className="p-4">
+                    <td className="p-3.5 whitespace-nowrap">
                       <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/40">
                         {tx.status}
                       </span>

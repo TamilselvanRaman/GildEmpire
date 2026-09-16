@@ -5,11 +5,13 @@ import { useApp } from '../../context/AppContext';
 import Home from '../page';
 
 export default function LoginRoute() {
-  const { setCurrentView } = useApp();
+  const { currentView, setCurrentView } = useApp();
 
   useEffect(() => {
-    setCurrentView('auth-login');
-  }, [setCurrentView]);
+    if (!currentView.startsWith('user-') && currentView !== 'public-landing') {
+      setCurrentView('auth-login');
+    }
+  }, []);
 
   return <Home />;
 }

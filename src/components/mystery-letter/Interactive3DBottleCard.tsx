@@ -118,7 +118,7 @@ export const Interactive3DBottleCard: React.FC<Interactive3DBottleCardProps> = (
           </div>
 
           <div className="text-xs font-bold text-[#00C2B8] mt-0.5 font-sans">
-            🏆 {winner.prizeDescription || '1 Gram 24K Gold Coin'}
+            🏆 {winner.prizeDescription || '1 Gram 916 Gold Coin'}
           </div>
         </div>
       )}

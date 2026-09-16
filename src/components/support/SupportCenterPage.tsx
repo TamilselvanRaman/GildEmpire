@@ -49,7 +49,7 @@ export const SupportCenterPage: React.FC<Props> = ({ mode = 'home' }) => {
   const faqs = [
     {
       q: 'How does the 50-Member Group daily gold selection work?',
-      a: 'When 50 members complete their verified ₹10,000 deposits, the group locks and begins a 50-day active cycle. Each day at 07:00 AM IST, 1 member wins 1 Gram of 24K Gold Coin via our SOC-2 audited random selection algorithm.',
+      a: 'When 50 members complete their verified ₹10,000 deposits, the group locks and begins a 50-day active cycle. Each day at 07:00 AM IST, 1 member wins 1 Gram of 916 Gold Coin via our SOC-2 audited random selection algorithm.',
     },
     {
       q: 'How do I claim my 5% instant referral cash bonus?',

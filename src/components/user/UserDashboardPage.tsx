@@ -278,7 +278,7 @@ export const UserDashboardPage = () => {
               </span>
             </div>
             <p className="text-xs text-slate-300 font-medium">
-              {group.totalGoldDistributedGrams} members have received 1 Gram 24K Gold. {group.activePoolCount} members remain in active selection pool.
+              {group.totalGoldDistributedGrams} members have received 1 Gram 916 Gold. {group.activePoolCount} members remain in active selection pool.
             </p>
           </div>
 
@@ -292,13 +292,13 @@ export const UserDashboardPage = () => {
         </div>
 
         {/* Enhanced Metallic Visual Progress Bar */}
-        <div className="space-y-3 pt-2">
-          <div className="flex justify-between items-center text-[11px] font-bold text-slate-300 uppercase tracking-widest">
+        <div className="space-y-4 pt-2">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2.5 text-[11px] font-bold text-slate-300 uppercase tracking-widest text-center sm:text-left">
             <span className="flex items-center space-x-1.5">
               <span className="w-2 h-2 rounded-full bg-[#00C2B8]"></span>
               <span>Day 1 (50 Members Pool)</span>
             </span>
-            <span className="font-mono font-black text-[#F2C868] bg-[#081E26] px-3 py-1 rounded-full border border-[#E1A238]/30">
+            <span className="font-mono font-black text-[#F2C868] bg-[#081E26] px-3.5 py-1 rounded-full border border-[#E1A238]/30 shadow-xs">
               {group.totalGoldDistributedGrams} Grams Awarded ({Math.round((group.totalGoldDistributedGrams / 50) * 100)}%)
             </span>
             <span className="flex items-center space-x-1.5">
@@ -317,20 +317,20 @@ export const UserDashboardPage = () => {
           </div>
 
           {/* Key Milestone Indicators */}
-          <div className="grid grid-cols-4 gap-2 pt-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            <div className="text-left border-l-2 border-[#00C2B8] pl-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-left border-l-2 border-[#00C2B8] pl-2.5">
               <p className="text-white font-extrabold">Day 1</p>
               <p className="text-[9px] text-slate-300 font-medium">Cycle Initiated</p>
             </div>
-            <div className="text-left border-l-2 border-[#00C2B8] pl-2">
+            <div className="text-left border-l-2 border-[#00C2B8] pl-2.5">
               <p className="text-[#00C2B8] font-extrabold">Group Pool</p>
               <p className="text-[9px] text-slate-300 font-medium">{group.activePoolCount} Members Active</p>
             </div>
-            <div className="text-left border-l-2 border-[#E1A238] pl-2">
+            <div className="text-left border-l-2 border-[#E1A238] pl-2.5">
               <p className="text-[#F2C868] font-extrabold">Selection Pool</p>
               <p className="text-[9px] text-[#F2C868] font-medium">Daily Transparent Draw</p>
             </div>
-            <div className="text-right border-r-2 border-[#0D3B43] pr-2">
+            <div className="text-left sm:text-right border-l-2 sm:border-l-0 sm:border-r-2 border-[#E1A238] sm:border-[#0D3B43] pl-2.5 sm:pl-0 sm:pr-2.5">
               <p className="text-white font-extrabold">Day 50</p>
               <p className="text-[9px] text-slate-300 font-medium">Full Group Awarded</p>
             </div>

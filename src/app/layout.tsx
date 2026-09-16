@@ -19,7 +19,7 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'InfinityGram | Audited Sovereign 50-Member Gold Reward Platform',
-  description: 'Verified Member Registration, Deposit Management, 50-Member Group Progression, and Daily 1 Gram 24K Gold Rewards Platform.',
+  description: 'Verified Member Registration, Deposit Management, 50-Member Group Progression, and Daily 1 Gram 916 Gold Rewards Platform.',
 };
 
 export default function RootLayout({

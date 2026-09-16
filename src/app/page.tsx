@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Layouts
 import { UserSidebar } from '../components/layout/UserSidebar';
 import { UserHeader } from '../components/layout/UserHeader';
-import { MobileBottomNav } from '../components/layout/MobileBottomNav';
 import { AdminSidebar } from '../components/layout/AdminSidebar';
 import { AdminHeader } from '../components/layout/AdminHeader';
 
@@ -91,6 +90,16 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentView, setCurrentView]);
 
+  // Guard user portal views: if user is not authenticated and has no session, redirect view & URL to /login
+  useEffect(() => {
+    if (currentView.startsWith('user-')) {
+      const hasStoredSession = typeof window !== 'undefined' && !!localStorage.getItem('infinity_gold_user_session');
+      if (!isAuthenticated && !hasStoredSession) {
+        setCurrentView('auth-login');
+      }
+    }
+  }, [currentView, isAuthenticated, setCurrentView]);
+
   // Ensure window scrolls to top on any view change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -157,9 +166,10 @@ export default function Home() {
         return <LoginPage />;
       }
       return (
-        <div className="min-h-screen bg-[#081E26] text-white flex flex-col md:flex-row pb-16 md:pb-0">
+        <div className="min-h-screen bg-[#081E26] text-white flex flex-col md:flex-row">
           <UserSidebar />
           <div className="flex-1 flex flex-col min-w-0">
+            <UserHeader />
             <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl mx-auto w-full">
               {currentView === 'user-dashboard' && <UserDashboardPage />}
               {(currentView === 'user-profile' || currentView === 'user-edit-profile') && <ProfilePage />}
@@ -173,7 +183,6 @@ export default function Home() {
               {currentView === 'user-help' && <HelpFaqPage />}
             </main>
           </div>
-          <MobileBottomNav />
         </div>
       );
     }

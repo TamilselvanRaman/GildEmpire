@@ -84,6 +84,11 @@ export default function CatchAllRoutePage() {
         '/system-notice': 'system-notice',
       };
 
+      if (path.startsWith('/user/') || path.startsWith('/admin/users/')) {
+        setCurrentView('admin-users');
+        return;
+      }
+
       const matchedView = pathToViewMap[path];
       if (matchedView) {
         setCurrentView(matchedView as any);

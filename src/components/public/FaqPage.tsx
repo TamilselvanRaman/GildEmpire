@@ -49,13 +49,13 @@ export const FaqPage = () => {
     },
     { 
       cat: 'Rewards', 
-      q: 'Does every single member receive 1 Gram 24K Gold?', 
-      a: 'Yes, 100% guaranteed! Over the 50-day cycle, exactly 1 member is selected daily. Each day’s winner is removed from subsequent daily spins, ensuring that by Day 50, all 50 members have received 1 Gram 24K Gold.' 
+      q: 'Does every single member receive 1 Gram 916 Gold?', 
+      a: 'Yes, 100% guaranteed! Over the 50-day cycle, exactly 1 member is selected daily. Each day’s winner is removed from subsequent daily spins, ensuring that by Day 50, all 50 members have received 1 Gram 916 Gold.' 
     },
     { 
       cat: 'Rewards', 
-      q: 'How is the 1 Gram 24K Gold delivered to my address?', 
-      a: 'All gold coins are 24K 999 purity hallmarked by BIS-certified refiners and shipped via insured BlueDart/DTDC express couriers. Live tracking code is provided on your dashboard.' 
+      q: 'How is the 1 Gram 916 Gold delivered to my address?', 
+      a: 'All gold coins are 916 purity hallmarked by BIS-certified refiners and shipped via insured BlueDart/DTDC express couriers. Live tracking code is provided on your dashboard.' 
     },
     { 
       cat: 'Referral', 
@@ -92,7 +92,7 @@ export const FaqPage = () => {
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Searchable Help & FAQ Center</h1>
           <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xl mx-auto">
-            Clear, transparent answers regarding account verification, ₹10,000 deposits, 50-member groups, and daily 1g 24K Gold distribution.
+            Clear, transparent answers regarding account verification, ₹10,000 deposits, 50-member groups, and daily 1g 916 Gold distribution.
           </p>
         </motion.div>
 

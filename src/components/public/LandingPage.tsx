@@ -30,7 +30,7 @@ export const LandingPage = () => {
     { num: '01', title: 'Register Account', desc: 'Create your secure member profile with verified mobile OTP & email identification.' },
     { num: '02', title: 'Complete Deposit', desc: 'Submit ₹10,000 membership deposit with instant UPI or Bank IMPS UTR proof.' },
     { num: '03', title: 'Join 50-Member Group', desc: 'Automatically assigned to a verified 50-member group cycle.' },
-    { num: '04', title: 'Daily 1g Gold Selection', desc: '50-day cycle distributes 1 Gram 24K Gold daily (1 winner/day).' },
+    { num: '04', title: 'Daily 1g Gold Selection', desc: '50-day cycle distributes 1 Gram 916 Gold daily (1 winner/day).' },
     { num: '05', title: 'Complete 50-Day Rewards', desc: 'Every single member receives 1 Gram Gold by Day 50 of the group.' },
   ];
 
@@ -44,7 +44,7 @@ export const LandingPage = () => {
   ];
 
   const faqs = [
-    { q: 'How does the 50-day 1 Gram Gold distribution process work?', a: 'Each group consists of exactly 50 verified members. Over a 50-day cycle, 1 Gram 24K Gold is awarded each day. Day 1 selects 1 winner from 50 members. Day 2 removes the Day 1 winner, leaving 49 members in the spin pool. This continues daily until all 50 members receive 1 Gram Gold by Day 50.' },
+    { q: 'How does the 50-day 1 Gram Gold distribution process work?', a: 'Each group consists of exactly 50 verified members. Over a 50-day cycle, 1 Gram 916 Gold is awarded each day. Day 1 selects 1 winner from 50 members. Day 2 removes the Day 1 winner, leaving 49 members in the spin pool. This continues daily until all 50 members receive 1 Gram Gold by Day 50.' },
     { q: 'Is my ₹10,000 deposit secure and verified?', a: 'Yes. All deposits are verified by our bank reconciliation team against official transaction UTR numbers before group allocation.' },
     { q: 'What happens after I receive my 1 Gram Gold coin?', a: 'Your reward coin is shipped via insured BlueDart express courier with tracking details provided on your member dashboard.' },
     { q: 'Can I refer friends to join a group?', a: 'Yes, your unique referral link is available on your dashboard to invite colleagues and track their deposit eligibility.' },
@@ -98,7 +98,7 @@ export const LandingPage = () => {
                 transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium"
               >
-                Official plan prospectus for structured 50-member group progression. Every 50-day cycle awards <strong className="text-[#00C2B8] font-bold">1 Gram 24K Gold</strong> daily, ensuring all 50 members receive their prize by Day 50.
+                Official plan prospectus for structured 50-member group progression. Every 50-day cycle awards <strong className="text-[#00C2B8] font-bold">1 Gram 916 Gold</strong> daily, ensuring all 50 members receive their prize by Day 50.
               </motion.p>
 
               <motion.div 
@@ -139,7 +139,7 @@ export const LandingPage = () => {
                 </span>
                 <span className="flex items-center space-x-1.5 hover:text-white transition-colors">
                   <Award className="w-4 h-4 text-[#E1A238]" />
-                  <span>24K Hallmarked Gold</span>
+                  <span>916 Hallmarked Gold</span>
                 </span>
               </motion.div>
             </motion.div>
@@ -245,7 +245,7 @@ export const LandingPage = () => {
           >
             <h2 className="text-3xl font-serif font-black text-white">How The Platform Works</h2>
             <p className="text-sm text-slate-300 font-medium">
-              Clear 5-step progression ensuring every member in a 50-person group receives 1 Gram 24K Gold.
+              Clear 5-step progression ensuring every member in a 50-person group receives 1 Gram 916 Gold.
             </p>
           </motion.div>
 

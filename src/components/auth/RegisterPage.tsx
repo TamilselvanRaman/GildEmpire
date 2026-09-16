@@ -19,7 +19,10 @@ import {
   Phone,
   Mail,
   CheckCircle2,
-  Clock
+  ChevronLeft,
+  BadgeCheck,
+  UserCheck,
+  FileCheck
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -276,45 +279,57 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen lg:h-screen bg-gradient-to-br from-[#F1F5F9] via-[#E2E8F0]/70 to-[#F8FAFC] flex items-center justify-center p-3 sm:p-5 font-sans relative overflow-hidden bg-[radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:24px_24px]">
+    <div className="min-h-screen bg-[#061526] text-slate-800 py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-sans relative flex items-center justify-center overflow-x-hidden selection:bg-blue-500 selection:text-white">
       
-      {/* Background Ambient Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-blue-500/10 to-transparent blur-[130px] pointer-events-none"></div>
+      {/* Dynamic Background Glow Gradients */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-b from-blue-600/15 via-cyan-500/10 to-transparent blur-[140px] pointer-events-none z-0"></div>
+      <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
 
       <motion.div 
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="max-w-5xl w-full max-h-[95vh] bg-white rounded-[2.2rem] border border-slate-200/80 shadow-[0_25px_60px_-15px_rgba(11,30,57,0.14)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative z-10 my-auto"
+        className="max-w-5xl w-full bg-white rounded-2xl sm:rounded-[2.2rem] border border-slate-200/90 shadow-[0_30px_70px_-15px_rgba(2,12,27,0.4)] grid grid-cols-1 lg:grid-cols-12 relative z-10 overflow-hidden my-auto"
       >
         
-        {/* LEFT SIDE: Executive Corporate Panel */}
-        <div className="lg:col-span-5 bg-gradient-to-br from-[#0B1E39] via-[#0F284B] to-[#0A192F] text-white p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[70px] pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[70px] pointer-events-none"></div>
+        {/* LEFT SIDE: Executive Corporate Panel (Desktop visible, stacked on tablet) */}
+        <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-br from-[#0B1E39] via-[#0D264A] to-[#081528] text-white p-7 sm:p-9 flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-[#00C2B8]/15 rounded-full blur-[90px] pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"></div>
 
           <div className="space-y-6 relative z-10">
-            {/* Brand Logo Header */}
-            <div 
-              onClick={() => setCurrentView('public-landing')} 
-              className="flex items-center space-x-3 cursor-pointer group select-none"
-            >
-              <img 
-                src="/logo.png" 
-                alt="InfinityGram Official Logo" 
-                className="h-10 sm:h-11 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(0,194,184,0.4)] group-hover:scale-105 transition-transform duration-300 shrink-0" 
-              />
-              <div>
-                <h3 className="text-xl font-black text-white tracking-tight leading-tight group-hover:text-amber-300 transition-colors">
-                  InfinityGram
-                </h3>
-                <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">SOVEREIGN MEMBER PORTAL</p>
+            {/* Brand Header */}
+            <div className="flex items-center justify-between">
+              <div 
+                onClick={() => setCurrentView('public-landing')} 
+                className="flex items-center space-x-3 cursor-pointer group select-none"
+              >
+                <img 
+                  src="/logo.png" 
+                  alt="InfinityGram Official Logo" 
+                  className="h-10 w-auto object-contain filter drop-shadow-[0_0_12px_rgba(0,194,184,0.45)] group-hover:scale-105 transition-transform duration-300 shrink-0" 
+                />
+                <div>
+                  <h3 className="text-xl font-black text-white tracking-tight leading-tight group-hover:text-[#00C2B8] transition-colors">
+                    Infinity<span className="text-[#00C2B8]">Gram</span>
+                  </h3>
+                  <p className="text-[9.5px] text-slate-400 font-extrabold uppercase tracking-widest">SOVEREIGN MEMBER PORTAL</p>
+                </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentView('public-landing')}
+                className="text-xs text-slate-300 hover:text-white font-bold flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-md transition-all cursor-pointer border border-white/10"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Home</span>
+              </button>
             </div>
 
             <div className="space-y-3 pt-2">
-              <span className="inline-flex items-center space-x-1.5 text-[10px] font-black text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 uppercase tracking-widest">
-                <Sparkles className="w-3 h-3 text-emerald-400" />
+              <span className="inline-flex items-center space-x-1.5 text-[10px] font-black text-emerald-400 bg-emerald-500/15 px-3 py-1 rounded-full border border-emerald-500/30 uppercase tracking-widest shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
                 <span>JOIN NEXT 50-MEMBER GROUP</span>
               </span>
 
@@ -323,26 +338,26 @@ export const RegisterPage = () => {
               </h2>
 
               <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                Create your verified member account to participate in daily 1 Gram 24K Gold rewards with transparent 50-member group progression.
+                Create your verified member account to participate in daily 1 Gram 916 Gold rewards with transparent 50-member group progression.
               </p>
             </div>
 
             {/* Feature Checklist */}
-            <div className="space-y-3 pt-1 text-xs font-semibold text-slate-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shrink-0">
+            <div className="space-y-2.5 pt-1 text-xs font-semibold text-slate-200">
+              <div className="flex items-center space-x-3 bg-white/5 p-2.5 rounded-xl border border-white/10">
+                <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0">
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
                 </div>
                 <span>Strict 50-Member Group Allocation</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shrink-0">
+              <div className="flex items-center space-x-3 bg-white/5 p-2.5 rounded-xl border border-white/10">
+                <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0">
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
                 </div>
-                <span>1 Gram 24K Gold Coin Daily</span>
+                <span>1 Gram 916 Gold Coin Daily</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shrink-0">
+              <div className="flex items-center space-x-3 bg-white/5 p-2.5 rounded-xl border border-white/10">
+                <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0">
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
                 </div>
                 <span>5% Instant Wallet Referral Bonus</span>
@@ -353,7 +368,7 @@ export const RegisterPage = () => {
             <div className="mt-4 bg-gradient-to-br from-[#081E26] via-[#0D3B43] to-[#081E26] border border-[#00C2B8]/40 p-4 rounded-2xl space-y-3 shadow-xl">
               <div className="flex items-center justify-between pb-2 border-b border-[#0D3B43] gap-2">
                 <span className="flex items-center space-x-2 text-xs font-black text-[#00C2B8] uppercase tracking-wider min-w-0">
-                  <Sparkles className="w-3.5 h-3.5 text-[#00C2B8] animate-pulse shrink-0" />
+                  <BadgeCheck className="w-4 h-4 text-[#00C2B8] shrink-0" />
                   <span className="truncate">3-Step Activation</span>
                 </span>
                 <span className="text-[9.5px] font-extrabold text-[#F2C868] bg-[#E1A238]/20 border border-[#E1A238]/40 px-2.5 py-1 rounded-full whitespace-nowrap shrink-0">
@@ -395,30 +410,56 @@ export const RegisterPage = () => {
             </div>
           </div>
 
-          <div className="pt-6 border-t border-white/10 text-xs text-slate-300 flex items-center space-x-2 font-medium relative z-10 mt-6">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>256-Bit Cryptographic SSL Secured</span>
+          <div className="pt-6 border-t border-white/10 text-xs text-slate-300 flex items-center justify-between font-medium relative z-10 mt-6">
+            <div className="flex items-center space-x-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>256-Bit Cryptographic SSL</span>
+            </div>
+            <span className="text-[10px] text-slate-400 font-mono">v2.4 Sovereign</span>
           </div>
         </div>
 
         {/* RIGHT SIDE: Interactive Registration Form */}
-        <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-4 bg-white overflow-y-auto max-h-full">
+        <div className="col-span-12 lg:col-span-7 p-5 sm:p-8 lg:p-10 flex flex-col justify-between bg-white min-w-0">
           
-          {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-[#0B1E39] tracking-tight">
-                Create Member Account
-              </h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Personal Identity & Mandatory KYC Verification
-              </p>
+          {/* Header Bar */}
+          <div>
+            {/* Mobile Header Brand Bar */}
+            <div className="flex lg:hidden items-center justify-between mb-4 pb-3 border-b border-slate-100">
+              <div 
+                className="flex items-center space-x-2 cursor-pointer"
+                onClick={() => setCurrentView('public-landing')}
+              >
+                <img src="/logo.png" alt="InfinityGram Logo" className="h-7 w-auto object-contain" />
+                <span className="text-lg font-black tracking-tight text-[#0B1E39]">
+                  Infinity<span className="text-[#00C2B8]">Gram</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentView('public-landing')}
+                className="text-xs text-slate-600 hover:text-slate-900 font-bold flex items-center space-x-1 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Home</span>
+              </button>
             </div>
 
-            <span className="text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full border transition-all flex items-center space-x-1.5 text-[#2563EB] bg-[#EEF4FF] border-blue-100/90 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-              <span>ACCOUNT REGISTRATION</span>
-            </span>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-[#0B1E39] tracking-tight">
+                  Create Member Account
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Personal Identity & Mandatory KYC Verification
+                </p>
+              </div>
+
+              <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border transition-all flex items-center space-x-1.5 text-[#2563EB] bg-[#EEF4FF] border-blue-200 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                <span>REGISTRATION</span>
+              </span>
+            </div>
           </div>
 
           {/* Validation Error Alert Banner */}
@@ -426,57 +467,64 @@ export const RegisterPage = () => {
             <motion.div 
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-rose-50 border border-rose-200/90 text-rose-700 p-3 rounded-xl text-xs flex items-center space-x-2.5 shadow-xs"
+              className="mt-3 bg-rose-50 border border-rose-200/90 text-rose-700 p-3.5 rounded-xl text-xs flex items-center space-x-2.5 shadow-xs"
             >
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 stroke-[2.5]" />
-              <span className="font-semibold">{errorMessage}</span>
+              <span className="font-semibold leading-relaxed">{errorMessage}</span>
             </motion.div>
           )}
 
           {/* Form Controls */}
-          <form onSubmit={handleRegister} className="space-y-3 text-xs font-medium">
+          <form onSubmit={handleRegister} className="space-y-4 text-xs font-medium mt-4">
             
-            {/* 1. Full Legal Name */}
-            <div>
-              <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                <span className="flex items-center space-x-1.5">
-                  <Users className="w-3.5 h-3.5 text-[#2563EB]" />
-                  <span>FULL LEGAL NAME (AS PER ID)</span>
-                </span>
-                {fullName.trim().length >= 2 && (
-                  <span className="text-emerald-600 font-bold flex items-center space-x-0.5 text-[10px]">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    <span>Valid</span>
-                  </span>
-                )}
-              </label>
-              <input
-                type="text"
-                required
-                value={fullName}
-                onChange={(e) => {
-                  setFullName(e.target.value);
-                  if (errorMessage) setErrorMessage('');
-                }}
-                placeholder="e.g. Rajesh Kumar Sharma"
-                className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
-              />
-            </div>
+            {/* SECTION 1: PERSONAL DETAILS */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                <span>Personal & Contact Info</span>
+                <div className="flex-1 h-px bg-slate-100 ml-2"></div>
+              </div>
 
-            {/* 2. Mobile & Email Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Mobile Number (Exactly 10 Digits) */}
+              {/* 1. Full Legal Name */}
               <div>
                 <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
                   <span className="flex items-center space-x-1.5">
-                    <Phone className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>MOBILE NUMBER</span>
+                    <Users className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>FULL LEGAL NAME (AS PER ID)</span>
                   </span>
-                  <span className={`text-[10px] font-mono font-bold ${mobile.length === 10 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                    {mobile.length}/10 {mobile.length === 10 && '✓'}
-                  </span>
+                  {fullName.trim().length >= 2 && (
+                    <span className="text-emerald-600 font-bold flex items-center space-x-0.5 text-[10px]">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <span>Valid</span>
+                    </span>
+                  )}
                 </label>
-                <div className="relative">
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  placeholder="e.g. Rajesh Kumar Sharma"
+                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
+                />
+              </div>
+
+              {/* 2. Mobile & Email Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Mobile Number */}
+                <div>
+                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="flex items-center space-x-1.5">
+                      <Phone className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>MOBILE NUMBER</span>
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold ${mobile.length === 10 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {mobile.length}/10 {mobile.length === 10 && '✓'}
+                    </span>
+                  </label>
                   <input
                     type="tel"
                     required
@@ -484,310 +532,333 @@ export const RegisterPage = () => {
                     value={mobile}
                     onChange={handleMobileChange}
                     placeholder="10 Digits e.g. 9876543210"
-                    className={`w-full bg-[#F8FAFC] border text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs ${
+                    className={`w-full bg-[#F8FAFC] border text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs ${
                       mobile.length === 10 ? 'border-emerald-500/80 bg-emerald-50/20' : 'border-slate-200 focus:border-[#2563EB]'
                     }`}
                   />
                 </div>
-              </div>
 
-              {/* Email Address */}
-              <div>
-                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span className="flex items-center space-x-1.5">
-                    <Mail className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>EMAIL ADDRESS</span>
-                  </span>
-                  {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && (
-                    <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                      <span>Valid</span>
+                {/* Email Address */}
+                <div>
+                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="flex items-center space-x-1.5">
+                      <Mail className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>EMAIL ADDRESS</span>
                     </span>
-                  )}
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (errorMessage) setErrorMessage('');
-                  }}
-                  placeholder="e.g. rajesh@gmail.com"
-                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
-                />
+                    {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && (
+                      <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        <span>Valid</span>
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    placeholder="e.g. rajesh@gmail.com"
+                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* 3. Mandatory Identity Credentials (PAN Card & Aadhaar Number) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* PAN Card Number */}
-              <div>
-                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span className="flex items-center space-x-1.5">
-                    <FileText className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>PAN CARD NUMBER</span>
-                  </span>
-                  {panNumber.trim().length === 10 && (
-                    <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                      <span>Valid PAN</span>
-                    </span>
-                  )}
-                </label>
-                <input
-                  type="text"
-                  maxLength={10}
-                  value={panNumber}
-                  onChange={(e) => {
-                    setPanNumber(e.target.value.toUpperCase());
-                    if (errorMessage) setErrorMessage('');
-                  }}
-                  placeholder="e.g. ABCDE1234F"
-                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs uppercase"
-                />
+            {/* SECTION 2: KYC & GOVERNMENT IDENTIFICATION */}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center space-x-2 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                <FileCheck className="w-3.5 h-3.5 text-blue-600" />
+                <span>Government KYC Verification</span>
+                <div className="flex-1 h-px bg-slate-100 ml-2"></div>
               </div>
 
-              {/* Aadhaar Number */}
+              {/* Identity Credentials (PAN Card & Aadhaar Number) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* PAN Card Number */}
+                <div>
+                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="flex items-center space-x-1.5">
+                      <FileText className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>PAN CARD NUMBER</span>
+                    </span>
+                    {panNumber.trim().length === 10 && (
+                      <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        <span>Valid PAN</span>
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={10}
+                    value={panNumber}
+                    onChange={(e) => {
+                      setPanNumber(e.target.value.toUpperCase());
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    placeholder="e.g. ABCDE1234F"
+                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs uppercase shadow-2xs"
+                  />
+                </div>
+
+                {/* Aadhaar Number */}
+                <div>
+                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="flex items-center space-x-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>AADHAAR NUMBER (12 DIGITS)</span>
+                    </span>
+                    {aadhaarNumber.replace(/\D/g, '').length === 12 && (
+                      <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        <span>Valid 12-Digit</span>
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={12}
+                    value={aadhaarNumber}
+                    onChange={(e) => {
+                      setAadhaarNumber(e.target.value.replace(/\D/g, ''));
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    placeholder="e.g. 1234 5678 9012"
+                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* Legal ID Document Upload Dropzone */}
               <div>
                 <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
                   <span className="flex items-center space-x-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>AADHAAR NUMBER (12 DIGITS)</span>
+                    <span>LEGAL ID DOCUMENT (AADHAAR / PAN / DRIVING LICENSE)</span>
                   </span>
-                  {aadhaarNumber.replace(/\D/g, '').length === 12 && (
-                    <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                      <span>Valid 12-Digit</span>
+                  {idDocument && (
+                    <span className="text-[10px] text-emerald-600 font-bold flex items-center space-x-1">
+                      <Check className="w-3 h-3 text-emerald-500 stroke-[3]" />
+                      <span>Attached</span>
+                    </span>
+                  )}
+                </label>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept="image/*,.pdf"
+                  onChange={(e) => handleFileChange(e.target.files?.[0])}
+                />
+
+                {!idDocument ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                    className={`flex flex-col items-center justify-center w-full py-4 border-2 border-dashed rounded-xl px-3 transition-all group cursor-pointer ${
+                      isDragging
+                        ? 'bg-blue-50 border-blue-500 scale-[1.01]'
+                        : 'bg-[#F8FAFC] border-slate-300 hover:bg-blue-50/50 hover:border-[#2563EB]'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-9 h-9 rounded-full bg-blue-100/80 text-[#2563EB] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-2xs">
+                        <Upload className="w-4 h-4 stroke-[2.5]" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[11px] text-slate-700 font-medium">
+                          <span className="font-extrabold text-[#2563EB] underline">Click to upload</span> or drag and drop document
+                        </p>
+                        <p className="text-[9.5px] text-slate-400 font-semibold mt-0.5">
+                          PNG, JPG, WEBP or PDF (Max 5MB)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative bg-[#F8FAFC] border-2 border-emerald-500/40 rounded-xl p-3 flex items-center justify-between space-x-3 shadow-xs">
+                    <div className="flex items-center space-x-3 overflow-hidden">
+                      {previewUrl ? (
+                        <div className="relative shrink-0">
+                          <img
+                            src={previewUrl}
+                            alt="ID Document Preview"
+                            className="w-10 h-10 object-cover rounded-lg border border-slate-200 shadow-xs bg-white"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                      )}
+
+                      <div className="overflow-hidden">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-bold text-slate-800 truncate max-w-[150px] sm:max-w-[200px]">
+                            {idDocument.name}
+                          </span>
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 uppercase shrink-0">
+                            Uploaded
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                          Size: {formatFileSize(idDocument.size)} &bull; {idDocument.type.split('/')[1]?.toUpperCase() || 'DOCUMENT'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        title="Change file"
+                        className="px-2.5 py-1 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center space-x-1 text-[10px] font-extrabold border border-slate-200 bg-white cursor-pointer shadow-2xs"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Change</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleRemoveFile}
+                        title="Remove file"
+                        className="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-all hover:scale-105 cursor-pointer"
+                      >
+                        <X className="w-4 h-4 stroke-[2.5]" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* SECTION 3: SECURITY & REFERRAL */}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center space-x-2 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                <Lock className="w-3.5 h-3.5 text-blue-600" />
+                <span>Security & Referral</span>
+                <div className="flex-1 h-px bg-slate-100 ml-2"></div>
+              </div>
+
+              {/* Password & Confirm Password Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Password Field */}
+                <div>
+                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="flex items-center space-x-1.5">
+                      <Lock className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>ACCOUNT PASSWORD</span>
+                    </span>
+                    {password.length >= 6 && (
+                      <span className="text-emerald-600 font-bold text-[10px]">Min 6 Chars ✓</span>
+                    )}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (errorMessage) setErrorMessage('');
+                      }}
+                      placeholder="Min 6 characters"
+                      className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 pl-3.5 pr-10 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-md"
+                      title={showPassword ? 'Hide Password' : 'Show Password'}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4 text-blue-600" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password Field */}
+                <div>
+                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="flex items-center space-x-1.5">
+                      <Lock className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>CONFIRM PASSWORD</span>
+                    </span>
+                    {confirmPassword.length > 0 && password === confirmPassword && (
+                      <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        <span>Matched</span>
+                      </span>
+                    )}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        if (errorMessage) setErrorMessage('');
+                      }}
+                      placeholder="Re-enter password"
+                      className={`w-full bg-[#F8FAFC] border text-[#0B1E39] font-semibold py-2.5 pl-3.5 pr-10 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs ${
+                        confirmPassword.length > 0 && password !== confirmPassword
+                          ? 'border-rose-400 bg-rose-50/20'
+                          : confirmPassword.length > 0 && password === confirmPassword
+                          ? 'border-emerald-500/80 bg-emerald-50/20'
+                          : 'border-slate-200 focus:border-[#2563EB]'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-md"
+                      title={showConfirmPassword ? 'Hide Password' : 'Show Password'}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4 text-blue-600" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Referral Code */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>REFERRAL CODE (OPTIONAL)</span>
+                  </span>
+                  {isAutoFilledRef && (
+                    <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                      Auto-filled from Link
                     </span>
                   )}
                 </label>
                 <input
                   type="text"
-                  maxLength={12}
-                  value={aadhaarNumber}
-                  onChange={(e) => {
-                    setAadhaarNumber(e.target.value.replace(/\D/g, ''));
-                    if (errorMessage) setErrorMessage('');
-                  }}
-                  placeholder="e.g. 1234 5678 9012"
-                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  placeholder="E.G. REF-AMIT99"
+                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 uppercase text-xs shadow-2xs"
                 />
               </div>
             </div>
 
-            {/* 3. Legal ID Document Upload Dropzone */}
-            <div>
-              <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                <span className="flex items-center space-x-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
-                  <span>LEGAL ID DOCUMENT (AADHAAR / PAN / DRIVING LICENSE)</span>
-                </span>
-                {idDocument && (
-                  <span className="text-[10px] text-emerald-600 font-bold flex items-center space-x-1">
-                    <Check className="w-3 h-3 text-emerald-500 stroke-[3]" />
-                    <span>Document Selected</span>
-                  </span>
-                )}
-              </label>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                accept="image/*,.pdf"
-                onChange={(e) => handleFileChange(e.target.files?.[0])}
-              />
-
-              {!idDocument ? (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleDrop}
-                  className={`flex flex-col items-center justify-center w-full h-20 sm:h-22 border-2 border-dashed rounded-xl p-2 transition-all group cursor-pointer ${
-                    isDragging
-                      ? 'bg-blue-50 border-blue-500 scale-[1.01]'
-                      : 'bg-[#F8FAFC] border-slate-300 hover:bg-blue-50/50 hover:border-[#2563EB]'
-                  }`}
-                >
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <div className="w-7 h-7 rounded-full bg-blue-100/80 text-[#2563EB] flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
-                      <Upload className="w-3.5 h-3.5 stroke-[2.5]" />
-                    </div>
-                    <p className="text-[11px] text-slate-700 font-medium">
-                      <span className="font-extrabold text-[#2563EB] underline">Click to upload</span> or drag and drop image / document
-                    </p>
-                    <p className="text-[9px] text-slate-400 font-semibold mt-0.5">
-                      PNG, JPG, WEBP or PDF (Max 5MB)
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative bg-slate-50 border-2 border-emerald-500/40 rounded-xl p-2.5 flex items-center justify-between space-x-3 shadow-sm">
-                  <div className="flex items-center space-x-3 overflow-hidden">
-                    {previewUrl ? (
-                      <div className="relative shrink-0">
-                        <img
-                          src={previewUrl}
-                          alt="ID Document Preview"
-                          className="w-11 h-11 object-cover rounded-lg border border-slate-200 shadow-sm bg-white"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-11 h-11 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                    )}
-
-                    <div className="overflow-hidden">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs font-bold text-slate-800 truncate max-w-[160px] sm:max-w-[200px]">
-                          {idDocument.name}
-                        </span>
-                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 uppercase shrink-0">
-                          Uploaded
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 font-medium mt-0.5">
-                        Size: {formatFileSize(idDocument.size)} &bull; {idDocument.type.split('/')[1]?.toUpperCase() || 'DOCUMENT'}
-                      </p>
-                      <p className="text-[10px] text-blue-600 font-bold flex items-center space-x-1 mt-0.5">
-                        <Eye className="w-3 h-3" />
-                        <span>Preview verified & attached</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      title="Upload another image or document"
-                      className="px-2.5 py-1 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center space-x-1 text-[10px] font-extrabold border border-slate-200 bg-white cursor-pointer"
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                      <span>Change</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleRemoveFile}
-                      title="Remove image / Upload different document"
-                      className="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/80 flex items-center justify-center transition-all hover:scale-105 cursor-pointer"
-                    >
-                      <X className="w-4 h-4 stroke-[2.5]" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 4. Password & Confirm Password Row with Eye Toggle Icon */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Account Password Field */}
-              <div>
-                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span className="flex items-center space-x-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>ACCOUNT PASSWORD</span>
-                  </span>
-                  {password.length >= 6 && (
-                    <span className="text-emerald-600 font-bold text-[10px]">Min 6 Chars ✓</span>
-                  )}
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (errorMessage) setErrorMessage('');
-                    }}
-                    placeholder="Min 6 characters"
-                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 pl-3.5 pr-10 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-md"
-                    title={showPassword ? 'Hide Password' : 'Show Password'}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4 text-blue-600" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-slate-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirm Password Field */}
-              <div>
-                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span className="flex items-center space-x-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>CONFIRM PASSWORD</span>
-                  </span>
-                  {confirmPassword.length > 0 && password === confirmPassword && (
-                    <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                      <span>Matched</span>
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (errorMessage) setErrorMessage('');
-                    }}
-                    placeholder="Re-enter password"
-                    className={`w-full bg-[#F8FAFC] border text-[#0B1E39] font-semibold py-2.5 pl-3.5 pr-10 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs ${
-                      confirmPassword.length > 0 && password !== confirmPassword
-                        ? 'border-rose-400 bg-rose-50/20'
-                        : confirmPassword.length > 0 && password === confirmPassword
-                        ? 'border-emerald-500/80 bg-emerald-50/20'
-                        : 'border-slate-200 focus:border-[#2563EB]'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-md"
-                    title={showConfirmPassword ? 'Hide Password' : 'Show Password'}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="w-4 h-4 text-blue-600" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-slate-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* 5. Optional Referral Code */}
-            <div>
-              <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center space-x-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>REFERRAL CODE (OPTIONAL)</span>
-              </label>
-              <input
-                type="text"
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value)}
-                placeholder="E.G. REF-AMIT99"
-                className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 uppercase text-xs"
-              />
-            </div>
-
-            {/* 6. Terms & Conditions Checkbox */}
-            <div className="flex items-start space-x-2.5 pt-1">
+            {/* Terms & Conditions Checkbox */}
+            <div className="flex items-start space-x-2.5 pt-2">
               <input 
                 type="checkbox" 
                 id="termsCheckbox"
@@ -795,17 +866,17 @@ export const RegisterPage = () => {
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
                 className="mt-0.5 rounded border-slate-300 text-[#2563EB] focus:ring-0 cursor-pointer w-4 h-4" 
               />
-              <label htmlFor="termsCheckbox" className="text-[11px] text-slate-600 leading-tight font-medium cursor-pointer select-none">
+              <label htmlFor="termsCheckbox" className="text-[11px] text-slate-600 leading-snug font-medium cursor-pointer select-none">
                 I agree to the <button type="button" onClick={() => setCurrentView('public-terms')} className="text-[#2563EB] font-extrabold hover:underline">Terms & Conditions</button> and confirm that I am an Indian resident aged 18+.
               </label>
             </div>
 
-            {/* 7. Submit Action Button */}
+            {/* Submit Action Button */}
             <button
               type="button"
               onClick={() => handleRegister()}
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-[#2563EB] via-blue-600 to-[#1D4ED8] hover:from-blue-600 hover:to-blue-800 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-[0_10px_25px_-5px_rgba(37,99,235,0.35)] hover:shadow-[0_15px_30px_-5px_rgba(37,99,235,0.45)] hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2 text-xs uppercase tracking-wider cursor-pointer mt-3 disabled:opacity-80"
+              className="w-full bg-gradient-to-r from-[#2563EB] via-[#1D4ED8] to-[#0F399E] hover:from-blue-600 hover:to-blue-900 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-[0_12px_28px_-5px_rgba(37,99,235,0.4)] hover:shadow-[0_15px_32px_-5px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2 text-xs uppercase tracking-wider cursor-pointer mt-4 disabled:opacity-80 active:scale-[0.99]"
             >
               {isSubmitting ? (
                 <div className="flex items-center space-x-2">
@@ -823,7 +894,7 @@ export const RegisterPage = () => {
           </form>
 
           {/* Footer Link */}
-          <div className="text-center text-xs text-slate-500 font-medium pt-2 border-t border-slate-100 flex items-center justify-between">
+          <div className="text-center text-xs text-slate-500 font-medium pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
             <span className="text-[10px] text-slate-400 font-semibold flex items-center space-x-1">
               <Lock className="w-3 h-3 text-emerald-500" />
               <span>256-Bit SSL Encrypted</span>

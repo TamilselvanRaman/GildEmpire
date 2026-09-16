@@ -20,6 +20,7 @@ import {
   depositHistoryMock, 
   currentGroupMock, 
   allGroupsMock,
+  buildDynamicGroupsFromUsers,
   pastGoldWinnersMock, 
   referralsMock, 
   notificationsMock, 
@@ -49,6 +50,8 @@ interface AppContextType {
   isAdminAuthenticated: boolean;
   dbUsers: any[];
   fetchDbUsers: () => Promise<void>;
+  fetchReferrals: (currentUser?: UserProfile, usersList?: any[]) => Promise<void>;
+  manualAssignSlot: (identifier: string, slotNo: number, targetBatchId?: string) => Promise<{ success: boolean; error?: string }>;
   
   // Live 24-Hour Cooldown Lock & Broadcast State
   drawLockedUntil: number | null;
@@ -245,20 +248,88 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile>(currentUserMock);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-  // Auto-restore active user session from browser storage on mount
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('infinity_gold_user_session');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.email) {
-            setUser(parsed);
-            setIsAuthenticated(true);
-          }
-        } catch (e) {}
-      }
+  // Helper to post cross-tab auth events
+  const broadcastAuthEvent = (event: { type: string; user?: any }) => {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const channel = new BroadcastChannel('infinity_gold_auth_sync');
+        channel.postMessage(event);
+        channel.close();
+      } catch (e) {}
     }
+  };
+
+  // Cross-Tab Session Synchronizer (Syncs logins/logouts across all open tabs in real-time)
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Restore user session on mount
+    const stored = localStorage.getItem('infinity_gold_user_session');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.email) {
+          setUser(parsed);
+          setIsAuthenticated(true);
+        }
+      } catch (e) {}
+    }
+
+    const syncUserSession = (newUser: UserProfile | null) => {
+      if (newUser && newUser.email) {
+        setUser(newUser);
+        setIsAuthenticated(true);
+      } else {
+        setUser(currentUserMock);
+        setIsAuthenticated(false);
+        setIsAdminAuthenticated(false);
+        setCurrentViewRaw(prev => prev.startsWith('user-') ? 'auth-login' : prev);
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'infinity_gold_user_session') {
+        if (e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            syncUserSession(parsed);
+          } catch (err) {}
+        } else {
+          syncUserSession(null);
+        }
+      } else if (e.key === 'infinity_gold_admin_session') {
+        if (e.newValue === 'true') {
+          setIsAdminAuthenticated(true);
+        } else {
+          setIsAdminAuthenticated(false);
+          setCurrentViewRaw(prev => prev.startsWith('admin-') ? 'auth-admin-login' : prev);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    let channel: BroadcastChannel | null = null;
+    if ('BroadcastChannel' in window) {
+      channel = new BroadcastChannel('infinity_gold_auth_sync');
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'LOGIN' && event.data?.user) {
+          syncUserSession(event.data.user);
+        } else if (event.data?.type === 'LOGOUT') {
+          syncUserSession(null);
+        } else if (event.data?.type === 'ADMIN_LOGIN') {
+          setIsAdminAuthenticated(true);
+        } else if (event.data?.type === 'ADMIN_LOGOUT') {
+          setIsAdminAuthenticated(false);
+          setCurrentViewRaw(prev => prev.startsWith('admin-') ? 'auth-admin-login' : prev);
+        }
+      };
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      if (channel) channel.close();
+    };
   }, []);
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(true);
@@ -277,37 +348,110 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<SystemSettingsConfig>(systemSettingsMock);
   const [dbUsers, setDbUsers] = useState<any[]>([]);
 
+  const fetchReferrals = async (currentUser = user, usersList = dbUsers) => {
+    if (!currentUser || (!currentUser.email && !currentUser.memberId && !currentUser.referralId)) return;
+    try {
+      const code = currentUser.referralId || (currentUser.memberId ? `REF-${currentUser.memberId.slice(-6)}` : '');
+      const memberId = currentUser.memberId || '';
+      const userId = currentUser.id || '';
+
+      const queryParams = new URLSearchParams();
+      if (code) queryParams.set('referralCode', code);
+      if (memberId) queryParams.set('memberId', memberId);
+      if (userId) queryParams.set('userId', userId);
+
+      const res = await fetch(`/api/referrals?${queryParams.toString()}`);
+      const data = await res.json();
+
+      let apiRefs: ReferralItem[] = [];
+      if (data.success && Array.isArray(data.referrals)) {
+        apiRefs = data.referrals;
+      }
+
+      const apiRefMemberIds = new Set(apiRefs.map((r: any) => r.referredMemberId));
+
+      const numPart = (code?.replace(/\D/g, '') || memberId?.replace(/\D/g, '') || '');
+      const codeCandidates = [
+        code.toUpperCase(),
+        code.replace(/^REF-/i, '').toUpperCase(),
+        memberId.toUpperCase(),
+        numPart ? `REF-${numPart}` : '',
+        numPart ? `LOP-${numPart}` : '',
+        numPart,
+      ].filter(Boolean);
+
+      const localRefsFromDbUsers: ReferralItem[] = [];
+      const listToScan = Array.isArray(usersList) && usersList.length > 0 ? usersList : dbUsers;
+
+      if (Array.isArray(listToScan)) {
+        listToScan.forEach((u: any) => {
+          if (u.email?.toLowerCase() === currentUser.email?.toLowerCase() || u.memberId === currentUser.memberId) return;
+
+          const uRefCode = (u.referralCode || u.referral_code || '').toString().trim().toUpperCase();
+          if (uRefCode && codeCandidates.some(c => c && (uRefCode === c || uRefCode.endsWith(c) || c.endsWith(uRefCode)))) {
+            if (!apiRefMemberIds.has(u.memberId)) {
+              const isVerified = u.deposit === 'Verified' || u.depositStatus === 'Verified';
+              localRefsFromDbUsers.push({
+                id: u.id || `ref_local_${u.memberId}`,
+                referredName: u.name || u.fullName || u.email?.split('@')[0] || 'Referred Member',
+                referredMemberId: u.memberId || 'LOP-MEMBER',
+                joinedDate: u.regDate || u.joinedDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+                depositStatus: isVerified ? 'Verified' : 'Not Started',
+                eligibility: isVerified ? 'Eligible' : 'Pending Verification',
+                bonusEarnedAmount: isVerified ? 500 : 0,
+              });
+            }
+          }
+        });
+      }
+
+      setReferrals([...apiRefs, ...localRefsFromDbUsers]);
+    } catch (err) {
+      console.error('Error fetching referrals in AppContext:', err);
+    }
+  };
+
   const fetchDbUsers = async () => {
     try {
       const res = await fetch('/api/admin/users');
       const data = await res.json();
       if (data.success && Array.isArray(data.users)) {
         setDbUsers(data.users);
-        // Sync GROUP-001 slots with real registered users from Supabase DB
-        setAllGroups(prevGroups => prevGroups.map(grp => {
-          if (grp.groupId === 'GROUP-001') {
-            const updatedSlots = grp.slots.map((s, idx) => {
-              const u = data.users[idx];
-              if (u) {
-                return {
-                  ...s,
-                  memberName: u.name,
-                  memberId: u.memberId,
-                  status: 'Occupied' as const,
-                  joinedDate: u.regDate,
-                };
-              }
-              return s;
-            });
-            return {
-              ...grp,
-              totalMembers: data.users.length,
-              activePoolCount: data.users.length,
-              slots: updatedSlots,
-            };
+        // Dynamically build and allocate 50-member groups based on real database users
+        const dynamicGroups = buildDynamicGroupsFromUsers(data.users);
+        setAllGroups(dynamicGroups);
+
+        // Dynamically resolve current user's group and slot ONLY IF deposit is verified
+        setUser(currentUser => {
+          if (!currentUser || !currentUser.email) return currentUser;
+          const verifiedUsers = data.users.filter((u: any) => u.deposit === 'Verified' || u.depositStatus === 'Verified');
+          const isUserVerified = currentUser.depositStatus === 'Verified' || verifiedUsers.some((u: any) => u.email?.toLowerCase() === currentUser.email?.toLowerCase());
+
+          if (isUserVerified) {
+            const uIdx = verifiedUsers.findIndex((u: any) => u.email?.toLowerCase() === currentUser.email?.toLowerCase());
+            if (uIdx !== -1) {
+              const calcGroupIdx = Math.floor(uIdx / 50);
+              const calcGroupId = `GROUP-${String(calcGroupIdx + 1).padStart(3, '0')}`;
+              const calcSlotNumber = (uIdx % 50) + 1;
+              return {
+                ...currentUser,
+                depositStatus: 'Verified',
+                groupId: calcGroupId,
+                slotNumber: calcSlotNumber,
+                assignedSlots: [calcSlotNumber],
+              };
+            }
           }
-          return grp;
-        }));
+          return {
+            ...currentUser,
+            groupId: 'GROUP-001',
+            slotNumber: 0,
+            assignedSlots: [],
+          };
+        });
+
+        // Trigger referral fetch for current user
+        fetchReferrals(user, data.users);
       }
     } catch (err) {
       console.error('Error fetching DB users in AppContext:', err);
@@ -317,6 +461,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   React.useEffect(() => {
     fetchDbUsers();
   }, []);
+
+  React.useEffect(() => {
+    if (user && (user.email || user.referralId || user.memberId)) {
+      fetchReferrals(user, dbUsers);
+    }
+  }, [user.email, user.referralId, user.memberId, dbUsers.length]);
 
   // 24-Hour Cooldown Lock & Broadcast State
   const [drawLocks, setDrawLocks] = useState<Record<string, number>>({});
@@ -352,7 +502,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       date: s.wonDate || '14 Aug 2026',
       winnerMemberId: s.memberId || `LOP-${String(s.slotNumber).padStart(6, '0')}`,
       winnerName: s.memberName || `Member #${s.slotNumber}`,
-      prizeDescription: '1 Gram 24K Gold Coin',
+      prizeDescription: '1 Gram 916 Gold Coin',
       dispatchStatus: 'Verified & Shipped',
       auditHash: `0x${s.slotNumber}a9b8c7d6e5`,
     }));
@@ -405,6 +555,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (typeof window !== 'undefined') {
           localStorage.setItem('infinity_gold_user_session', JSON.stringify(resData.user));
         }
+        broadcastAuthEvent({ type: 'LOGIN', user: resData.user });
       }
       setIsAuthenticated(true);
       fetchDbUsers();
@@ -439,6 +590,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           if (typeof window !== 'undefined') {
             localStorage.setItem('infinity_gold_user_session', JSON.stringify(resData.user));
           }
+          broadcastAuthEvent({ type: 'LOGIN', user: resData.user });
         }
         setIsAuthenticated(true);
         setCurrentView('user-dashboard');
@@ -464,6 +616,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         // Fallback to local admin verification if endpoint is unreachable or dev mode
         if (email.trim().toLowerCase().includes('admin') || key.length >= 4) {
           setIsAdminAuthenticated(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('infinity_gold_admin_session', 'true');
+          }
+          broadcastAuthEvent({ type: 'ADMIN_LOGIN' });
           const newAudit: AuditLogItem = {
             id: `audit_${Date.now()}`,
             timestamp: new Date().toLocaleString('en-IN') + ' IST',
@@ -484,6 +640,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setIsAdminAuthenticated(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('infinity_gold_admin_session', 'true');
+      }
+      broadcastAuthEvent({ type: 'ADMIN_LOGIN' });
       const newAudit: AuditLogItem = {
         id: `audit_${Date.now()}`,
         timestamp: new Date().toLocaleString('en-IN') + ' IST',
@@ -501,6 +661,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } catch (err) {
       setIsAdminAuthenticated(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('infinity_gold_admin_session', 'true');
+      }
+      broadcastAuthEvent({ type: 'ADMIN_LOGIN' });
       setCurrentView('admin-dashboard');
       return true;
     }
@@ -512,11 +676,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {}
     if (typeof window !== 'undefined') {
       localStorage.removeItem('infinity_gold_user_session');
+      localStorage.removeItem('infinity_gold_admin_session');
     }
+    broadcastAuthEvent({ type: 'LOGOUT' });
     setIsAuthenticated(false);
     setIsAdminAuthenticated(false);
     setUser(currentUserMock);
-    setCurrentView('public-landing');
+    setCurrentView('auth-login');
   };
 
   // Helper function: Automatically allocate user to next available slot in active batch upon admin payment verification
@@ -578,6 +744,89 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return assignedSlotNumber;
+  };
+
+  const manualAssignSlot = async (identifier: string, slotNo: number, targetBatchId = 'GROUP-001') => {
+    try {
+      await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: identifier, 
+          memberId: identifier, 
+          userId: identifier, 
+          slotNumber: slotNo, 
+          depositStatus: 'Verified', 
+          groupId: targetBatchId 
+        }),
+      });
+
+      const targetUser = dbUsers.find(u => 
+        u.email?.toLowerCase() === identifier.toLowerCase() || 
+        u.memberId === identifier || 
+        u.id === identifier
+      );
+
+      const memberName = targetUser?.name || targetUser?.fullName || identifier;
+      const memberId = targetUser?.memberId || identifier;
+
+      setAllGroups(prevGroups => {
+        return prevGroups.map(grp => {
+          if (grp.groupId !== targetBatchId) return grp;
+          const updatedSlots = grp.slots.map(s => {
+            if (s.slotNumber === slotNo) {
+              return {
+                ...s,
+                memberName: memberName,
+                memberId: memberId,
+                status: 'Occupied' as const,
+                joinedDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+              };
+            }
+            return s;
+          });
+          const newTotalMembers = updatedSlots.filter(s => s.status === 'Occupied').length;
+          return {
+            ...grp,
+            totalMembers: newTotalMembers,
+            status: newTotalMembers >= 50 ? 'full' : grp.status,
+            slots: updatedSlots,
+          };
+        });
+      });
+
+      setDbUsers(prev => prev.map(u => {
+        if (u.email?.toLowerCase() === identifier.toLowerCase() || u.memberId === identifier || u.id === identifier) {
+          return {
+            ...u,
+            deposit: 'Verified',
+            group: targetBatchId,
+            slot: `#${slotNo}`,
+          };
+        }
+        return u;
+      }));
+
+      await fetchDbUsers();
+
+      const newAudit: AuditLogItem = {
+        id: `audit_${Date.now()}`,
+        timestamp: new Date().toLocaleString('en-IN') + ' IST',
+        actor: 'admin.op@infinitygram.net',
+        role: 'Super Admin',
+        action: 'MANUAL_SLOT_ALLOCATION_CONFIRMED',
+        module: 'Groups',
+        recordId: `${targetBatchId}-SLOT${slotNo}`,
+        previousStatus: 'Open Available Slot',
+        newStatus: `Occupied by ${memberName} (${memberId})`,
+        ipAddress: '103.45.12.89',
+      };
+      setAuditLogs(prev => [newAudit, ...prev]);
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to assign slot manually' };
+    }
   };
 
   // Submit deposit
@@ -681,7 +930,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
       winnerMemberId: winnerSlot.memberId || `LOP-${String(winnerSlot.slotNumber).padStart(6, '0')}`,
       winnerName: winnerSlot.memberName || `Member #${winnerSlot.slotNumber}`,
-      prizeDescription: '1 Gram 24K Gold Coin',
+      prizeDescription: '1 Gram 916 Gold Coin',
       dispatchStatus: 'Processing',
       auditHash: `0x${Math.random().toString(16).substring(2, 12)}${currentDay}`,
     };
@@ -734,7 +983,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const newNotif: NotificationItem = {
       id: `notif_${Date.now()}`,
       title: `Day ${currentDay} Gold Selection Completed`,
-      description: `${newWinner.winnerName} (${newWinner.winnerMemberId}) was awarded 1 Gram 24K Gold Coin! Next draw opens in 24 hours.`,
+      description: `${newWinner.winnerName} (${newWinner.winnerMemberId}) was awarded 1 Gram 916 Gold Coin! Next draw opens in 24 hours.`,
       category: 'Reward',
       timestamp: 'Just now',
       read: false,
@@ -768,7 +1017,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateUserProfile = (name: string, email: string, mobile: string) => {
-    setUser(prev => ({ ...prev, fullName: name, email, mobile }));
+    setUser(prev => {
+      const updated = { ...prev, fullName: name, email, mobile };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('infinity_gold_user_session', JSON.stringify(updated));
+      }
+      broadcastAuthEvent({ type: 'LOGIN', user: updated });
+      return updated;
+    });
   };
 
   const updateSettings = (newSettings: Partial<SystemSettingsConfig>) => {
@@ -806,6 +1062,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       isAdminAuthenticated,
       dbUsers,
       fetchDbUsers,
+      fetchReferrals,
+      manualAssignSlot,
       drawLockedUntil,
       isLiveDrawActive,
       currentLiveWinner,

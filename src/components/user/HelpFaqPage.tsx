@@ -33,7 +33,7 @@ export const HelpFaqPage = () => {
     {
       category: 'cycle',
       question: 'How does the 50-Member 1 Gram Gold Group work?',
-      answer: 'Each structured group consists of 50 verified members. Every member makes a single ₹10,000 deposit. For 50 consecutive days, exactly 1 member is awarded 1 Gram of 24K Gold daily through an audited selection process until all 50 members have received their 1 Gram Gold coin.'
+      answer: 'Each structured group consists of 50 verified members. Every member makes a single ₹10,000 deposit. For 50 consecutive days, exactly 1 member is awarded 1 Gram of 916 Gold daily through an audited selection process until all 50 members have received their 1 Gram Gold coin.'
     },
     {
       category: 'draw',
@@ -48,7 +48,7 @@ export const HelpFaqPage = () => {
     {
       category: 'delivery',
       question: 'How and when will my 1 Gram Gold Coin be delivered?',
-      answer: 'Awarded 1 Gram 24K Gold coins are packed with tamper-evident security seals, accompanied by an audited authenticity certificate, and shipped via insured courier (Blue Dart/Delhivery) within 3 to 5 business days.'
+      answer: 'Awarded 1 Gram 916 Gold coins are packed with tamper-evident security seals, accompanied by an audited authenticity certificate, and shipped via insured courier (Blue Dart/Delhivery) within 3 to 5 business days.'
     },
     {
       category: 'referral',

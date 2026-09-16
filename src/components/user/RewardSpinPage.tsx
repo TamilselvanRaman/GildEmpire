@@ -85,7 +85,7 @@ export const RewardSpinPage = () => {
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#E1A238]/10 rounded-full blur-2xl pointer-events-none" />
           <p className="text-[10px] font-mono font-bold text-[#F2C868] uppercase tracking-widest">Current Cycle</p>
           <p className="text-xl sm:text-2xl font-black text-white font-serif mt-1">Day {group.currentCycleDay.toString().padStart(2, '0')} <span className="text-xs text-[#00C2B8] font-sans font-semibold">/ 50</span></p>
-          <p className="text-[11px] text-slate-300 mt-1 font-medium">1 Gram 24K Gold Draw</p>
+          <p className="text-[11px] text-slate-300 mt-1 font-medium">1 Gram 916 Gold Draw</p>
         </div>
 
         {/* Metric 2: Active Chits Pool */}
@@ -209,7 +209,7 @@ export const RewardSpinPage = () => {
               Official 50-Day Winner Dispatch Log
             </h3>
             <p className="text-xs text-slate-300 mt-0.5">
-              Cryptographically verified 1 Gram 24K Gold Coin winner dispatch registry
+              Cryptographically verified 1 Gram 916 Gold Coin winner dispatch registry
             </p>
           </div>
           <span className="text-xs font-mono font-bold text-[#081E26] bg-[#00C2B8] border border-[#00C2B8] px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm font-extrabold">
@@ -238,7 +238,7 @@ export const RewardSpinPage = () => {
                   <td className="p-4 text-slate-300">{w.date}</td>
                   <td className="p-4 font-mono font-bold text-[#00C2B8]">{w.winnerMemberId}</td>
                   <td className="p-4 font-bold text-white">{w.winnerName}</td>
-                  <td className="p-4 text-[#E1A238] font-bold">1 Gram 24K Gold Coin</td>
+                  <td className="p-4 text-[#E1A238] font-bold">1 Gram 916 Gold Coin</td>
                   <td className="p-4">
                     <span className="bg-[#00C2B8]/20 text-[#00C2B8] border border-[#00C2B8]/40 px-3 py-1 rounded-full text-[10px] font-mono font-black uppercase tracking-wider">
                       {w.dispatchStatus}
@@ -301,7 +301,7 @@ export const RewardSpinPage = () => {
               <div className="bg-[#0B1524] p-5 rounded-2xl border border-[#D4AF37]/30 text-left space-y-2.5 text-xs font-sans">
                 <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                   <span className="text-slate-400 font-bold">Awarded Prize:</span>
-                  <span className="text-[#F7DF94] font-black">1 Gram 24K Gold Coin</span>
+                  <span className="text-[#F7DF94] font-black">1 Gram 916 Gold Coin</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                   <span className="text-slate-400 font-bold">Group Batch:</span>

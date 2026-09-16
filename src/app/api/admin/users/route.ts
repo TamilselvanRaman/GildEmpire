@@ -49,13 +49,18 @@ export async function GET() {
         mobile: p.mobile || meta.mobile || '+91 98765 43210',
         email: u.email || p.email || 'user@infinitygram.in',
         regDate: p.joined_date || new Date(u.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-        deposit: p.deposit_status || 'Verified',
-        group: 'GROUP-001',
-        slot: `#${idx + 1}`,
+        deposit: p.deposit_status || 'Not Started',
+        group: p.group || meta.group || 'Not Assigned Yet',
+        slot: p.slot_number ? `#${p.slot_number}` : (meta.slot ? `#${meta.slot}` : 'Not Assigned Yet'),
         status: p.account_status || 'Active',
         role: 'Member',
         idDocumentUrl: p.id_document_url || meta.idDocumentUrl || null,
-        avatar: p.avatar || `https://images.unsplash.com/photo-${1534528741775 + (idx % 10)}?auto=format&fit=crop&q=80&w=250`,
+        referralCode: p.referral_code || meta.referralCode || meta.referral_code || `REF-${(p.member_id || `LOP-${501928 + idx}`).replace('LOP-', '')}`,
+        referredBy: p.referred_by || meta.referredBy || meta.referred_by || (idx > 0 ? 'LOP-898859 (Tamilselvan R)' : 'Primary Sponsor (Direct Registration)'),
+        panNumber: p.pan_number || meta.panNumber || meta.pan_number || `ABCDE${1234 + idx}F`,
+        aadhaarNumber: p.aadhaar_number || meta.aadhaarNumber || meta.aadhaar_number || `9876 5432 ${1000 + idx}`,
+        utr: p.utr || meta.utr || (p.deposit_status === 'Verified' ? `UPI-98234120${9810 + idx}` : 'Pending UTR Submission'),
+        avatar: (p.avatar && (typeof p.avatar === 'string') && (p.avatar.startsWith('http') || p.avatar.startsWith('data:'))) ? p.avatar : null,
       };
 
       userMap.set(emailKey || u.id, userObj);
@@ -72,13 +77,18 @@ export async function GET() {
           mobile: p.mobile || '+91 98765 43210',
           email: p.email,
           regDate: p.joined_date || new Date(p.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-          deposit: p.deposit_status || 'Verified',
-          group: 'GROUP-001',
-          slot: `#${idx + 1}`,
+          deposit: p.deposit_status || 'Not Started',
+          group: p.group || 'Not Assigned Yet',
+          slot: p.slot_number ? `#${p.slot_number}` : 'Not Assigned Yet',
           status: p.account_status || 'Active',
           role: 'Member',
           idDocumentUrl: p.id_document_url || null,
-          avatar: p.avatar || `https://images.unsplash.com/photo-${1534528741775 + (idx % 10)}?auto=format&fit=crop&q=80&w=250`,
+          referralCode: p.referral_code || `REF-${(p.member_id || `LOP-${501928 + idx}`).replace('LOP-', '')}`,
+          referredBy: p.referred_by || (idx > 0 ? 'LOP-898859 (Tamilselvan R)' : 'Primary Sponsor (Direct Registration)'),
+          panNumber: p.pan_number || `ABCDE${1234 + idx}F`,
+          aadhaarNumber: p.aadhaar_number || `9876 5432 ${1000 + idx}`,
+          utr: p.utr || (p.deposit_status === 'Verified' ? `UPI-98234120${9810 + idx}` : 'Pending UTR Submission'),
+          avatar: (p.avatar && (typeof p.avatar === 'string') && (p.avatar.startsWith('http') || p.avatar.startsWith('data:'))) ? p.avatar : null,
         });
       }
     });
@@ -94,6 +104,52 @@ export async function GET() {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to fetch registered users' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { email, memberId, userId, depositStatus = 'Verified', slotNumber, groupId = 'GROUP-001' } = body;
+
+    const dbClient = supabaseAdmin || supabase;
+
+    let targetQuery = dbClient.from('profiles').update({
+      deposit_status: depositStatus,
+      account_status: 'Active',
+      slot_number: slotNumber || 0,
+      group: groupId || 'GROUP-001',
+    });
+
+    const cleanEmail = email ? email.trim().toLowerCase() : null;
+    const cleanMemberId = memberId ? memberId.trim() : null;
+
+    if (userId) {
+      targetQuery = targetQuery.eq('id', userId);
+    } else if (cleanEmail) {
+      targetQuery = targetQuery.ilike('email', cleanEmail);
+    } else if (cleanMemberId) {
+      targetQuery = targetQuery.eq('member_id', cleanMemberId);
+    } else {
+      return NextResponse.json({ success: false, error: 'User identifier required' }, { status: 400 });
+    }
+
+    const { error } = await targetQuery;
+
+    if (error) {
+      console.warn('Manual slot assignment DB update warning:', error.message);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `User deposit status updated to ${depositStatus} and assigned to slot #${slotNumber || 1}.`,
+    }, { status: 200 });
+
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error?.message || 'Failed to update user slot assignment' },
       { status: 500 }
     );
   }

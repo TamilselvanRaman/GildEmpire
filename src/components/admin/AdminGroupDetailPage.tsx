@@ -215,71 +215,94 @@ export const AdminGroupDetailPage = () => {
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredMembers.map((slot) => {
                 const hasWon = slot.status === 'Won 1g Gold';
+                const isFilled = slot.memberName && slot.memberName.trim() !== '' && slot.memberName !== '—' && slot.memberId && slot.memberId !== '—' && slot.memberId !== 'Unassigned';
 
                 return (
                   <tr 
                     key={slot.slotNumber}
-                    onClick={() => setSelectedSlotMember(slot)}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    onClick={() => isFilled && setSelectedSlotMember(slot)}
+                    className={`transition-colors ${isFilled ? 'hover:bg-blue-50/70 cursor-pointer' : 'hover:bg-slate-50/50'}`}
                   >
                     <td className="p-4 font-mono font-black text-[#0B1E39] text-sm">
                       Slot #{slot.slotNumber.toString().padStart(2, '0')}
                     </td>
 
                     <td className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs ${
-                          hasWon ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-50 text-[#2F6FED]'
-                        }`}>
-                          {slot.memberName ? slot.memberName.charAt(0) : 'M'}
+                      {isFilled ? (
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs uppercase shrink-0 border ${
+                            hasWon ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-gradient-to-br from-[#00C2B8] to-[#0B1E39] text-[#F2C868] border-[#E1A238]/60 shadow-xs'
+                          }`}>
+                            {(slot.memberName || '?').charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-[#0B1E39] text-xs">
+                              {slot.memberName}
+                            </p>
+                            {(slot as any).mobile ? (
+                              <p className="text-[11px] text-slate-500 font-mono">
+                                {(slot as any).mobile}
+                              </p>
+                            ) : null}
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-extrabold text-[#0B1E39] text-xs">
-                            {slot.memberName || `Member #${slot.slotNumber}`}
-                          </p>
-                          <p className="text-[11px] text-slate-500 font-mono">
-                            +91 98765 {10000 + slot.slotNumber}
-                          </p>
-                        </div>
-                      </div>
+                      ) : (
+                        <span className="text-slate-400 font-mono font-bold">—</span>
+                      )}
                     </td>
 
                     <td className="p-4 font-mono font-black text-[#2F6FED]">
-                      {slot.memberId || `LOP-${String(slot.slotNumber).padStart(6, '0')}`}
+                      {isFilled ? slot.memberId : <span className="text-slate-400 font-normal">—</span>}
                     </td>
 
                     <td className="p-4">
-                      <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-[10px] font-black inline-flex items-center space-x-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>₹10,000 Paid (Verified)</span>
-                      </span>
-                    </td>
-
-                    <td className="p-4">
-                      {hasWon ? (
-                        <span className="bg-amber-100 text-amber-950 border border-amber-300 px-3 py-1 rounded-full text-[10px] font-black inline-flex items-center space-x-1">
-                          <Award className="w-3.5 h-3.5 text-amber-700" />
-                          <span>Won 1g Gold (Day {slot.wonDay || 1})</span>
+                      {isFilled ? (
+                        <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-[10px] font-black inline-flex items-center space-x-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>₹10,000 Paid (Verified)</span>
                         </span>
                       ) : (
-                        <span className="bg-blue-50 text-blue-900 border border-blue-200 px-3 py-1 rounded-full text-[10px] font-bold inline-flex items-center space-x-1">
-                          <Clock className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Active in Draw Pool</span>
+                        <span className="bg-slate-100 text-slate-400 border border-slate-200 px-3 py-1 rounded-full text-[10px] font-medium">
+                          Slot Open / Unassigned
                         </span>
                       )}
                     </td>
 
                     <td className="p-4">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedSlotMember(slot);
-                        }}
-                        className="text-xs font-bold text-[#2F6FED] hover:underline flex items-center space-x-1"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View Details</span>
-                      </button>
+                      {isFilled ? (
+                        hasWon ? (
+                          <span className="bg-amber-100 text-amber-950 border border-amber-300 px-3 py-1 rounded-full text-[10px] font-black inline-flex items-center space-x-1">
+                            <Award className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Won 1g Gold (Day {slot.wonDay || 1})</span>
+                          </span>
+                        ) : (
+                          <span className="bg-blue-50 text-blue-900 border border-blue-200 px-3 py-1 rounded-full text-[10px] font-bold inline-flex items-center space-x-1">
+                            <Clock className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Active in Draw Pool</span>
+                          </span>
+                        )
+                      ) : (
+                        <span className="bg-slate-100 text-slate-400 border border-slate-200 px-3 py-1 rounded-full text-[10px] font-medium">
+                          Slot Open
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="p-4">
+                      {isFilled ? (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedSlotMember(slot);
+                          }}
+                          className="text-xs font-bold text-[#2F6FED] hover:underline flex items-center space-x-1 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Details</span>
+                        </button>
+                      ) : (
+                        <span className="text-slate-400 font-mono">—</span>
+                      )}
                     </td>
                   </tr>
                 );

@@ -161,14 +161,14 @@ export const ReferralDashboardPage = () => {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
-        className="bg-[#0D3B43] rounded-[2.5rem] border border-[#E1A238]/30 shadow-2xl p-8 space-y-6"
+        className="bg-[#0D3B43] rounded-[2.5rem] border border-[#E1A238]/30 shadow-2xl p-5 sm:p-8 space-y-6"
       >
-        <div className="flex items-center justify-between pb-4 border-b border-[#081E26]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-[#081E26]">
           <div>
             <h3 className="text-base font-black text-white tracking-tight">Referred Members Directory</h3>
             <p className="text-xs text-slate-300 font-medium mt-0.5">Real-time deposit verification log and 5% bonus tracking.</p>
           </div>
-          <span className="text-[10px] font-mono font-black text-[#00C2B8] bg-[#081E26] px-3.5 py-1.5 rounded-full border border-[#00C2B8]/40">
+          <span className="text-[10px] font-mono font-black text-[#00C2B8] bg-[#081E26] px-3.5 py-1.5 rounded-full border border-[#00C2B8]/40 self-start sm:self-auto">
             Total Commission: ₹{total5PercentEarnings} (5% on ₹10,000)
           </span>
         </div>

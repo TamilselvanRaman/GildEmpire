@@ -178,7 +178,7 @@ export interface DailyGoldWinner {
   date: string;
   winnerMemberId: string;
   winnerName: string;
-  prizeDescription: '1 Gram 24K Gold Coin';
+  prizeDescription: '1 Gram 916 Gold Coin';
   dispatchStatus: 'Verified & Shipped' | 'Processing' | 'Pending Verification';
   trackingNumber?: string;
   auditHash: string;
@@ -190,7 +190,8 @@ export interface ReferralItem {
   referredMemberId: string;
   joinedDate: string;
   depositStatus: 'Verified' | 'Pending' | 'Not Started';
-  eligibility: 'Eligible' | 'Pending Deposit';
+  eligibility: 'Eligible' | 'Pending Deposit' | 'Pending Verification';
+  bonusEarnedAmount?: number;
 }
 
 export interface NotificationItem {

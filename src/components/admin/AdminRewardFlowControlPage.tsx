@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DailyGoldWinner } from '../../types';
+import { mysteryAudio } from '../../utils/mysteryAudio';
 import { 
   Award, 
   Sparkles, 
@@ -121,6 +122,7 @@ export const AdminRewardFlowControlPage = () => {
     if (isLocked24h || drawState !== 'idle' || activePoolMembers.length === 0) return;
 
     setDrawState('shaking');
+    mysteryAudio.playSpin7Seconds();
 
     setTimeout(() => {
       setDrawState('drawing');
@@ -131,7 +133,7 @@ export const AdminRewardFlowControlPage = () => {
         setDrawState('revealed');
         setShowWinnerModal(true);
       }, 1600);
-    }, 1800);
+    }, 5400);
   };
 
   const resetDrawState = () => {
@@ -822,7 +824,7 @@ export const AdminRewardFlowControlPage = () => {
               <div className="bg-amber-50/80 p-5 rounded-2xl border border-amber-200 text-left space-y-2 text-xs font-medium">
                 <div className="flex justify-between items-center border-b border-amber-200/80 pb-2">
                   <span className="text-slate-600 font-bold">Awarded Prize:</span>
-                  <span className="text-amber-900 font-black">1 Gram 24K Gold Coin</span>
+                  <span className="text-amber-900 font-black">1 Gram 916 Gold Coin</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-amber-200/80 pb-2">
                   <span className="text-slate-600 font-bold">Group Batch:</span>
@@ -889,7 +891,7 @@ export const AdminRewardFlowControlPage = () => {
                 </div>
 
                 <p className="text-slate-700 leading-relaxed font-medium pt-1">
-                  "Dear Member, your group's daily 1 Gram 24K Gold Panai lucky pot selection starts in 10 minutes ({scheduledTime} {scheduledAmPm} IST). Click the direct link below to open the portal and watch the live paper chit draw!"
+                  "Dear Member, your group's daily 1 Gram 916 Gold Panai lucky pot selection starts in 10 minutes ({scheduledTime} {scheduledAmPm} IST). Click the direct link below to open the portal and watch the live paper chit draw!"
                 </p>
 
                 <div className="pt-2">

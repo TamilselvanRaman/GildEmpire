@@ -4,12 +4,12 @@ import React, { useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import Home from '../page';
 
-export default function RegisterRoute() {
+export default function DashboardRoute() {
   const { currentView, setCurrentView } = useApp();
 
   useEffect(() => {
-    if (!currentView.startsWith('user-') && currentView !== 'public-landing') {
-      setCurrentView('auth-register');
+    if (currentView !== 'user-dashboard') {
+      setCurrentView('user-dashboard');
     }
   }, []);
 

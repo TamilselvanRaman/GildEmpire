@@ -1,74 +1,94 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../../../lib/supabaseClient';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
-    const referralCode = searchParams.get('referralCode');
+    const rawRefCode = searchParams.get('referralCode');
+    const memberId = searchParams.get('memberId');
 
-    if (!userId && !referralCode) {
-      return NextResponse.json(
-        { success: false, error: 'Either userId or referralCode parameter is required.' },
-        { status: 400 }
-      );
+    const cleanCode = rawRefCode ? rawRefCode.trim().toUpperCase() : null;
+    const cleanMemberId = memberId ? memberId.trim().toUpperCase() : null;
+    const numPart = (cleanCode?.replace(/\D/g, '') || cleanMemberId?.replace(/\D/g, '') || '');
+
+    const dbClient = supabaseAdmin || supabase;
+
+    // Code candidate strings to search for
+    const codeCandidates = [
+      cleanCode,
+      cleanCode ? cleanCode.replace(/^REF-/i, '') : null,
+      cleanMemberId,
+      numPart ? `REF-${numPart}` : null,
+      numPart ? `LOP-${numPart}` : null,
+      numPart || null,
+    ].filter(Boolean) as string[];
+
+    let dbReferrals: any[] = [];
+
+    // 1. Fetch from referrals table
+    try {
+      let query = dbClient.from('referrals').select('*');
+      if (codeCandidates.length > 0 && userId) {
+        const orClause = [...codeCandidates.map(c => `referrer_code.ilike.${c}`), `referrer_id.eq.${userId}`].join(',');
+        query = query.or(orClause);
+      } else if (codeCandidates.length > 0) {
+        const orClause = codeCandidates.map(c => `referrer_code.ilike.${c}`).join(',');
+        query = query.or(orClause);
+      } else if (userId) {
+        query = query.eq('referrer_id', userId);
+      }
+      const { data } = await query;
+      if (data) dbReferrals = data;
+    } catch (e) {}
+
+    // 2. Fetch from profiles table for registered users who entered any of these referral_codes
+    let profileReferrals: any[] = [];
+    if (codeCandidates.length > 0) {
+      try {
+        const orClause = codeCandidates.map(c => `referral_code.ilike.${c}`).join(',');
+        const { data: pData } = await dbClient
+          .from('profiles')
+          .select('*')
+          .or(orClause);
+        if (pData) profileReferrals = pData;
+      } catch (e) {}
     }
 
-    // Query referrals from Supabase database
-    let query = supabase.from('referrals').select('*');
-    if (userId) {
-      query = query.eq('referrer_id', userId);
-    } else if (referralCode) {
-      query = query.eq('referrer_code', referralCode);
-    }
+    // Combine and format referrals list
+    const combinedMap = new Map<string, any>();
 
-    const { data: referrals, error } = await query;
+    dbReferrals.forEach((r: any) => {
+      const key = r.referred_member_id || r.referred_user_id || r.id;
+      const isVerified = r.deposit_status === 'Verified';
+      combinedMap.set(key, {
+        id: r.id || `ref_${Date.now()}`,
+        referredName: r.referred_name || 'Referred Member',
+        referredMemberId: r.referred_member_id || 'LOP-MEMBER',
+        joinedDate: r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN'),
+        depositStatus: r.deposit_status || 'Not Started',
+        eligibility: isVerified ? 'Eligible' : 'Pending Verification',
+        bonusEarnedAmount: isVerified ? (r.bonus_amount || 500) : 0,
+      });
+    });
 
-    if (error && !error.message.includes('relation "referrals" does not exist')) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
-      );
-    }
+    profileReferrals.forEach((p: any) => {
+      const key = p.member_id || p.id;
+      if (!combinedMap.has(key)) {
+        const isVerified = p.deposit_status === 'Verified';
+        combinedMap.set(key, {
+          id: p.id || `ref_p_${Date.now()}`,
+          referredName: p.full_name || p.email?.split('@')[0] || 'Referred Member',
+          referredMemberId: p.member_id || 'LOP-MEMBER',
+          joinedDate: p.joined_date || new Date(p.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          depositStatus: p.deposit_status || 'Not Started',
+          eligibility: isVerified ? 'Eligible' : 'Pending Verification',
+          bonusEarnedAmount: isVerified ? 500 : 0,
+        });
+      }
+    });
 
-    // Default referral mock fallback if empty
-    const referralList = (referrals && referrals.length > 0) ? referrals.map((r: any) => ({
-      id: r.id,
-      referredName: r.referred_name,
-      referredMemberId: r.referred_member_id,
-      joinedDate: r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Aug 2026',
-      depositStatus: r.deposit_status || 'Verified',
-      eligibility: r.deposit_status === 'Verified' ? 'Eligible' : 'Pending Deposit',
-      bonusEarnedAmount: r.bonus_amount || 500, // 5% of ₹10,000 = ₹500
-    })) : [
-      {
-        id: 'ref_1',
-        referredName: 'Amit Verma',
-        referredMemberId: 'LOP-883920',
-        joinedDate: '15 Aug 2026',
-        depositStatus: 'Verified',
-        eligibility: 'Eligible',
-        bonusEarnedAmount: 500,
-      },
-      {
-        id: 'ref_2',
-        referredName: 'Priya Sundaram',
-        referredMemberId: 'LOP-772819',
-        joinedDate: '18 Aug 2026',
-        depositStatus: 'Verified',
-        eligibility: 'Eligible',
-        bonusEarnedAmount: 500,
-      },
-      {
-        id: 'ref_3',
-        referredName: 'Karthik Raja',
-        referredMemberId: 'LOP-449201',
-        joinedDate: '22 Aug 2026',
-        depositStatus: 'Pending',
-        eligibility: 'Pending Deposit',
-        bonusEarnedAmount: 0,
-      },
-    ];
+    const referralList = Array.from(combinedMap.values());
 
     const totalBonusEarned = referralList
       .filter((r: any) => r.depositStatus === 'Verified')
@@ -79,9 +99,9 @@ export async function GET(request: Request) {
       referrals: referralList,
       totalReferrals: referralList.length,
       verifiedCount: referralList.filter((r: any) => r.depositStatus === 'Verified').length,
-      commissionRatePercent: 5, // 5% instant bonus
-      totalBonusEarned, // e.g. ₹1,000
-    });
+      commissionRatePercent: 5,
+      totalBonusEarned,
+    }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to fetch referral records' },
@@ -102,12 +122,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: newReferral, error } = await supabase
+    const dbClient = supabaseAdmin || supabase;
+    const cleanCode = referrerCode ? referrerCode.trim().toUpperCase() : null;
+
+    const { data: newReferral, error } = await dbClient
       .from('referrals')
       .insert([
         {
           referrer_id: referrerId || null,
-          referrer_code: referrerCode || null,
+          referrer_code: cleanCode,
           referred_user_id: referredUserId,
           referred_name: referredName,
           referred_member_id: referredMemberId,

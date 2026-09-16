@@ -71,8 +71,8 @@ export const TermsPage = () => {
 
           <section id="rewards" className="space-y-3 pt-2 border-t border-[#081E26] scroll-mt-28">
             <h2 className="text-lg font-extrabold text-white border-b border-[#081E26] pb-2">5. 50-Day Gold Reward Rules</h2>
-            <p>Each group cycle operates over 50 consecutive calendar days. On each day, 1 member is selected to receive a 1 Gram 24K Hallmarked Gold coin via audited daily selection.</p>
-            <p><strong>Non-Repeating Pool Guarantee:</strong> Selected daily winners are automatically removed from the active selection pool for subsequent days. Over 50 days, every single member (#1 through #50) is guaranteed to receive 1 Gram 24K Gold.</p>
+            <p>Each group cycle operates over 50 consecutive calendar days. On each day, 1 member is selected to receive a 1 Gram 916 Hallmarked Gold coin via audited daily selection.</p>
+            <p><strong>Non-Repeating Pool Guarantee:</strong> Selected daily winners are automatically removed from the active selection pool for subsequent days. Over 50 days, every single member (#1 through #50) is guaranteed to receive 1 Gram 916 Gold.</p>
           </section>
 
           <section id="referrals" className="space-y-3 pt-2 border-t border-[#081E26] scroll-mt-28">
@@ -82,7 +82,7 @@ export const TermsPage = () => {
 
           <section id="compliance" className="space-y-3 pt-2 border-t border-[#081E26] scroll-mt-28">
             <h2 className="text-lg font-extrabold text-white border-b border-[#081E26] pb-2">7. Regulatory & Legal Compliance</h2>
-            <p>InfinityGram operates in strict compliance with Indian financial laws and consumer guidelines. All gold coins distributed are certified 24K 999 purity with BIS Hallmark authentication and dispatched via insured courier.</p>
+            <p>InfinityGram operates in strict compliance with Indian financial laws and consumer guidelines. All gold coins distributed are certified 916 BIS Hallmark purity authentication and dispatched via insured courier.</p>
           </section>
 
         </div>

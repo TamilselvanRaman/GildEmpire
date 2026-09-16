@@ -103,29 +103,29 @@ export const DepositOverviewPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="border-2 p-6 sm:p-7 rounded-[2.2rem] shadow-2xl space-y-4 relative overflow-hidden transition-all duration-500 bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#0A192F] border-amber-400/90"
+          className="border-2 p-5 sm:p-7 rounded-[2.2rem] shadow-2xl space-y-4 relative overflow-hidden transition-all duration-500 bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#0A192F] border-amber-400/90"
         >
           <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"></div>
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
-            <div className="flex items-start space-x-4">
-              <div className="w-13 h-13 rounded-2xl border flex items-center justify-center shrink-0 shadow-inner bg-amber-500/20 border-amber-400/50 text-amber-300">
+            <div className="flex items-start space-x-3.5 min-w-0 w-full">
+              <div className="w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-inner bg-amber-500/20 border-amber-400/50 text-amber-300">
                 <Mail className="w-6 h-6 animate-pulse text-amber-300" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5 min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[10px] font-black uppercase px-3 py-0.5 rounded-full tracking-wider bg-amber-400 text-amber-950">
                     EMAIL DISPATCHED & VERIFIED
                   </span>
-                  <span className="text-xs text-amber-300 font-mono font-bold">Recipient: {user.email}</span>
+                  <span className="text-xs text-amber-300 font-mono font-bold break-all">Recipient: {user.email}</span>
                 </div>
                 
-                <h3 className="text-lg font-black text-white">
-                  Payment Verification Email Dispatched to {user.email}
+                <h3 className="text-base sm:text-lg font-black text-white leading-tight break-words">
+                  Payment Verification Email Dispatched to <span className="text-amber-300 break-all">{user.email}</span>
                 </h3>
                 
                 <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-2xl">
-                  An official email containing payment instructions and bank verification link has been dispatched to your verified email (<strong className="text-amber-300">{user.email}</strong>). Check your inbox to proceed with deposit.
+                  An official email containing payment instructions and bank verification link has been dispatched to your verified email (<strong className="text-amber-300 break-all">{user.email}</strong>). Check your inbox to proceed with deposit.
                 </p>
               </div>
             </div>

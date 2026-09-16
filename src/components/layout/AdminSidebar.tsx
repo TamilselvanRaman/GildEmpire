@@ -73,16 +73,8 @@ export const AdminSidebar = () => {
         </nav>
       </div>
 
-      {/* Admin Actions: Switch View & Logout */}
+      {/* Admin Actions: Logout */}
       <div className="pt-4 border-t border-blue-200/80 space-y-2">
-        <button
-          onClick={() => setCurrentView('user-dashboard')}
-          className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-blue-200/60 hover:text-[#2F6FED] transition-colors cursor-pointer"
-        >
-          <ShieldCheck className="w-4 h-4 text-blue-600/80" />
-          <span>Switch to Member View</span>
-        </button>
-
         <button
           onClick={() => {
             logout();

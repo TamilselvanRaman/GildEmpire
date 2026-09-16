@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { mysteryAudio } from '@/utils/mysteryAudio';
+import { mysteryAudio } from '../../utils/mysteryAudio';
 
 export type BowlState =
   | 'IDLE'
@@ -401,7 +401,7 @@ export const GlassBottleScene: React.FC<GlassBowlSceneProps> = ({
         }
 
         case 'SHAKING': {
-          const shakeDuration = reducedMotion ? 0.8 : 1.8;
+          const shakeDuration = reducedMotion ? 0.8 : 7.0;
           const progress = Math.min(sTime / shakeDuration, 1.0);
           const envelope = Math.sin(progress * Math.PI);
 
@@ -431,7 +431,7 @@ export const GlassBottleScene: React.FC<GlassBowlSceneProps> = ({
 
           if (sTime >= shakeDuration) {
             stateTimeRef.current = 0;
-            mysteryAudio.playChime(587.33, 'triangle', 0.6, 0.2);
+            mysteryAudio.playWinningSound();
             onStateTransition('LETTER_SELECTED');
           }
           break;

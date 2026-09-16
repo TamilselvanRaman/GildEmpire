@@ -14,7 +14,7 @@ export const SystemNoticePage: React.FC = () => {
       date: '11 Sep 2026',
       category: 'Reward Announcement',
       type: 'success',
-      content: 'Day 15 of 50-Member Group Batch A was drawn at 07:00 AM IST. 1 Gram of 24K Gold Coin awarded to Member MB-2041 (Vikram Seth). Audit Hash verified.',
+      content: 'Day 15 of 50-Member Group Batch A was drawn at 07:00 AM IST. 1 Gram of 916 Gold Coin awarded to Member MB-2041 (Vikram Seth). Audit Hash verified.',
     },
     {
       id: 'NTC-102',

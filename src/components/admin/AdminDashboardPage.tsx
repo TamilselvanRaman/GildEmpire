@@ -19,14 +19,18 @@ import {
 } from 'lucide-react';
 
 export const AdminDashboardPage = () => {
-  const { deposits, group, allGroups, auditLogs, setCurrentView } = useApp();
+  const { deposits, group, allGroups, auditLogs, setCurrentView, dbUsers = [], pastWinners = [] } = useApp();
 
+  const totalMembersCount = dbUsers.length > 0 ? dbUsers.length : (allGroups || []).reduce((acc, g) => acc + g.slots.filter(s => s.status === 'Occupied').length, 0);
   const pendingDeposits = deposits.filter(d => d.status === 'Pending');
-  const verifiedDeposits = deposits.filter(d => d.status === 'Verified');
-  const verifiedVolumeINR = verifiedDeposits.reduce((acc, d) => acc + d.amount, 0);
-  const activeBatchesCount = (allGroups || []).filter(g => g.status === 'active' || g.status === 'recruiting').length || 1;
-  const totalOccupiedSlots = (allGroups || []).reduce((acc, g) => acc + g.slots.filter(s => s.status === 'Occupied').length, 0);
-  const totalGoldDistributed = (allGroups || []).reduce((acc, g) => acc + g.totalGoldDistributedGrams, 0);
+  
+  const verifiedCount = dbUsers.length > 0 
+    ? dbUsers.filter(u => u.deposit === 'Verified' || u.status === 'Active').length 
+    : deposits.filter(d => d.status === 'Verified').length;
+  const verifiedVolumeINR = verifiedCount * 10000;
+  
+  const activeBatchesCount = (allGroups || []).filter(g => g.totalMembers > 0 || g.status === 'active').length || 1;
+  const totalGoldDistributed = pastWinners.length > 0 ? pastWinners.length : (allGroups || []).reduce((acc, g) => acc + g.totalGoldDistributedGrams, 0);
 
   return (
     <div className="space-y-6 font-sans">
@@ -74,7 +78,7 @@ export const AdminDashboardPage = () => {
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-3xl font-black text-[#0B1E39] mt-2 tracking-tight">{totalOccupiedSlots} Members</h3>
+          <h3 className="text-3xl font-black text-[#0B1E39] mt-2 tracking-tight">{totalMembersCount} Members</h3>
           <p className="text-[11px] text-emerald-600 font-bold mt-1 flex items-center space-x-1">
             <TrendingUp className="w-3.5 h-3.5" />
             <span>Across Active Group Batches</span>
@@ -88,7 +92,7 @@ export const AdminDashboardPage = () => {
               <Wallet className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-3xl font-black text-[#2F6FED] mt-2 tracking-tight">{verifiedDeposits.length} Verified</h3>
+          <h3 className="text-3xl font-black text-[#2F6FED] mt-2 tracking-tight">{verifiedCount} Verified</h3>
           <p className="text-[11px] text-slate-500 font-mono font-bold mt-1">₹{verifiedVolumeINR.toLocaleString('en-IN')} Verified Volume</p>
         </div>
 
@@ -100,7 +104,7 @@ export const AdminDashboardPage = () => {
             </div>
           </div>
           <h3 className="text-3xl font-black text-indigo-700 mt-2 tracking-tight">{activeBatchesCount} Batch{activeBatchesCount > 1 ? 'es' : ''}</h3>
-          <p className="text-[11px] text-indigo-600 font-semibold mt-1">{totalOccupiedSlots} Active Member Slots</p>
+          <p className="text-[11px] text-indigo-600 font-semibold mt-1">{totalMembersCount} Active Member Slots</p>
         </div>
 
         <div className="bg-gradient-to-br from-amber-50 to-amber-100/60 p-5 rounded-2xl border border-amber-300/80 shadow-xs hover:border-amber-400 transition-all">
@@ -111,7 +115,7 @@ export const AdminDashboardPage = () => {
             </div>
           </div>
           <h3 className="text-3xl font-black text-amber-800 mt-2 tracking-tight">{totalGoldDistributed} Grams</h3>
-          <p className="text-[11px] text-amber-900 font-extrabold mt-1">24K Hallmarked Gold Coins</p>
+          <p className="text-[11px] text-amber-900 font-extrabold mt-1">916 Hallmarked Gold Coins</p>
         </div>
 
       </div>
