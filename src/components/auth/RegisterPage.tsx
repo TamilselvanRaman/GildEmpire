@@ -18,8 +18,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   BadgeCheck,
-  UserCheck,
-  FileCheck,
   MapPin
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -190,129 +188,129 @@ export const RegisterPage = () => {
       >
         
         {/* LEFT SIDE: Executive Corporate Panel (Desktop visible, stacked on tablet) */}
-        <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-br from-[#0B1E39] via-[#0D264A] to-[#081528] text-white p-7 sm:p-9 flex-col justify-between relative overflow-hidden">
+        <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-br from-[#0B1E39] via-[#0D264A] to-[#081528] text-white p-6 lg:p-7 flex-col justify-between relative overflow-hidden">
           <div className="absolute top-0 right-0 w-72 h-72 bg-[#00C2B8]/15 rounded-full blur-[90px] pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"></div>
 
-          <div className="space-y-6 relative z-10">
+          <div className="space-y-4 relative z-10">
             {/* Brand Header */}
             <div className="flex items-center justify-between">
               <div 
                 onClick={() => setCurrentView('public-landing')} 
-                className="flex items-center space-x-3 cursor-pointer group select-none"
+                className="flex items-center space-x-2.5 cursor-pointer group select-none"
               >
                 <img 
                   src="/logo.png" 
                   alt="InfinityGram Official Logo" 
-                  className="h-10 w-auto object-contain filter drop-shadow-[0_0_12px_rgba(0,194,184,0.45)] group-hover:scale-105 transition-transform duration-300 shrink-0" 
+                  className="h-9 w-auto object-contain filter drop-shadow-[0_0_12px_rgba(0,194,184,0.45)] group-hover:scale-105 transition-transform duration-300 shrink-0" 
                 />
                 <div>
-                  <h3 className="text-xl font-black text-white tracking-tight leading-tight group-hover:text-[#00C2B8] transition-colors">
+                  <h3 className="text-lg font-black text-white tracking-tight leading-tight group-hover:text-[#00C2B8] transition-colors">
                     Infinity<span className="text-[#00C2B8]">Gram</span>
                   </h3>
-                  <p className="text-[9.5px] text-slate-400 font-extrabold uppercase tracking-widest">SOVEREIGN MEMBER PORTAL</p>
+                  <p className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest">SOVEREIGN MEMBER PORTAL</p>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={() => setCurrentView('public-landing')}
-                className="text-xs text-slate-300 hover:text-white font-bold flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-md transition-all cursor-pointer border border-white/10"
+                className="text-[11px] text-slate-300 hover:text-white font-bold flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-full backdrop-blur-md transition-all cursor-pointer border border-white/10"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 <span>Home</span>
               </button>
             </div>
 
-            <div className="space-y-3 pt-2">
-              <span className="inline-flex items-center space-x-1.5 text-[10px] font-black text-emerald-400 bg-emerald-500/15 px-3 py-1 rounded-full border border-emerald-500/30 uppercase tracking-widest shadow-sm">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+            <div className="space-y-2 pt-1">
+              <span className="inline-flex items-center space-x-1.5 text-[9.5px] font-black text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30 uppercase tracking-widest shadow-xs">
+                <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
                 <span>JOIN NEXT 50-MEMBER GROUP</span>
               </span>
 
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+              <h2 className="text-xl lg:text-2xl font-black text-white tracking-tight leading-snug">
                 Secure Your Slot in the 50-Day 1g Gold Cycle
               </h2>
 
-              <p className="text-xs text-slate-300 leading-relaxed font-medium">
+              <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
                 Create your verified member account to participate in daily 1 Gram 916 Gold rewards with transparent 50-member group progression.
               </p>
             </div>
 
             {/* Feature Checklist */}
-            <div className="space-y-2.5 pt-1 text-xs font-semibold text-slate-200">
-              <div className="flex items-center space-x-3 bg-white/5 p-2.5 rounded-xl border border-white/10">
-                <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+            <div className="space-y-2 text-xs font-semibold text-slate-200">
+              <div className="flex items-center space-x-2.5 bg-white/5 p-2 rounded-xl border border-white/10">
+                <div className="w-4.5 h-4.5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0">
+                  <Check className="w-3 h-3 stroke-[3]" />
                 </div>
-                <span>Strict 50-Member Group Allocation</span>
+                <span className="text-[11px]">Strict 50-Member Group Allocation</span>
               </div>
-              <div className="flex items-center space-x-3 bg-white/5 p-2.5 rounded-xl border border-white/10">
-                <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+              <div className="flex items-center space-x-2.5 bg-white/5 p-2 rounded-xl border border-white/10">
+                <div className="w-4.5 h-4.5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0">
+                  <Check className="w-3 h-3 stroke-[3]" />
                 </div>
-                <span>1 Gram 916 Gold Coin Daily</span>
+                <span className="text-[11px]">1 Gram 916 Gold Coin Daily</span>
               </div>
-              <div className="flex items-center space-x-3 bg-white/5 p-2.5 rounded-xl border border-white/10">
-                <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+              <div className="flex items-center space-x-2.5 bg-white/5 p-2 rounded-xl border border-white/10">
+                <div className="w-4.5 h-4.5 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/40 shrink-0">
+                  <Check className="w-3 h-3 stroke-[3]" />
                 </div>
-                <span>5% Instant Wallet Referral Bonus</span>
+                <span className="text-[11px]">5% Instant Wallet Referral Bonus</span>
               </div>
             </div>
 
             {/* EXECUTIVE 3-STEP MEMBER ACTIVATION WORKFLOW CARD */}
-            <div className="mt-4 bg-gradient-to-br from-[#081E26] via-[#0D3B43] to-[#081E26] border border-[#00C2B8]/40 p-4 rounded-2xl space-y-3 shadow-xl">
-              <div className="flex items-center justify-between pb-2 border-b border-[#0D3B43] gap-2">
-                <span className="flex items-center space-x-2 text-xs font-black text-[#00C2B8] uppercase tracking-wider min-w-0">
-                  <BadgeCheck className="w-4 h-4 text-[#00C2B8] shrink-0" />
+            <div className="mt-2.5 bg-gradient-to-br from-[#081E26] via-[#0D3B43] to-[#081E26] border border-[#00C2B8]/40 p-3 rounded-2xl space-y-2 shadow-xl">
+              <div className="flex items-center justify-between pb-1.5 border-b border-[#0D3B43] gap-2">
+                <span className="flex items-center space-x-1.5 text-[11px] font-black text-[#00C2B8] uppercase tracking-wider min-w-0">
+                  <BadgeCheck className="w-3.5 h-3.5 text-[#00C2B8] shrink-0" />
                   <span className="truncate">3-Step Activation</span>
                 </span>
-                <span className="text-[9.5px] font-extrabold text-[#F2C868] bg-[#E1A238]/20 border border-[#E1A238]/40 px-2.5 py-1 rounded-full whitespace-nowrap shrink-0">
+                <span className="text-[9px] font-extrabold text-[#F2C868] bg-[#E1A238]/20 border border-[#E1A238]/40 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                   ⏱ 24h Admin KYC Review
                 </span>
               </div>
 
-              <div className="space-y-2 text-xs font-medium">
-                <div className="flex items-center space-x-3 bg-[#081E26]/90 p-2.5 rounded-xl border border-[#00C2B8]/30">
-                  <div className="w-5 h-5 rounded-lg bg-[#00C2B8] text-[#081E26] font-black text-xs flex items-center justify-center shrink-0">
+              <div className="space-y-1.5 text-xs font-medium">
+                <div className="flex items-center space-x-2.5 bg-[#081E26]/90 p-2 rounded-xl border border-[#00C2B8]/30">
+                  <div className="w-4.5 h-4.5 rounded-lg bg-[#00C2B8] text-[#081E26] font-black text-[11px] flex items-center justify-center shrink-0">
                     1
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-white text-xs">Register Account & Address</p>
-                    <p className="text-[10px] text-slate-300">Name, Mobile, Email & Address</p>
+                    <p className="font-bold text-white text-[11px] leading-tight">Register Account & Address</p>
+                    <p className="text-[9.5px] text-slate-300">Name, Mobile, Email & Address</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 bg-[#081E26]/90 p-2.5 rounded-xl border border-[#E1A238]/40">
-                  <div className="w-5 h-5 rounded-lg bg-[#E1A238] text-[#081E26] font-black text-xs flex items-center justify-center shrink-0">
+                <div className="flex items-center space-x-2.5 bg-[#081E26]/90 p-2 rounded-xl border border-[#E1A238]/40">
+                  <div className="w-4.5 h-4.5 rounded-lg bg-[#E1A238] text-[#081E26] font-black text-[11px] flex items-center justify-center shrink-0">
                     2
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-[#F2C868] text-xs">Account Verification</p>
-                    <p className="text-[10px] text-slate-300">Instant setup & email dispatch</p>
+                    <p className="font-bold text-[#F2C868] text-[11px] leading-tight">Account Verification</p>
+                    <p className="text-[9.5px] text-slate-300">Instant setup & email dispatch</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 bg-[#081E26]/90 p-2.5 rounded-xl border border-emerald-400/40">
-                  <div className="w-5 h-5 rounded-lg bg-emerald-400 text-[#081E26] font-black text-xs flex items-center justify-center shrink-0">
+                <div className="flex items-center space-x-2.5 bg-[#081E26]/90 p-2 rounded-xl border border-emerald-400/40">
+                  <div className="w-4.5 h-4.5 rounded-lg bg-emerald-400 text-[#081E26] font-black text-[11px] flex items-center justify-center shrink-0">
                     3
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-emerald-300 text-xs">Deposit & Buy Group Slot</p>
-                    <p className="text-[10px] text-slate-300">₹10,000 deposit unlocks 50-member slot</p>
+                    <p className="font-bold text-emerald-300 text-[11px] leading-tight">Deposit & Buy Group Slot</p>
+                    <p className="text-[9.5px] text-slate-300">₹10,000 deposit unlocks 50-member slot</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-white/10 text-xs text-slate-300 flex items-center justify-between font-medium relative z-10 mt-6">
+          <div className="pt-4 border-t border-white/10 text-xs text-slate-300 flex items-center justify-between font-medium relative z-10 mt-4">
             <div className="flex items-center space-x-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>256-Bit Cryptographic SSL</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="text-[11px]">256-Bit Cryptographic SSL</span>
             </div>
-            <span className="text-[10px] text-slate-400 font-mono">v2.4 Sovereign</span>
+            <span className="text-[9.5px] text-slate-400 font-mono">v2.4 Sovereign</span>
           </div>
         </div>
 
@@ -357,9 +355,7 @@ export const RegisterPage = () => {
                 <span>REGISTRATION</span>
               </span>
             </div>
-          </div>
-
-          {/* Validation Error Alert Banner */}
+                    {/* Validation Error Alert Banner */}
           {errorMessage && (
             <motion.div 
               initial={{ opacity: 0, y: -5 }}
@@ -372,254 +368,228 @@ export const RegisterPage = () => {
           )}
 
           {/* Form Controls */}
-          <form onSubmit={handleRegister} className="space-y-4 text-xs font-medium mt-4">
+          <form onSubmit={handleRegister} className="space-y-3 text-xs font-medium mt-3">
             
-            {/* SECTION 1: PERSONAL DETAILS */}
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-                <UserCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>Personal & Contact Info</span>
-                <div className="flex-1 h-px bg-slate-100 ml-2"></div>
-              </div>
+            {/* 1. Full Legal Name */}
+            <div>
+              <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span className="flex items-center space-x-1.5">
+                  <Users className="w-3.5 h-3.5 text-[#2563EB]" />
+                  <span>FULL LEGAL NAME (AS PER ID)</span>
+                </span>
+                {fullName.trim().length >= 2 && (
+                  <span className="text-emerald-600 font-bold flex items-center space-x-0.5 text-[10px]">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span>Valid</span>
+                  </span>
+                )}
+              </label>
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  if (errorMessage) setErrorMessage('');
+                }}
+                placeholder="e.g. Rajesh Kumar Sharma"
+                className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
+              />
+            </div>
 
-              {/* 1. Full Legal Name */}
+            {/* 2. Mobile & Email Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Mobile Number */}
               <div>
                 <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
                   <span className="flex items-center space-x-1.5">
-                    <Users className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>FULL LEGAL NAME (AS PER ID)</span>
+                    <Phone className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>MOBILE NUMBER</span>
                   </span>
-                  {fullName.trim().length >= 2 && (
-                    <span className="text-emerald-600 font-bold flex items-center space-x-0.5 text-[10px]">
+                  <span className={`text-[10px] font-mono font-bold ${mobile.length === 10 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {mobile.length}/10 {mobile.length === 10 && '✓'}
+                  </span>
+                </label>
+                <input
+                  type="tel"
+                  required
+                  maxLength={10}
+                  value={mobile}
+                  onChange={handleMobileChange}
+                  placeholder="10 Digits e.g. 9876543210"
+                  className={`w-full bg-[#F8FAFC] border text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs ${
+                    mobile.length === 10 ? 'border-emerald-500/80 bg-emerald-50/20' : 'border-slate-200 focus:border-[#2563EB]'
+                  }`}
+                />
+              </div>
+
+              {/* Email Address */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5">
+                    <Mail className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>EMAIL ADDRESS</span>
+                  </span>
+                  {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && (
+                    <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
                       <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                       <span>Valid</span>
                     </span>
                   )}
                 </label>
                 <input
-                  type="text"
+                  type="email"
                   required
-                  value={fullName}
+                  value={email}
                   onChange={(e) => {
-                    setFullName(e.target.value);
+                    setEmail(e.target.value);
                     if (errorMessage) setErrorMessage('');
                   }}
-                  placeholder="e.g. Rajesh Kumar Sharma"
+                  placeholder="e.g. rajesh@gmail.com"
                   className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
                 />
               </div>
+            </div>
 
-              {/* 2. Mobile & Email Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Mobile Number */}
-                <div>
-                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span className="flex items-center space-x-1.5">
-                      <Phone className="w-3.5 h-3.5 text-[#2563EB]" />
-                      <span>MOBILE NUMBER</span>
-                    </span>
-                    <span className={`text-[10px] font-mono font-bold ${mobile.length === 10 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                      {mobile.length}/10 {mobile.length === 10 && '✓'}
-                    </span>
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    maxLength={10}
-                    value={mobile}
-                    onChange={handleMobileChange}
-                    placeholder="10 Digits e.g. 9876543210"
-                    className={`w-full bg-[#F8FAFC] border text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs ${
-                      mobile.length === 10 ? 'border-emerald-500/80 bg-emerald-50/20' : 'border-slate-200 focus:border-[#2563EB]'
-                    }`}
-                  />
-                </div>
+            {/* 3. Delivery Address */}
+            <div>
+              <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span className="flex items-center space-x-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#2563EB]" />
+                  <span>DELIVERY ADDRESS (FOR GOLD REWARD DISPATCH)</span>
+                </span>
+                {deliveryAddress.trim().length >= 5 && (
+                  <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span>Valid Address</span>
+                  </span>
+                )}
+              </label>
+              <textarea
+                rows={2}
+                required
+                value={deliveryAddress}
+                onChange={(e) => {
+                  setDeliveryAddress(e.target.value);
+                  if (errorMessage) setErrorMessage('');
+                }}
+                placeholder="Enter complete shipping address (House/Flat No., Street, City, State, PIN Code)"
+                className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs resize-none"
+              ></textarea>
+            </div>
 
-                {/* Email Address */}
-                <div>
-                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span className="flex items-center space-x-1.5">
-                      <Mail className="w-3.5 h-3.5 text-[#2563EB]" />
-                      <span>EMAIL ADDRESS</span>
-                    </span>
-                    {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && (
-                      <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                        <span>Valid</span>
-                      </span>
-                    )}
-                  </label>
+            {/* 4. Password & Confirm Password Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Password Field */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5">
+                    <Lock className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>ACCOUNT PASSWORD</span>
+                  </span>
+                  {password.length >= 6 && (
+                    <span className="text-emerald-600 font-bold text-[10px]">Min 6 Chars ✓</span>
+                  )}
+                </label>
+                <div className="relative">
                   <input
-                    type="email"
+                    type={showPassword ? 'text' : 'password'}
                     required
-                    value={email}
+                    value={password}
                     onChange={(e) => {
-                      setEmail(e.target.value);
+                      setPassword(e.target.value);
                       if (errorMessage) setErrorMessage('');
                     }}
-                    placeholder="e.g. rajesh@gmail.com"
-                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
+                    placeholder="Min 6 characters"
+                    className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 pl-3.5 pr-10 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-md"
+                    title={showPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4 text-blue-600" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
                 </div>
               </div>
-            </div>
 
-            {/* SECTION 2: DELIVERY ADDRESS */}
-            <div className="space-y-3 pt-1">
-              <div className="flex items-center space-x-2 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-                <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                <span>Delivery Address</span>
-                <div className="flex-1 h-px bg-slate-100 ml-2"></div>
-              </div>
-
+              {/* Confirm Password Field */}
               <div>
                 <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
                   <span className="flex items-center space-x-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>DELIVERY ADDRESS (FOR GOLD REWARD DISPATCH)</span>
+                    <Lock className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>CONFIRM PASSWORD</span>
                   </span>
-                  {deliveryAddress.trim().length >= 5 && (
+                  {confirmPassword.length > 0 && password === confirmPassword && (
                     <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
                       <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                      <span>Valid Address</span>
+                      <span>Matched</span>
                     </span>
                   )}
                 </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={deliveryAddress}
-                  onChange={(e) => {
-                    setDeliveryAddress(e.target.value);
-                    if (errorMessage) setErrorMessage('');
-                  }}
-                  placeholder="Enter complete shipping address (House/Flat No., Street, City, State, PIN Code)"
-                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs resize-none"
-                ></textarea>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    placeholder="Re-enter password"
+                    className={`w-full bg-[#F8FAFC] border text-[#0B1E39] font-semibold py-2.5 pl-3.5 pr-10 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs ${
+                      confirmPassword.length > 0 && password !== confirmPassword
+                        ? 'border-rose-400 bg-rose-50/20'
+                        : confirmPassword.length > 0 && password === confirmPassword
+                        ? 'border-emerald-500/80 bg-emerald-50/20'
+                        : 'border-slate-200 focus:border-[#2563EB]'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-md"
+                    title={showConfirmPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-4 h-4 text-blue-600" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* SECTION 3: SECURITY & REFERRAL */}
-            <div className="space-y-3 pt-1">
-              <div className="flex items-center space-x-2 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-                <Lock className="w-3.5 h-3.5 text-blue-600" />
-                <span>Security & Referral</span>
-                <div className="flex-1 h-px bg-slate-100 ml-2"></div>
-              </div>
-
-              {/* Password & Confirm Password Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Password Field */}
-                <div>
-                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span className="flex items-center space-x-1.5">
-                      <Lock className="w-3.5 h-3.5 text-[#2563EB]" />
-                      <span>ACCOUNT PASSWORD</span>
-                    </span>
-                    {password.length >= 6 && (
-                      <span className="text-emerald-600 font-bold text-[10px]">Min 6 Chars ✓</span>
-                    )}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (errorMessage) setErrorMessage('');
-                      }}
-                      placeholder="Min 6 characters"
-                      className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-semibold py-2.5 pl-3.5 pr-10 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-md"
-                      title={showPassword ? 'Hide Password' : 'Show Password'}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4 text-blue-600" />
-                      ) : (
-                        <Eye className="w-4 h-4 text-slate-400" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm Password Field */}
-                <div>
-                  <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span className="flex items-center space-x-1.5">
-                      <Lock className="w-3.5 h-3.5 text-[#2563EB]" />
-                      <span>CONFIRM PASSWORD</span>
-                    </span>
-                    {confirmPassword.length > 0 && password === confirmPassword && (
-                      <span className="text-emerald-600 font-bold text-[10px] flex items-center space-x-0.5">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                        <span>Matched</span>
-                      </span>
-                    )}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => {
-                        setConfirmPassword(e.target.value);
-                        if (errorMessage) setErrorMessage('');
-                      }}
-                      placeholder="Re-enter password"
-                      className={`w-full bg-[#F8FAFC] border text-[#0B1E39] font-semibold py-2.5 pl-3.5 pr-10 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 text-xs shadow-2xs ${
-                        confirmPassword.length > 0 && password !== confirmPassword
-                          ? 'border-rose-400 bg-rose-50/20'
-                          : confirmPassword.length > 0 && password === confirmPassword
-                          ? 'border-emerald-500/80 bg-emerald-50/20'
-                          : 'border-slate-200 focus:border-[#2563EB]'
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-md"
-                      title={showConfirmPassword ? 'Hide Password' : 'Show Password'}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="w-4 h-4 text-blue-600" />
-                      ) : (
-                        <Eye className="w-4 h-4 text-slate-400" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Referral Code */}
-              <div>
-                <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span className="flex items-center space-x-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>REFERRAL CODE (OPTIONAL)</span>
+            {/* 5. Referral Code */}
+            <div>
+              <label className="block text-[10px] font-extrabold text-[#334155] uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span className="flex items-center space-x-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>REFERRAL CODE (OPTIONAL)</span>
+                </span>
+                {isAutoFilledRef && (
+                  <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                    Auto-filled from Link
                   </span>
-                  {isAutoFilledRef && (
-                    <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                      Auto-filled from Link
-                    </span>
-                  )}
-                </label>
-                <input
-                  type="text"
-                  value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value)}
-                  placeholder="E.G. REF-AMIT99"
-                  className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 uppercase text-xs shadow-2xs"
-                />
-              </div>
+                )}
+              </label>
+              <input
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value)}
+                placeholder="E.G. REF-AMIT99"
+                className="w-full bg-[#F8FAFC] border border-slate-200 text-[#0B1E39] font-mono font-semibold py-2.5 px-3.5 rounded-xl focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 uppercase text-xs shadow-2xs"
+              />
             </div>
 
             {/* Terms & Conditions Checkbox */}
-            <div className="flex items-start space-x-2.5 pt-2">
+            <div className="flex items-start space-x-2.5 pt-1">
               <input 
                 type="checkbox" 
                 id="termsCheckbox"
@@ -637,7 +607,7 @@ export const RegisterPage = () => {
               type="button"
               onClick={() => handleRegister()}
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-[#2563EB] via-[#1D4ED8] to-[#0F399E] hover:from-blue-600 hover:to-blue-900 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-[0_12px_28px_-5px_rgba(37,99,235,0.4)] hover:shadow-[0_15px_32px_-5px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2 text-xs uppercase tracking-wider cursor-pointer mt-4 disabled:opacity-80 active:scale-[0.99]"
+              className="w-full bg-gradient-to-r from-[#2563EB] via-[#1D4ED8] to-[#0F399E] hover:from-blue-600 hover:to-blue-900 text-white font-extrabold py-3 px-6 rounded-xl shadow-[0_12px_28px_-5px_rgba(37,99,235,0.4)] hover:shadow-[0_15px_32px_-5px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2 text-xs uppercase tracking-wider cursor-pointer mt-3 disabled:opacity-80 active:scale-[0.99]"
             >
               {isSubmitting ? (
                 <div className="flex items-center space-x-2">
@@ -653,25 +623,26 @@ export const RegisterPage = () => {
             </button>
 
           </form>
-
-          {/* Footer Link */}
-          <div className="text-center text-xs text-slate-500 font-medium pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[10px] text-slate-400 font-semibold flex items-center space-x-1">
-              <Lock className="w-3 h-3 text-emerald-500" />
-              <span>256-Bit SSL Encrypted</span>
-            </span>
-
-            <div>
-              Already registered?{' '}
-              <button onClick={() => setCurrentView('auth-login')} className="text-[#2563EB] font-bold hover:underline cursor-pointer">
-                Login here
-              </button>
-            </div>
-          </div>
-
         </div>
 
-      </motion.div>
-    </div>
-  );
+        {/* Footer Link */}
+        <div className="text-center text-xs text-slate-500 font-medium pt-3 mt-4 border-t border-slate-100 flex items-center justify-between">
+          <span className="text-[10px] text-slate-400 font-semibold flex items-center space-x-1">
+            <Lock className="w-3 h-3 text-emerald-500" />
+            <span>256-Bit SSL Encrypted</span>
+          </span>
+
+          <div>
+            Already registered?{' '}
+            <button onClick={() => setCurrentView('auth-login')} className="text-[#2563EB] font-bold hover:underline cursor-pointer">
+              Login here
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </motion.div>
+  </div>
+);
 };

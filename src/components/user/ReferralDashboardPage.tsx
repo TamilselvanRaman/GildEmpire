@@ -10,7 +10,9 @@ export const ReferralDashboardPage = () => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
-  const referralCode = user.referralId || `REF-${user.memberId?.slice(-6) || 'USER'}`;
+  const referralCode = (user.referralId && user.referralId.startsWith('REF-')) 
+    ? user.referralId 
+    : `REF-${(user.memberId || 'USER').replace('LOP-', '')}`;
   const referralLink = `https://infinitygram.net/register?ref=${referralCode}`;
 
   const handleCopyLink = () => {

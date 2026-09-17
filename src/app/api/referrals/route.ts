@@ -42,16 +42,26 @@ export async function GET(request: Request) {
       if (data) dbReferrals = data;
     } catch (e) {}
 
-    // 2. Fetch from profiles table for registered users who entered any of these referral_codes
+    // 2. Fetch from profiles table for registered users who entered any of these referral_codes as their referred_by
     let profileReferrals: any[] = [];
     if (codeCandidates.length > 0) {
       try {
-        const orClause = codeCandidates.map(c => `referral_code.ilike.${c}`).join(',');
+        const orClause = [
+          ...codeCandidates.map(c => `referred_by.ilike.${c}`),
+          ...codeCandidates.map(c => `referral_code.ilike.${c}`)
+        ].join(',');
         const { data: pData } = await dbClient
           .from('profiles')
           .select('*')
           .or(orClause);
-        if (pData) profileReferrals = pData;
+        if (pData) {
+          // Filter out requesting user's own profile record
+          profileReferrals = pData.filter((p: any) => {
+            const isSelfId = userId && p.id === userId;
+            const isSelfMemberId = cleanMemberId && p.member_id === cleanMemberId;
+            return !isSelfId && !isSelfMemberId;
+          });
+        }
       } catch (e) {}
     }
 

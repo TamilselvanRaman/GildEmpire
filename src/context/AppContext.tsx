@@ -385,10 +385,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       if (Array.isArray(listToScan)) {
         listToScan.forEach((u: any) => {
-          if (u.email?.toLowerCase() === currentUser.email?.toLowerCase() || u.memberId === currentUser.memberId) return;
+          if (u.email?.toLowerCase() === currentUser.email?.toLowerCase() || u.memberId === currentUser.memberId || u.id === currentUser.id) return;
 
+          const uReferredBy = (u.referredBy || u.referred_by || '').toString().trim().toUpperCase();
           const uRefCode = (u.referralCode || u.referral_code || '').toString().trim().toUpperCase();
-          if (uRefCode && codeCandidates.some(c => c && (uRefCode === c || uRefCode.endsWith(c) || c.endsWith(uRefCode)))) {
+
+          const isMatch = (uReferredBy && codeCandidates.some(c => c && (uReferredBy === c || uReferredBy.endsWith(c) || c.endsWith(uReferredBy)))) ||
+            (uRefCode && uRefCode !== currentUser.referralId && codeCandidates.some(c => c && (uRefCode === c || uRefCode.endsWith(c) || c.endsWith(uRefCode))));
+
+          if (isMatch) {
             if (!apiRefMemberIds.has(u.memberId)) {
               const isVerified = u.deposit === 'Verified' || u.depositStatus === 'Verified';
               localRefsFromDbUsers.push({

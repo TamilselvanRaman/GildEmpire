@@ -259,6 +259,10 @@ export const AdminUsersPage = () => {
                 <p className="text-xs font-mono font-extrabold text-[#00C2B8] flex flex-wrap items-center gap-2">
                   <span>Member ID: <strong className="text-[#F2C868]">{selectedUserModal.memberId}</strong></span>
                   <span>&bull;</span>
+                  <span>Ref Code: <strong className="text-white">{selectedUserModal.referralCode || `REF-${(selectedUserModal.memberId || '898859').replace('LOP-', '')}`}</strong></span>
+                  <span>&bull;</span>
+                  <span>Referred By: <strong className="text-purple-300">{selectedUserModal.referredBy || 'Direct Registration'}</strong></span>
+                  <span>&bull;</span>
                   <span>Group: <strong className="text-white">{displayGroup}</strong></span>
                   <span>&bull;</span>
                   <span>Slot Position: <strong className="text-[#F2C868]">{cleanSlotDisplay}</strong></span>

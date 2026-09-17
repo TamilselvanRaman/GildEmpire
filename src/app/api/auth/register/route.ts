@@ -96,6 +96,9 @@ export async function POST(request: Request) {
       console.warn('Supabase Auth Exception:', authErr?.message || authErr);
     }
 
+    // Generate unique referral code for this user (to share with others)
+    const ownReferralCode = `REF-${memberId.replace('LOP-', '')}`;
+
     // 3. Insert User Profile into Supabase profiles table
     try {
       const profileRecord = {
@@ -104,7 +107,8 @@ export async function POST(request: Request) {
         email: email.trim(),
         mobile,
         member_id: memberId,
-        referral_code: referralCode || null,
+        referral_code: ownReferralCode,
+        referred_by: referralCode || null,
         account_status: 'Active',
         deposit_status: 'Not Started',
         reward_status: 'In Selection Pool',
@@ -157,7 +161,8 @@ export async function POST(request: Request) {
         rewardStatus: 'In Selection Pool',
         slotNumber: 0,
         registrationDate: joinedDate,
-        referralId: referralCode || `REF-${memberId.slice(-6)}`,
+        referralId: ownReferralCode,
+        referredBy: referralCode || 'Direct Registration',
         idDocumentUrl,
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
       },
