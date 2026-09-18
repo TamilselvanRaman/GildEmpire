@@ -90,12 +90,13 @@ export async function GET(request: Request) {
       }
     }
 
-    // Update profile record setting email_verified = true
+    // Update profile record setting email_verified = true and account_status = Active
     try {
       const { error: upErr } = await dbClient
         .from('profiles')
         .update({
           email_verified: true,
+          account_status: 'Active',
           verification_token: null,
           verification_token_expires_at: null,
         })
@@ -104,9 +105,35 @@ export async function GET(request: Request) {
       if (upErr) {
         await supabase
           .from('profiles')
-          .update({ email_verified: true })
+          .update({ email_verified: true, account_status: 'Active' })
           .eq('id', profile.id);
       }
+
+      // Sync verification state to Supabase Auth User record
+      try {
+        if (supabaseAdmin && supabaseAdmin.auth && supabaseAdmin.auth.admin) {
+          await supabaseAdmin.auth.admin.updateUserById(profile.id, {
+            email_confirm: true,
+          });
+        }
+      } catch (authSyncErr) {
+        console.warn('[Verify Email API] Auth admin update notice:', authSyncErr);
+      }
+
+      // Record Security Audit Log Entry
+      try {
+        await dbClient.from('audit_logs').insert([{
+          actor: profile.full_name || profile.email,
+          role: 'Member',
+          action: 'EMAIL_VERIFICATION_SUCCESS',
+          module: 'Authentication',
+          record_id: profile.member_id || profile.id,
+          previous_status: 'Pending Verification',
+          new_status: 'Verified & Active',
+          ip_address: request.headers.get('x-forwarded-for') || '127.0.0.1',
+        }]);
+      } catch (auditErr) {}
+
     } catch (updateErr: any) {
       console.warn('[Verify Email API] DB update notice:', updateErr?.message || updateErr);
     }
