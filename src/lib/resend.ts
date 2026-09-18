@@ -174,7 +174,7 @@ export function getVerificationEmailHtml(name: string, verificationUrl: string):
  * Sends email verification message safely via Resend
  */
 export async function sendVerificationEmail({ email, name, token }: SendVerificationParams) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : (process.env.NODE_ENV === 'production' ? 'https://infinitygram.net' : 'http://localhost:3000'));
   const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
 
   // Graceful mode: If API Key is missing or placeholder, log notice and return successful mock status

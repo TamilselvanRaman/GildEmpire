@@ -18,11 +18,16 @@ export async function GET() {
     // 2. Fetch auth.users records using admin API
     let authUsers: any[] = [];
     try {
-      const { data: authData } = await supabaseAdmin.auth.admin.listUsers();
+      const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.listUsers();
+      if (authErr) {
+        console.error('Error fetching Supabase auth users via admin API:', authErr.message);
+      }
       if (authData?.users) {
         authUsers = authData.users;
       }
-    } catch (authErr) {}
+    } catch (authErr: any) {
+      console.error('Exception fetching auth users:', authErr?.message || authErr);
+    }
 
     const profileList = profiles || [];
     const profileMap = new Map<string, any>();

@@ -99,6 +99,7 @@ export async function POST(request: Request) {
           email: email.trim(),
           password,
           options: {
+            emailRedirectTo: process.env.NEXT_PUBLIC_APP_URL || 'https://infinitygram.net/verify-email',
             data: {
               fullName,
               mobile,
