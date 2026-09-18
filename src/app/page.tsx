@@ -187,35 +187,27 @@ export default function Home() {
       );
     }
 
-    // 8. ADMIN PORTAL (Wrapped with Admin Sidebar + Header with Mobile Screen Blocker)
+    // 8. ADMIN PORTAL (Wrapped with Responsive Admin Sidebar + Header)
     if (currentView.startsWith('admin-')) {
       return (
-        <>
-          {/* Mobile Screen Blocker (< 1024px) */}
-          <div className="block lg:hidden">
-            <AdminMobileRestrictionPage />
+        <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row text-slate-900 font-sans">
+          <AdminSidebar />
+          <div className="flex-1 flex flex-col min-w-0">
+            <AdminHeader />
+            <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl mx-auto w-full">
+              {currentView === 'admin-dashboard' && <AdminDashboardPage />}
+              {(currentView === 'admin-users' || currentView === 'admin-user-detail' || currentView === 'admin-team') && <AdminUsersPage />}
+              {(currentView === 'admin-deposits' || currentView === 'admin-deposit-review') && <AdminDepositsPage />}
+              {currentView === 'admin-groups' && <AdminGroupsOverviewPage />}
+              {currentView === 'admin-group-detail' && <AdminGroupDetailPage />}
+              {currentView === 'admin-slots' && <AdminSlotsControlPage />}
+              {currentView.startsWith('admin-reward') && <AdminRewardFlowControlPage />}
+              {(currentView === 'admin-audit-logs' || currentView === 'admin-reports') && <AdminAuditLogsPage />}
+              {currentView === 'admin-referrals' && <AdminReferralsPage />}
+              {(currentView === 'admin-settings' || currentView === 'admin-notifications') && <AdminSettingsPage />}
+            </main>
           </div>
-
-          {/* Laptop & Desktop Workspace (>= 1024px) */}
-          <div className="hidden lg:flex min-h-screen bg-[#F8FAFC] flex-col lg:flex-row text-slate-900 font-sans">
-            <AdminSidebar />
-            <div className="flex-1 flex flex-col min-w-0">
-              <AdminHeader />
-              <main className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl mx-auto w-full">
-                {currentView === 'admin-dashboard' && <AdminDashboardPage />}
-                {(currentView === 'admin-users' || currentView === 'admin-user-detail' || currentView === 'admin-team') && <AdminUsersPage />}
-                {(currentView === 'admin-deposits' || currentView === 'admin-deposit-review') && <AdminDepositsPage />}
-                {currentView === 'admin-groups' && <AdminGroupsOverviewPage />}
-                {currentView === 'admin-group-detail' && <AdminGroupDetailPage />}
-                {currentView === 'admin-slots' && <AdminSlotsControlPage />}
-                {currentView.startsWith('admin-reward') && <AdminRewardFlowControlPage />}
-                {(currentView === 'admin-audit-logs' || currentView === 'admin-reports') && <AdminAuditLogsPage />}
-                {currentView === 'admin-referrals' && <AdminReferralsPage />}
-                {(currentView === 'admin-settings' || currentView === 'admin-notifications') && <AdminSettingsPage />}
-              </main>
-            </div>
-          </div>
-        </>
+        </div>
       );
     }
     return (

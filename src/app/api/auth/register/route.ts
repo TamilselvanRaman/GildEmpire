@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '../../../../lib/supabaseClient';
 import crypto from 'crypto';
+import { sendVerificationEmail } from '../../../../lib/resend';
+import { createVerificationToken } from '../../send-verification/route';
 
 export async function POST(request: Request) {
   try {
@@ -29,11 +31,32 @@ export async function POST(request: Request) {
     try {
       const { data: existingUsers } = await dbClient
         .from('profiles')
-        .select('email, mobile');
+        .select('id, email, mobile');
 
       if (Array.isArray(existingUsers)) {
         for (const u of existingUsers) {
           if (u.email?.toLowerCase() === cleanEmail) {
+            // Check if user actually exists in auth.users
+            let existsInAuth = true;
+            try {
+              if (supabaseAdmin && supabaseAdmin.auth && supabaseAdmin.auth.admin) {
+                const { data: authUserData, error: authGetErr } = await supabaseAdmin.auth.admin.getUserById(u.id);
+                if (authGetErr || !authUserData?.user) {
+                  existsInAuth = false;
+                }
+              }
+            } catch (e) {
+              // If auth check unavailable, treat profile as existing
+              existsInAuth = true;
+            }
+
+            // If profile is an orphaned record not present in Supabase Auth, clean it up automatically
+            if (!existsInAuth) {
+              console.log(`[Register API] Cleaning up orphaned profile record for ${cleanEmail} (ID: ${u.id})`);
+              await dbClient.from('profiles').delete().eq('id', u.id);
+              continue;
+            }
+
             return NextResponse.json(
               { success: false, error: '❌ Email Already Registered: An account with this email address already exists. Please log in.' },
               { status: 400 }
@@ -99,6 +122,10 @@ export async function POST(request: Request) {
     // Generate unique referral code for this user (to share with others)
     const ownReferralCode = `REF-${memberId.replace('LOP-', '')}`;
 
+    // Generate 32-byte crypto verification token with 30-min expiry
+    const verificationToken = createVerificationToken(email.trim());
+    const verificationTokenExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+
     // 3. Insert User Profile into Supabase profiles table
     try {
       const profileRecord = {
@@ -128,6 +155,17 @@ export async function POST(request: Request) {
         }
       }
 
+      // Try setting verification_token if table has optional verification columns
+      try {
+        await dbClient.from('profiles').update({
+          email_verified: false,
+          verification_token: verificationToken,
+          verification_token_expires_at: verificationTokenExpiresAt,
+        }).eq('id', userId);
+      } catch (tokErr) {
+        console.warn('Optional verification column update notice:', tokErr);
+      }
+
       if (referralCode) {
         try {
           await dbClient.from('referrals').insert([
@@ -142,6 +180,16 @@ export async function POST(request: Request) {
           ]);
         } catch (refErr) {}
       }
+
+      // Dispatch Verification Email via Resend safely in background (graceful mode fallback)
+      sendVerificationEmail({
+        email: email.trim(),
+        name: fullName,
+        token: verificationToken,
+      }).catch((emailErr) => {
+        console.warn('Background Resend Verification Email Notice:', emailErr);
+      });
+
     } catch (dbErr) {
       console.warn('Supabase DB Insert Warning:', dbErr);
     }

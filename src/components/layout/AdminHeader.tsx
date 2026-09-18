@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Activity, AlertCircle, ShieldCheck, LogOut } from 'lucide-react';
+import { Activity, AlertCircle, LogOut, ShieldCheck } from 'lucide-react';
 
 export const AdminHeader = () => {
   const { setCurrentView, deposits, logout } = useApp();
   const pendingDepositsCount = deposits.filter(d => d.status === 'Pending').length;
 
   return (
-    <header className="bg-white text-slate-900 border-b border-slate-200/90 px-6 py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-40 select-none backdrop-blur-md">
+    <header className="hidden md:flex bg-white text-slate-900 border-b border-slate-200/90 px-6 py-3.5 items-center justify-between shadow-xs sticky top-0 z-30 select-none backdrop-blur-md">
       
       {/* Breadcrumb & System Status Tag */}
       <div className="flex items-center space-x-2.5 bg-[#081E26] text-white px-3.5 py-1.5 rounded-full text-xs font-mono font-bold shadow-xs">
@@ -34,7 +34,7 @@ export const AdminHeader = () => {
         )}
 
         {/* Audit Status */}
-        <div className="flex items-center space-x-2 text-xs bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/80 hidden lg:flex">
+        <div className="flex items-center space-x-2 text-xs bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/80">
           <Activity className="w-4 h-4 text-emerald-600 shrink-0" />
           <span className="text-slate-700 font-mono text-[11px] font-semibold">Audited Engine: OK</span>
         </div>
@@ -42,7 +42,7 @@ export const AdminHeader = () => {
         {/* Admin Badge */}
         <div className="flex items-center space-x-2.5 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
           <img src="/logo.png" alt="InfinityGram Logo" className="w-7 h-7 object-contain" />
-          <div className="text-left hidden sm:block">
+          <div className="text-left">
             <p className="text-xs font-black text-[#081E26] leading-tight">Super Admin</p>
             <p className="text-[10px] text-slate-500 font-medium leading-tight">admin.op@infinitygram.net</p>
           </div>
@@ -58,7 +58,7 @@ export const AdminHeader = () => {
           title="Logout Admin Session"
         >
           <LogOut className="w-4 h-4 text-rose-600" />
-          <span className="hidden sm:inline">Logout</span>
+          <span>Logout</span>
         </button>
 
       </div>

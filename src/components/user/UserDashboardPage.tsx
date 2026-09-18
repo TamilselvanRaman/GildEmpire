@@ -27,7 +27,8 @@ import { motion } from 'framer-motion';
 export const UserDashboardPage = () => {
   const { user, group, deposits, referrals, setCurrentView } = useApp();
   const [copied, setCopied] = useState(false);
-  const [emailResentToast, setEmailResentToast] = useState(false);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [emailResentToast, setEmailResentToast] = useState<{ type: 'success' | 'error'; message: string; url?: string } | null>(null);
 
   const slotsOwnedCount = user.slotsOwned || (user.slotNumber ? 1 : 0);
 
@@ -37,9 +38,50 @@ export const UserDashboardPage = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleResendEmail = () => {
-    setEmailResentToast(true);
-    setTimeout(() => setEmailResentToast(false), 3500);
+  const handleResendEmail = async () => {
+    if (!user.email) return;
+    setIsResendingEmail(true);
+    setEmailResentToast(null);
+
+    console.log(`📧 [CLIENT EMAIL REQUEST] Initiating email resend to: ${user.email}...`);
+
+    try {
+      const res = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json();
+
+      console.log('📧 [CLIENT EMAIL RESPONSE RECEIVED]:', data);
+
+      if (res.ok && data.success) {
+        console.log(`✅ [EMAIL DISPATCH STATUS SUCCESS] ${data.message}`);
+        if (data.verificationUrl) {
+          console.log(`🔗 [TEST VERIFICATION URL]: ${data.verificationUrl}`);
+        }
+        setEmailResentToast({
+          type: 'success',
+          message: data.message || `Verification email successfully sent to ${user.email}!`,
+          url: data.verificationUrl,
+        });
+      } else {
+        console.error(`❌ [EMAIL DISPATCH STATUS FAILED] ${data.error}`);
+        setEmailResentToast({
+          type: 'error',
+          message: data.error || 'Failed to dispatch verification email. Please try again.',
+        });
+      }
+    } catch (err) {
+      console.error('❌ [EMAIL DISPATCH NETWORK ERROR]:', err);
+      setEmailResentToast({
+        type: 'error',
+        message: 'Network error trying to send verification email.',
+      });
+    } finally {
+      setIsResendingEmail(false);
+      setTimeout(() => setEmailResentToast(null), 10000);
+    }
   };
 
   return (
@@ -51,13 +93,31 @@ export const UserDashboardPage = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="bg-emerald-500 text-slate-950 font-extrabold p-4 rounded-2xl shadow-2xl flex items-center justify-between space-x-3 text-xs border border-emerald-300"
+          className={`font-extrabold p-4 rounded-2xl shadow-2xl flex flex-wrap items-center justify-between gap-3 text-xs border ${
+            emailResentToast.type === 'success'
+              ? 'bg-emerald-500 text-slate-950 border-emerald-300'
+              : 'bg-red-500 text-white border-red-300'
+          }`}
         >
           <div className="flex items-center space-x-2">
-            <CheckCircle2 className="w-5 h-5 text-slate-950 shrink-0" />
-            <span>Deposit verification email successfully re-sent to <strong className="underline">{user.email}</strong>!</span>
+            {emailResentToast.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 shrink-0" />
+            )}
+            <span>{emailResentToast.message}</span>
+            {emailResentToast.url && (
+              <a
+                href={emailResentToast.url}
+                target="_blank"
+                rel="noreferrer"
+                className="underline ml-2 bg-slate-950 text-amber-400 px-2.5 py-1 rounded-lg hover:bg-slate-900 transition-colors"
+              >
+                Open Verification Link →
+              </a>
+            )}
           </div>
-          <button onClick={() => setEmailResentToast(false)} className="text-slate-950 font-bold px-2 py-0.5 rounded hover:bg-emerald-600/30 cursor-pointer">✕</button>
+          <button onClick={() => setEmailResentToast(null)} className="font-bold px-2 py-0.5 rounded hover:bg-black/20 cursor-pointer">✕</button>
         </motion.div>
       )}
 
@@ -94,14 +154,6 @@ export const UserDashboardPage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0 w-full lg:w-auto">
-              <button
-                onClick={handleResendEmail}
-                className="w-full sm:w-auto bg-[#081E26] hover:bg-[#081E26]/80 text-amber-300 border border-amber-400/40 text-xs font-black px-4 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
-              >
-                <RefreshCw className="w-4 h-4 text-amber-400" />
-                <span>Resend Email</span>
-              </button>
-
               <button
                 onClick={() => setCurrentView('user-deposit-overview')}
                 className="w-full sm:w-auto bg-gradient-to-r from-[#00C2B8] to-[#00A8A0] hover:from-[#00A8A0] hover:to-[#00C2B8] text-[#081E26] text-xs font-black px-7 py-3.5 rounded-xl shadow-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"

@@ -101,10 +101,12 @@ export const AdminUsersPage = () => {
       const members = dbUsers.filter(u => u.role === 'Member');
       setUsersList(members);
 
-      // Auto-select user if URL path matches /user/:id or /admin/users/:id
+      // Auto-select user ONLY if URL path matches a specific user ID (/user/:id or /admin/users/:id)
       if (typeof window !== 'undefined') {
         const path = window.location.pathname;
-        if (path.startsWith('/user/') || path.startsWith('/admin/users/')) {
+        if (path === '/admin/users' || path === '/admin/users/') {
+          setSelectedUserModal(null);
+        } else if (path.startsWith('/user/') || path.startsWith('/admin/users/')) {
           const pathSegments = path.split('/').filter(Boolean);
           const lastSeg = pathSegments[pathSegments.length - 1];
           if (lastSeg && lastSeg !== 'users' && lastSeg !== 'user') {
@@ -115,7 +117,11 @@ export const AdminUsersPage = () => {
             );
             if (found) {
               setSelectedUserModal(found);
+            } else {
+              setSelectedUserModal(null);
             }
+          } else {
+            setSelectedUserModal(null);
           }
         }
       }

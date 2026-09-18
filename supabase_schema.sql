@@ -15,8 +15,15 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   referral_code TEXT,
   id_document_url TEXT,
   avatar TEXT,
+  email_verified BOOLEAN DEFAULT false,
+  verification_token TEXT,
+  verification_token_expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_token TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_token_expires_at TIMESTAMP WITH TIME ZONE;
 
 -- 2. Deposits Table (₹10,000 Minimum Deposit)
 CREATE TABLE IF NOT EXISTS public.deposits (
