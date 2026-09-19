@@ -25,9 +25,10 @@ export const AdminDashboardPage = () => {
   const pendingDeposits = deposits.filter(d => d.status === 'Pending');
   
   const verifiedCount = dbUsers.length > 0 
-    ? dbUsers.filter(u => u.deposit === 'Verified' || u.status === 'Active').length 
+    ? dbUsers.filter(u => u.deposit === 'Verified' || u.depositStatus === 'Verified').length 
     : deposits.filter(d => d.status === 'Verified').length;
   const verifiedVolumeINR = verifiedCount * 10000;
+  const emailVerifiedCount = dbUsers.filter(u => u.emailVerified).length;
   
   const activeBatchesCount = (allGroups || []).filter(g => g.totalMembers > 0 || g.status === 'active').length || 1;
   const totalGoldDistributed = pastWinners.length > 0 ? pastWinners.length : (allGroups || []).reduce((acc, g) => acc + g.totalGoldDistributedGrams, 0);
@@ -80,8 +81,8 @@ export const AdminDashboardPage = () => {
           </div>
           <h3 className="text-3xl font-black text-[#0B1E39] mt-2 tracking-tight">{totalMembersCount} Members</h3>
           <p className="text-[11px] text-emerald-600 font-bold mt-1 flex items-center space-x-1">
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>Across Active Group Batches</span>
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>{emailVerifiedCount} Email Verified</span>
           </p>
         </div>
 
