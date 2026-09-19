@@ -179,6 +179,8 @@ export const AdminUsersPage = () => {
     const matchesStatus = 
       statusFilter === 'All' ? true :
       statusFilter === 'Admins' ? u.role !== 'Member' :
+      statusFilter === 'Email Verified' ? u.emailVerified === true :
+      statusFilter === 'Email Unverified' ? !u.emailVerified :
       u.status === statusFilter;
 
     const matchesSearch = 
@@ -667,7 +669,7 @@ export const AdminUsersPage = () => {
       {/* Filter Tabs & Search Bar */}
       <div className="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex flex-wrap items-center space-x-1.5 bg-slate-100/90 p-1.5 rounded-2xl w-full md:w-auto text-xs font-extrabold">
-          {['All', 'Active', 'Admins', 'Pending Verification', 'Deactivated'].map((tab) => (
+          {['All', 'Active', 'Admins', 'Email Verified', 'Email Unverified', 'Pending Verification', 'Deactivated'].map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilter(tab)}
@@ -704,9 +706,9 @@ export const AdminUsersPage = () => {
                 <th className="p-4">Full Name Profile</th>
                 <th className="p-4">Contact Details</th>
                 <th className="p-4">Role Access</th>
-                <th className="p-4">Email Status</th>
                 <th className="p-4">Deposit Requirement</th>
                 <th className="p-4">Assigned Group</th>
+                <th className="p-4">Email Status</th>
                 <th className="p-4">Account Status</th>
                 <th className="p-4 text-right">Actions</th>
               </tr>
@@ -716,7 +718,8 @@ export const AdminUsersPage = () => {
                 const isAdmin = u.role !== 'Member';
                 const userInitial = u.name ? u.name.charAt(0).toUpperCase() : 'U';
                 const tableRawSlot = String(u.slot || '').replace(/^#+/, '').trim();
-                const tableSlotDisplay = (tableRawSlot && tableRawSlot !== '-' && tableRawSlot !== 'STAFF' && tableRawSlot !== 'ADMIN' && tableRawSlot !== '0') 
+                const isNumericSlot = /^\d+$/.test(tableRawSlot);
+                const tableSlotDisplay = (isNumericSlot && tableRawSlot !== '0') 
                   ? `(Slot #${tableRawSlot})` 
                   : '';
 
@@ -770,6 +773,22 @@ export const AdminUsersPage = () => {
                     </td>
 
                     <td className="p-4">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                        u.deposit === 'Verified' 
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                          : u.deposit === 'Pending'
+                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                            : 'bg-rose-50 text-rose-800 border border-rose-200'
+                      }`}>
+                        {u.deposit === 'Verified' ? '₹10,000 Verified' : u.deposit}
+                      </span>
+                    </td>
+
+                    <td className="p-4 font-mono font-bold text-slate-700">
+                      {u.group} {tableSlotDisplay}
+                    </td>
+
+                    <td className="p-4">
                       {u.emailVerified ? (
                         <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold inline-flex items-center space-x-1">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -794,22 +813,6 @@ export const AdminUsersPage = () => {
                           </button>
                         </div>
                       )}
-                    </td>
-
-                    <td className="p-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
-                        u.deposit === 'Verified' 
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
-                          : u.deposit === 'Pending'
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-rose-50 text-rose-800 border border-rose-200'
-                      }`}>
-                        {u.deposit === 'Verified' ? '₹10,000 Verified' : u.deposit}
-                      </span>
-                    </td>
-
-                    <td className="p-4 font-mono font-bold text-slate-700">
-                      {u.group} {tableSlotDisplay}
                     </td>
 
                     <td className="p-4">
