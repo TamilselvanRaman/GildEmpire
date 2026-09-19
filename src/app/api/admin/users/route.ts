@@ -136,7 +136,8 @@ export async function POST(request: Request) {
       let updateObj: any = { email_verified: true };
       let targetQuery = dbClient.from('profiles').update(updateObj);
 
-      if (userId) {
+      const isUuid = userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+      if (isUuid) {
         targetQuery = targetQuery.eq('id', userId);
       } else if (cleanEmail) {
         targetQuery = targetQuery.ilike('email', cleanEmail);
@@ -175,7 +176,9 @@ export async function POST(request: Request) {
 
     let targetQuery = dbClient.from('profiles').update(updateObj);
 
-    if (userId) {
+    const isUuid = userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+
+    if (isUuid) {
       targetQuery = targetQuery.eq('id', userId);
     } else if (cleanEmail) {
       targetQuery = targetQuery.ilike('email', cleanEmail);

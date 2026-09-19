@@ -808,7 +808,8 @@ export const AdminSlotsControlPage = () => {
                     setSelectedUserForSlot('');
                     setUserSearchTerm('');
                     if (res?.success) {
-                      alert(`✅ Slot #${targetSlotNum} successfully assigned to ${selectedUserForSlot}!`);
+                      const personName = (res as any).memberName || selectedUserForSlot;
+                      alert(`✅ Slot #${targetSlotNum} successfully assigned to ${personName}!`);
                     } else {
                       alert(`❌ Slot assignment error: ${res?.error || 'Failed to assign slot.'}`);
                     }

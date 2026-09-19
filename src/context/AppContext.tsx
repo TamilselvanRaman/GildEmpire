@@ -767,27 +767,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const manualAssignSlot = async (identifier: string, slotNo: number, targetBatchId = 'GROUP-001') => {
     try {
-      await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: identifier, 
-          memberId: identifier, 
-          userId: identifier, 
-          slotNumber: slotNo, 
-          depositStatus: 'Verified', 
-          groupId: targetBatchId 
-        }),
-      });
-
       const targetUser = dbUsers.find(u => 
         u.email?.toLowerCase() === identifier.toLowerCase() || 
         u.memberId === identifier || 
         u.id === identifier
       );
 
-      const memberName = targetUser?.name || targetUser?.fullName || identifier;
-      const memberId = targetUser?.memberId || identifier;
+      const targetUserId = targetUser?.id;
+      const targetEmail = targetUser?.email || identifier;
+      const targetMemberId = targetUser?.memberId || identifier;
+      const memberName = targetUser?.name || targetUser?.fullName || targetEmail;
+
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: targetEmail, 
+          memberId: targetMemberId, 
+          userId: targetUserId, 
+          slotNumber: slotNo, 
+          depositStatus: 'Verified', 
+          groupId: targetBatchId 
+        }),
+      });
+
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok || !resData.success) {
+        return { success: false, error: resData?.error || 'Failed to update database slot assignment' };
+      }
 
       setAllGroups(prevGroups => {
         return prevGroups.map(grp => {
@@ -797,7 +804,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               return {
                 ...s,
                 memberName: memberName,
-                memberId: memberId,
+                memberId: targetMemberId,
                 status: 'Occupied' as const,
                 joinedDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
               };
@@ -815,7 +822,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       });
 
       setDbUsers(prev => prev.map(u => {
-        if (u.email?.toLowerCase() === identifier.toLowerCase() || u.memberId === identifier || u.id === identifier) {
+        if (u.email?.toLowerCase() === targetEmail.toLowerCase() || u.memberId === targetMemberId || u.id === targetUserId) {
           return {
             ...u,
             deposit: 'Verified',
@@ -837,12 +844,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         module: 'Groups',
         recordId: `${targetBatchId}-SLOT${slotNo}`,
         previousStatus: 'Open Available Slot',
-        newStatus: `Occupied by ${memberName} (${memberId})`,
+        newStatus: `Occupied by ${memberName} (${targetMemberId})`,
         ipAddress: '103.45.12.89',
       };
       setAuditLogs(prev => [newAudit, ...prev]);
 
-      return { success: true };
+      return { success: true, memberName };
     } catch (err: any) {
       return { success: false, error: err?.message || 'Failed to assign slot manually' };
     }
