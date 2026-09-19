@@ -433,9 +433,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const dynamicGroups = buildDynamicGroupsFromUsers(data.users);
         setAllGroups(dynamicGroups);
 
-        // Dynamically resolve current user's group and slot ONLY IF deposit is verified
+        // Dynamically resolve current user's group, slot, and email verification status from DB
         setUser(currentUser => {
           if (!currentUser || !currentUser.email) return currentUser;
+          const dbMatch = data.users.find((u: any) => u.email?.toLowerCase() === currentUser.email?.toLowerCase());
+          const isEmailVerified = dbMatch ? Boolean(dbMatch.emailVerified) : Boolean(currentUser.emailVerified);
+
           const verifiedUsers = data.users.filter((u: any) => u.deposit === 'Verified' || u.depositStatus === 'Verified');
           const isUserVerified = currentUser.depositStatus === 'Verified' || verifiedUsers.some((u: any) => u.email?.toLowerCase() === currentUser.email?.toLowerCase());
 
@@ -447,6 +450,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               const calcSlotNumber = (uIdx % 50) + 1;
               return {
                 ...currentUser,
+                emailVerified: isEmailVerified,
                 depositStatus: 'Verified',
                 groupId: calcGroupId,
                 slotNumber: calcSlotNumber,
@@ -456,6 +460,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           }
           return {
             ...currentUser,
+            emailVerified: isEmailVerified,
             groupId: 'GROUP-001',
             slotNumber: 0,
             assignedSlots: [],

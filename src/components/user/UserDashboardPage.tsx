@@ -84,6 +84,8 @@ export const UserDashboardPage = () => {
     }
   };
 
+  const isEmailVerified = user.emailVerified === true || (user.accountStatus === 'Active' && user.emailVerified !== false);
+
   return (
     <div className="space-y-6 relative z-10 font-sans pb-10 text-white">
       
@@ -112,7 +114,7 @@ export const UserDashboardPage = () => {
       )}
 
       {/* DYNAMIC EMAIL VERIFICATION & DEPOSIT BANNER */}
-      {!user.emailVerified ? (
+      {!isEmailVerified ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
