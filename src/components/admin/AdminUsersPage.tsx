@@ -39,7 +39,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminUsersPage = () => {
-  const { setCurrentView, dbUsers } = useApp();
+  const { setCurrentView, dbUsers, fetchDbUsers } = useApp();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -47,6 +47,37 @@ export const AdminUsersPage = () => {
   const [activeModalTab, setActiveModalTab] = useState<'info' | 'kyc' | 'logs' | 'scheme'>('info');
   const [kycVerifiedStatus, setKycVerifiedStatus] = useState<Record<string, boolean>>({});
   const [uploadingKyc, setUploadingKyc] = useState(false);
+
+  const handleManualVerifyEmail = async (u: any) => {
+    if (!u) return;
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: u.id,
+          email: u.email,
+          memberId: u.memberId,
+          action: 'verify_email',
+          emailVerified: true,
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        const updatedUser = { ...u, emailVerified: true };
+        setUsersList(prev => prev.map(item => (item.id === u.id || item.email === u.email) ? updatedUser : item));
+        if (selectedUserModal && (selectedUserModal.id === u.id || selectedUserModal.email === u.email)) {
+          setSelectedUserModal(updatedUser);
+        }
+        alert(`✅ Email address for ${u.name || u.email} has been manually verified by Admin!`);
+        fetchDbUsers();
+      } else {
+        alert(`❌ Failed to verify email: ${data?.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      alert(`❌ Network error while verifying email: ${err?.message || err}`);
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -364,12 +395,34 @@ export const AdminUsersPage = () => {
                 <p className="text-base font-mono font-black text-[#2F6FED]">{selectedUserModal.memberId}</p>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Email Address</span>
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Email Address & Verification</span>
                 <p className="text-sm font-mono font-bold text-slate-800 flex items-center space-x-2">
                   <Mail className="w-4 h-4 text-slate-400 shrink-0" />
                   <span>{selectedUserModal.email}</span>
                 </p>
+                <div className="pt-1">
+                  {selectedUserModal.emailVerified ? (
+                    <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1 rounded-full text-xs font-black inline-flex items-center space-x-1">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Email Verified</span>
+                    </span>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 rounded-full text-xs font-bold inline-flex items-center space-x-1 w-fit">
+                        <Mail className="w-4 h-4 text-amber-600" />
+                        <span>Pending Email Verification</span>
+                      </span>
+                      <button
+                        onClick={() => handleManualVerifyEmail(selectedUserModal)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 cursor-pointer shadow-md transition-all w-fit"
+                      >
+                        <BadgeCheck className="w-4 h-4 text-emerald-200" />
+                        <span>Verify Email Manually</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
@@ -651,6 +704,7 @@ export const AdminUsersPage = () => {
                 <th className="p-4">Full Name Profile</th>
                 <th className="p-4">Contact Details</th>
                 <th className="p-4">Role Access</th>
+                <th className="p-4">Email Status</th>
                 <th className="p-4">Deposit Requirement</th>
                 <th className="p-4">Assigned Group</th>
                 <th className="p-4">Account Status</th>
@@ -713,6 +767,33 @@ export const AdminUsersPage = () => {
                       }`}>
                         {u.role}
                       </span>
+                    </td>
+
+                    <td className="p-4">
+                      {u.emailVerified ? (
+                        <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold inline-flex items-center space-x-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Verified</span>
+                        </span>
+                      ) : (
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="bg-amber-50 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center space-x-1">
+                            <Mail className="w-3 h-3 text-amber-600" />
+                            <span>Unverified</span>
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleManualVerifyEmail(u);
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-2 py-0.5 rounded-lg text-[9px] cursor-pointer shadow-xs transition-all flex items-center space-x-1"
+                            title="Verify Email Manually"
+                          >
+                            <BadgeCheck className="w-3 h-3 text-emerald-200" />
+                            <span>Verify Email</span>
+                          </button>
+                        </div>
+                      )}
                     </td>
 
                     <td className="p-4">

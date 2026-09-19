@@ -53,9 +53,16 @@ export const generateBatchSlots = (filledCount: number = 0, prefix: string = 'LO
 // Dynamic 50-Member Group Allocator: Fills 50 members per group and dynamically creates new groups as user base expands
 export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
   const usersList = Array.isArray(users) ? users : [];
-  // ONLY place members into group slots after payment & deposit verification
-  const verifiedUsers = usersList.filter(u => u.deposit === 'Verified' || u.depositStatus === 'Verified');
-  const requiredGroupsCount = Math.max(5, Math.ceil(verifiedUsers.length / 50) + 1);
+
+  const maxGroupNumFromUsers = usersList.reduce((max, u) => {
+    if (u.group && u.group.startsWith('GROUP-')) {
+      const num = parseInt(u.group.replace('GROUP-', ''), 10);
+      return Math.max(max, isNaN(num) ? 0 : num);
+    }
+    return max;
+  }, 5);
+
+  const requiredGroupsCount = Math.max(5, maxGroupNumFromUsers);
   const groups: GroupDetails[] = [];
 
   for (let gIndex = 0; gIndex < requiredGroupsCount; gIndex++) {
@@ -63,62 +70,86 @@ export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
     const letterCode = String.fromCharCode(65 + (gIndex % 26));
     const groupName = `InfinityGram 50 Gold Club - Batch ${letterCode}`;
     
-    const groupUsers = verifiedUsers.slice(gIndex * 50, (gIndex + 1) * 50);
-    const totalMembers = groupUsers.length;
-
-    let status: GroupDetails['status'] = 'empty';
-    if (totalMembers === 50) {
-      status = 'full';
-    } else if (totalMembers > 0) {
-      status = 'active';
-    } else if (gIndex === 0 || (gIndex > 0 && groups[gIndex - 1]?.totalMembers > 0)) {
-      status = 'recruiting';
-    } else {
-      status = 'empty';
-    }
-
-    const slots = Array.from({ length: 50 }, (_, slotIdx) => {
-      const slotNo = slotIdx + 1;
-      const u = groupUsers[slotIdx];
-      const letterPrefix = `LOP${letterCode}-`;
-
-      if (u) {
-        return {
-          slotNumber: slotNo,
-          memberId: u.memberId || `${letterPrefix}${String(slotNo).padStart(6, '0')}`,
-          memberName: u.name || `Member #${slotNo}`,
-          status: 'Occupied' as const,
-          joinedDate: u.regDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-          wonDay: undefined,
-          wonDate: undefined,
-        };
-      }
-
-      return {
-        slotNumber: slotNo,
-        memberId: '—',
-        memberName: '—',
-        status: 'Available' as const,
-        joinedDate: '-',
-        wonDay: undefined,
-        wonDate: undefined,
-      };
-    });
+    const slots = Array.from({ length: 50 }, (_, slotIdx) => ({
+      slotNumber: slotIdx + 1,
+      memberId: '—',
+      memberName: '—',
+      status: 'Available' as const,
+      joinedDate: '-',
+      wonDay: undefined,
+      wonDate: undefined,
+    }));
 
     groups.push({
       groupId,
       groupName,
-      status,
+      status: 'empty',
       createdDate: '01 Aug 2026',
-      totalMembers,
-      currentCycleDay: totalMembers > 0 ? Math.min(15, totalMembers) : 0,
+      totalMembers: 0,
+      currentCycleDay: 0,
       totalGoldDistributedGrams: 0,
-      activePoolCount: totalMembers,
-      scheduledTime: totalMembers > 0 ? '07:00 AM IST' : 'Awaiting Members',
-      startDate: totalMembers > 0 ? '2026-08-14' : '',
+      activePoolCount: 0,
+      scheduledTime: 'Awaiting Members',
+      startDate: '',
       slots,
     });
   }
+
+  const eligibleUsers = usersList.filter(
+    u => u.deposit === 'Verified' || u.depositStatus === 'Verified' || (u.group && u.group.startsWith('GROUP-') && u.slot && u.slot !== 'Not Assigned Yet' && u.slot !== '-')
+  );
+
+  eligibleUsers.forEach((u) => {
+    let targetGroupId = u.group && u.group.startsWith('GROUP-') ? u.group : 'GROUP-001';
+    let targetGroup = groups.find(g => g.groupId === targetGroupId);
+    if (!targetGroup) {
+      targetGroup = groups[0];
+    }
+
+    let rawSlotNum = 0;
+    if (u.slot) {
+      const clean = String(u.slot).replace(/[^0-9]/g, '');
+      rawSlotNum = parseInt(clean, 10) || 0;
+    }
+
+    let targetSlotIndex = -1;
+    if (rawSlotNum >= 1 && rawSlotNum <= 50) {
+      targetSlotIndex = rawSlotNum - 1;
+    } else {
+      targetSlotIndex = targetGroup.slots.findIndex(s => s.status === 'Available');
+    }
+
+    if (targetSlotIndex >= 0 && targetSlotIndex < 50) {
+      targetGroup.slots[targetSlotIndex] = {
+        slotNumber: targetSlotIndex + 1,
+        memberId: u.memberId || u.id || `LOP-${String(targetSlotIndex + 1).padStart(6, '0')}`,
+        memberName: u.name || u.email || `Member #${targetSlotIndex + 1}`,
+        status: 'Occupied' as const,
+        joinedDate: u.regDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+        wonDay: undefined,
+        wonDate: undefined,
+      };
+    }
+  });
+
+  groups.forEach((grp, gIndex) => {
+    const filledSlots = grp.slots.filter(s => s.status === 'Occupied');
+    grp.totalMembers = filledSlots.length;
+    grp.activePoolCount = grp.totalMembers;
+    grp.currentCycleDay = grp.totalMembers > 0 ? Math.min(15, grp.totalMembers) : 0;
+    grp.scheduledTime = grp.totalMembers > 0 ? '07:00 AM IST' : 'Awaiting Members';
+    grp.startDate = grp.totalMembers > 0 ? '2026-08-14' : '';
+
+    if (grp.totalMembers === 50) {
+      grp.status = 'full';
+    } else if (grp.totalMembers > 0) {
+      grp.status = 'active';
+    } else if (gIndex === 0 || (gIndex > 0 && groups[gIndex - 1]?.totalMembers > 0)) {
+      grp.status = 'recruiting';
+    } else {
+      grp.status = 'empty';
+    }
+  });
 
   return groups;
 };

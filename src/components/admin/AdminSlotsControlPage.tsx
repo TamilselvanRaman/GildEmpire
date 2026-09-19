@@ -139,18 +139,19 @@ export const AdminSlotsControlPage = () => {
 
   // Generate 50 Slots Representation for selected batch
   const generateBatchSlots = () => {
+    const targetGrp = (allGroups || []).find(g => g.groupId === currentBatchInfo.groupId);
+    if (targetGrp && targetGrp.slots && targetGrp.slots.length === 50) {
+      return targetGrp.slots;
+    }
     return Array.from({ length: 50 }, (_, i) => {
       const slotNo = i + 1;
-      const isOccupied = slotNo <= filledCount;
-      const existingSlot = group.slots.find(s => s.slotNumber === slotNo);
-
       return {
         slotNumber: slotNo,
-        memberId: isOccupied ? (existingSlot?.memberId || `LOP-${String(slotNo).padStart(6, '0')}`) : undefined,
-        memberName: isOccupied ? (existingSlot?.memberName || `Member #${slotNo}`) : undefined,
-        status: isOccupied ? (existingSlot?.status || 'Occupied') : 'Available',
-        joinedDate: isOccupied ? (existingSlot?.joinedDate || '12 Aug 2026') : undefined,
-        wonDay: existingSlot?.wonDay,
+        memberId: undefined,
+        memberName: undefined,
+        status: 'Available' as const,
+        joinedDate: undefined,
+        wonDay: undefined,
       };
     });
   };

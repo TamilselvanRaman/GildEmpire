@@ -117,19 +117,63 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, memberId, userId, depositStatus = 'Verified', slotNumber, groupId = 'GROUP-001' } = body;
+    const { 
+      email, 
+      memberId, 
+      userId, 
+      depositStatus = 'Verified', 
+      slotNumber, 
+      groupId = 'GROUP-001',
+      action,
+      emailVerified 
+    } = body;
 
     const dbClient = supabaseAdmin || supabase;
+    const cleanEmail = email ? email.trim().toLowerCase() : null;
+    const cleanMemberId = memberId ? memberId.trim() : null;
 
-    let targetQuery = dbClient.from('profiles').update({
+    if (action === 'verify_email' || emailVerified === true) {
+      let updateObj: any = { email_verified: true };
+      let targetQuery = dbClient.from('profiles').update(updateObj);
+
+      if (userId) {
+        targetQuery = targetQuery.eq('id', userId);
+      } else if (cleanEmail) {
+        targetQuery = targetQuery.ilike('email', cleanEmail);
+      } else if (cleanMemberId) {
+        targetQuery = targetQuery.eq('member_id', cleanMemberId);
+      }
+
+      const { error: profileErr } = await targetQuery;
+      if (profileErr) {
+        console.warn('Manual email verification profile update warning:', profileErr.message);
+      }
+
+      if (userId && supabaseAdmin) {
+        try {
+          await supabaseAdmin.auth.admin.updateUserById(userId, { email_confirm: true });
+        } catch (e: any) {
+          console.warn('Could not confirm auth email via admin API:', e?.message);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `User email verified successfully by admin.`,
+      }, { status: 200 });
+    }
+
+    let updateObj: any = {
       deposit_status: depositStatus,
       account_status: 'Active',
       slot_number: slotNumber || 0,
       group: groupId || 'GROUP-001',
-    });
+    };
+    if (emailVerified !== undefined) {
+      updateObj.email_verified = Boolean(emailVerified);
+    }
 
-    const cleanEmail = email ? email.trim().toLowerCase() : null;
-    const cleanMemberId = memberId ? memberId.trim() : null;
+    let targetQuery = dbClient.from('profiles').update(updateObj);
 
     if (userId) {
       targetQuery = targetQuery.eq('id', userId);
@@ -154,8 +198,9 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error?.message || 'Failed to update user slot assignment' },
+      { success: false, error: error?.message || 'Failed to update user' },
       { status: 500 }
     );
   }
 }
+
