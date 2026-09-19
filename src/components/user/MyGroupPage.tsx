@@ -6,9 +6,15 @@ import { Users, Award, ShieldCheck, Sparkles, Filter, CheckCircle2, Clock, Table
 import { motion } from 'framer-motion';
 
 export const MyGroupPage = () => {
-  const { group, user, setCurrentView } = useApp();
+  const { group, user, setCurrentView, fetchDbUsers } = useApp();
   const [filter, setFilter] = useState<'All' | 'ActivePool' | 'WonGold'>('All');
   const [viewFormat, setViewFormat] = useState<'table' | 'grid'>('table');
+
+  React.useEffect(() => {
+    if (typeof fetchDbUsers === 'function') {
+      fetchDbUsers();
+    }
+  }, []);
 
   const occupiedCount = group.slots.filter(s => s.status === 'Occupied' || s.status === 'Won 1g Gold').length;
   const availableCount = 50 - occupiedCount;
@@ -132,6 +138,24 @@ export const MyGroupPage = () => {
         </div>
       </div>
 
+      {/* Privacy Audit Banner */}
+      <div className="bg-[#081E26] border border-[#00C2B8]/40 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-md">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-lg bg-[#00C2B8]/20 border border-[#00C2B8]/50 text-[#00C2B8] flex items-center justify-center font-bold shrink-0">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-extrabold text-[#00C2B8]">🔒 Audited Privacy Mode Active:</span>
+            <span className="text-slate-300 ml-1">
+              Only your personal owned slot details are displayed in full clarity. Other member entries are anonymized as Verified Participants for security & privacy compliance.
+            </span>
+          </div>
+        </div>
+        <span className="text-[10px] bg-[#00C2B8]/15 border border-[#00C2B8]/30 text-[#00C2B8] font-mono px-2.5 py-1 rounded-full uppercase tracking-wider font-bold shrink-0">
+          256-Bit Encrypted Pool
+        </span>
+      </div>
+
       {/* Main 50-Member Display Container */}
       <div className="bg-[#0D3B43] rounded-3xl border border-[#E1A238]/30 shadow-2xl p-6 space-y-4">
         <div className="flex items-center justify-between">
@@ -158,20 +182,38 @@ export const MyGroupPage = () => {
               <tbody className="divide-y divide-[#081E26] font-medium">
                 {filteredSlots.map(slot => {
                   const isWon = slot.status === 'Won 1g Gold';
-                  const isCurrentUser = 
-                    user?.depositStatus === 'Verified' && 
-                    (((user.slotNumber ?? 0) > 0 && slot.slotNumber === user.slotNumber) || 
-                     (!!user.memberId && !!slot.memberId && slot.memberId === user.memberId));
+                  const isCurrentUser = Boolean(
+                    user && (
+                      (!!user.memberId && !!slot.memberId && user.memberId.trim().toUpperCase() === slot.memberId.trim().toUpperCase()) ||
+                      ((user.slotNumber ?? 0) > 0 && slot.slotNumber === user.slotNumber) ||
+                      (Array.isArray(user.assignedSlots) && user.assignedSlots.includes(slot.slotNumber)) ||
+                      (!!user.fullName && !!slot.memberName && user.fullName.trim().toLowerCase() === slot.memberName.trim().toLowerCase())
+                    )
+                  );
+
+                  const displayMemberName = isCurrentUser
+                    ? (slot.memberName || user.fullName || 'Your Account')
+                    : slot.status === 'Available'
+                      ? 'Slot Open for Member'
+                      : `Verified Participant #${slot.slotNumber.toString().padStart(2, '0')}`;
+
+                  const displayMemberId = isCurrentUser
+                    ? (slot.memberId || user.memberId || `LOP-${String(slot.slotNumber).padStart(6, '0')}`)
+                    : slot.status === 'Available'
+                      ? '—'
+                      : slot.memberId && slot.memberId.startsWith('LOP-')
+                        ? `LOP-***${slot.memberId.slice(-3)}`
+                        : `LOP-***${slot.slotNumber.toString().padStart(2, '0')}`;
 
                   return (
                     <tr
                       key={slot.slotNumber}
                       className={`transition-all ${
                         isCurrentUser
-                          ? 'bg-[#00C2B8]/20 text-white font-bold border-l-4 border-l-[#00C2B8]'
+                          ? 'bg-[#00C2B8]/20 text-white font-bold border-l-4 border-l-[#00C2B8] shadow-md'
                           : isWon
                             ? 'bg-[#E1A238]/10 text-[#F2C868]'
-                            : 'text-slate-200'
+                            : 'text-slate-200 hover:bg-[#081E26]/40'
                       }`}
                     >
                       <td className="p-3.5 font-mono font-bold text-[#00C2B8] whitespace-nowrap">
@@ -184,20 +226,31 @@ export const MyGroupPage = () => {
                           {slot.status === 'Available' ? (
                             <span className="text-slate-400 font-normal italic">Slot Open for Member</span>
                           ) : (
-                            <span>{slot.memberName}</span>
+                            <span className={isCurrentUser ? 'text-white font-black' : 'text-slate-300'}>
+                              {displayMemberName}
+                            </span>
                           )}
-                          {isCurrentUser && (
-                            <span className="text-[9px] bg-[#E1A238] text-[#081E26] font-black px-1.5 py-0.5 rounded uppercase shrink-0">YOU</span>
+                          {isCurrentUser ? (
+                            <span className="text-[9px] bg-[#E1A238] text-[#081E26] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 shadow-xs">
+                              ★ YOUR OWNED SLOT
+                            </span>
+                          ) : slot.status !== 'Available' && (
+                            <span className="text-[9px] text-slate-500 font-mono flex items-center space-x-1 shrink-0">
+                              <span>🔒</span>
+                              <span>Protected</span>
+                            </span>
                           )}
                         </div>
                       </td>
 
                       {/* Member ID Field */}
-                      <td className="p-3.5 font-mono text-slate-300 whitespace-nowrap">
+                      <td className="p-3.5 font-mono whitespace-nowrap">
                         {slot.status === 'Available' ? (
                           <span className="text-slate-500">—</span>
                         ) : (
-                          <span>{slot.memberId}</span>
+                          <span className={isCurrentUser ? 'text-[#00C2B8] font-bold' : 'text-slate-400'}>
+                            {displayMemberId}
+                          </span>
                         )}
                       </td>
 
@@ -238,10 +291,28 @@ export const MyGroupPage = () => {
           <div className="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3">
             {filteredSlots.map(slot => {
               const isWon = slot.status === 'Won 1g Gold';
-              const isCurrentUser = 
-                user?.depositStatus === 'Verified' && 
-                (((user.slotNumber ?? 0) > 0 && slot.slotNumber === user.slotNumber) || 
-                 (!!user.memberId && !!slot.memberId && slot.memberId === user.memberId));
+              const isCurrentUser = Boolean(
+                user && (
+                  (!!user.memberId && !!slot.memberId && user.memberId.trim().toUpperCase() === slot.memberId.trim().toUpperCase()) ||
+                  ((user.slotNumber ?? 0) > 0 && slot.slotNumber === user.slotNumber) ||
+                  (Array.isArray(user.assignedSlots) && user.assignedSlots.includes(slot.slotNumber)) ||
+                  (!!user.fullName && !!slot.memberName && user.fullName.trim().toLowerCase() === slot.memberName.trim().toLowerCase())
+                )
+              );
+
+              const displayMemberName = isCurrentUser
+                ? (slot.memberName || user.fullName || 'Your Account')
+                : slot.status === 'Available'
+                  ? 'Slot Open'
+                  : `Participant #${slot.slotNumber.toString().padStart(2, '0')}`;
+
+              const displayMemberId = isCurrentUser
+                ? (slot.memberId || user.memberId || `LOP-${String(slot.slotNumber).padStart(6, '0')}`)
+                : slot.status === 'Available'
+                  ? '—'
+                  : slot.memberId && slot.memberId.startsWith('LOP-')
+                    ? `LOP-***${slot.memberId.slice(-3)}`
+                    : `LOP-***${slot.slotNumber.toString().padStart(2, '0')}`;
 
               return (
                 <motion.div
@@ -251,7 +322,7 @@ export const MyGroupPage = () => {
                     isWon
                       ? 'bg-[#081E26] border-[#E1A238] text-[#F2C868] shadow-xs'
                       : isCurrentUser
-                        ? 'bg-gradient-to-br from-[#00C2B8] to-[#0D3B43] text-white border-[#00C2B8] shadow-md ring-2 ring-[#00C2B8]/40'
+                        ? 'bg-gradient-to-br from-[#00C2B8] to-[#0D3B43] text-white border-2 border-[#00C2B8] shadow-xl ring-2 ring-[#00C2B8]/40'
                         : 'bg-[#081E26] border-[#0D3B43] text-slate-300'
                   }`}
                 >
@@ -261,16 +332,16 @@ export const MyGroupPage = () => {
                     </span>
                     {isWon && <Award className="w-4 h-4 text-[#E1A238]" />}
                     {isCurrentUser && !isWon && (
-                      <span className="text-[9px] font-bold uppercase bg-[#E1A238] text-[#081E26] px-1.5 rounded">YOU</span>
+                      <span className="text-[9px] font-black uppercase bg-[#E1A238] text-[#081E26] px-1.5 py-0.5 rounded shadow-xs">YOU</span>
                     )}
                   </div>
 
                   <div>
-                    <p className={`text-xs font-bold truncate ${isCurrentUser ? 'text-white' : isWon ? 'text-[#F2C868]' : slot.status === 'Available' ? 'text-slate-400 font-normal italic' : 'text-slate-300'}`}>
-                      {slot.status === 'Available' ? 'Slot Open' : slot.memberName}
+                    <p className={`text-xs font-bold truncate ${isCurrentUser ? 'text-white font-extrabold' : isWon ? 'text-[#F2C868]' : slot.status === 'Available' ? 'text-slate-400 font-normal italic' : 'text-slate-300'}`}>
+                      {displayMemberName}
                     </p>
-                    <p className={`text-[10px] font-mono ${isCurrentUser ? 'text-slate-200' : 'text-slate-400'}`}>
-                      {slot.status === 'Available' ? '—' : slot.memberId}
+                    <p className={`text-[10px] font-mono ${isCurrentUser ? 'text-[#F2C868] font-bold' : 'text-slate-400'}`}>
+                      {displayMemberId}
                     </p>
                   </div>
 

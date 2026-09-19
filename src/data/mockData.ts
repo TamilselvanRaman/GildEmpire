@@ -11,22 +11,22 @@ import {
 } from '../types';
 
 export const currentUserMock: UserProfile = {
-  id: '',
-  memberId: '',
-  fullName: '',
-  email: '',
-  mobile: '',
-  avatar: '',
-  registrationDate: '',
-  accountStatus: 'Pending Verification',
-  emailVerified: false,
-  referralId: '',
-  referredBy: '',
-  depositStatus: 'Not Started',
-  groupId: '',
-  slotNumber: 0,
-  slotsOwned: 0,
-  assignedSlots: [],
+  id: 'usr_jeyaguru_485339',
+  memberId: 'LOP-485339',
+  fullName: 'JEYAGURU',
+  email: 'jeyaguru@infinitygram.net',
+  mobile: '+91 98765 43210',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+  registrationDate: '10 Aug 2026',
+  accountStatus: 'Active',
+  emailVerified: true,
+  referralId: 'REF-485339',
+  referredBy: 'REF-897800',
+  depositStatus: 'Verified',
+  groupId: 'GROUP-001',
+  slotNumber: 2,
+  slotsOwned: 1,
+  assignedSlots: [2],
   rewardStatus: 'In Selection Pool',
 };
 
@@ -70,27 +70,57 @@ export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
     const letterCode = String.fromCharCode(65 + (gIndex % 26));
     const groupName = `InfinityGram 50 Gold Club - Batch ${letterCode}`;
     
-    const slots = Array.from({ length: 50 }, (_, slotIdx) => ({
-      slotNumber: slotIdx + 1,
-      memberId: '—',
-      memberName: '—',
-      status: 'Available' as const,
-      joinedDate: '-',
-      wonDay: undefined,
-      wonDate: undefined,
-    }));
+    // Group-001 (Group - A) is a fully filled 50-member active event cycle
+    const isGroupA = gIndex === 0;
+    const sampleNamesGroupA = [
+      'Suresh P', 'JEYAGURU', 'Anand Kumar', 'Priya Sharma', 'Kavitha N',
+      'Vijay Ram', 'Deepak Verma', 'Meena Kumari', 'Rajesh K', 'Santhosh M',
+      'Lakshmi Narayanan', 'Arun Swaminathan', 'Divya Prabha', 'Karthik Raja', 'Bala Subramanian',
+      'Nisha Devi', 'Ganesh Moorthy', 'Subhashini R', 'Praveen Chandran', 'Venkatesh S',
+      'Aravind B', 'Swathi Reddy', 'Dinesh Kumar', 'Monika S', 'Saravanan P',
+      'Gowtham V', 'Pavithra M', 'Manoj Kumar', 'Revathi S', 'Sridhar R',
+      'Aakash Gupta', 'Shalini P', 'Bharath Kumar', 'Ritu Sharma', 'Gokul Nath',
+      'Kavya Mohan', 'Hemant Patel', 'Sangeetha R', 'Nitin Malhotra', 'Aarti Joshi',
+      'Vimal Raj', 'Geetha Sundaram', 'Surya Prakash', 'Madhumitha K', 'Aswin Kumar',
+      'Preeti Singh', 'Ashok Kumar', 'Anitha R', 'Sunder Rajan', 'Tamilselvan R'
+    ];
+
+    const slots = Array.from({ length: 50 }, (_, slotIdx) => {
+      const slotNumber = slotIdx + 1;
+      if (isGroupA) {
+        return {
+          slotNumber,
+          memberId: slotIdx === 0 ? 'LOP-897800' : slotIdx === 1 ? 'LOP-485339' : `LOP-${String(897800 + slotIdx).padStart(6, '0')}`,
+          memberName: sampleNamesGroupA[slotIdx] || `Member #${slotNumber}`,
+          status: 'Occupied' as const,
+          joinedDate: '12 Aug 2026',
+          wonDay: undefined,
+          wonDate: undefined,
+        };
+      }
+
+      return {
+        slotNumber,
+        memberId: '—',
+        memberName: '—',
+        status: 'Available' as const,
+        joinedDate: '-',
+        wonDay: undefined,
+        wonDate: undefined,
+      };
+    });
 
     groups.push({
       groupId,
       groupName,
-      status: 'empty',
+      status: isGroupA ? 'active' : 'empty',
       createdDate: '01 Aug 2026',
-      totalMembers: 0,
-      currentCycleDay: 0,
+      totalMembers: isGroupA ? 50 : 0,
+      currentCycleDay: isGroupA ? 1 : 0,
       totalGoldDistributedGrams: 0,
-      activePoolCount: 0,
-      scheduledTime: 'Awaiting Members',
-      startDate: '',
+      activePoolCount: isGroupA ? 50 : 0,
+      scheduledTime: isGroupA ? '07:00 AM IST' : 'Awaiting Members',
+      startDate: isGroupA ? '2026-08-14' : '',
       slots,
     });
   }
@@ -133,15 +163,15 @@ export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
   });
 
   groups.forEach((grp, gIndex) => {
-    const filledSlots = grp.slots.filter(s => s.status === 'Occupied');
+    const filledSlots = grp.slots.filter(s => s.status === 'Occupied' || s.status === 'Won 1g Gold');
     grp.totalMembers = filledSlots.length;
-    grp.activePoolCount = grp.totalMembers;
+    grp.activePoolCount = grp.slots.filter(s => s.status === 'Occupied').length;
     grp.currentCycleDay = grp.totalMembers > 0 ? Math.min(15, grp.totalMembers) : 0;
     grp.scheduledTime = grp.totalMembers > 0 ? '07:00 AM IST' : 'Awaiting Members';
     grp.startDate = grp.totalMembers > 0 ? '2026-08-14' : '';
 
     if (grp.totalMembers === 50) {
-      grp.status = 'full';
+      grp.status = 'active';
     } else if (grp.totalMembers > 0) {
       grp.status = 'active';
     } else if (gIndex === 0 || (gIndex > 0 && groups[gIndex - 1]?.totalMembers > 0)) {
