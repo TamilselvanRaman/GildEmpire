@@ -23,12 +23,13 @@ import {
   PlusCircle,
   ShieldCheck,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminSlotsControlPage = () => {
-  const { group, allGroups, deposits, setCurrentView, dbUsers = [], manualAssignSlot } = useApp();
+  const { group, allGroups, deposits, setCurrentView, dbUsers = [], manualAssignSlot, unassignSlot } = useApp();
   const [selectedBatch, setSelectedBatch] = useState<'batchA' | 'batchB' | 'batchC' | 'batchD' | 'batchE'>('batchA');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'occupied' | 'available'>('all');
@@ -41,6 +42,32 @@ export const AdminSlotsControlPage = () => {
   const [selectedUserForSlot, setSelectedUserForSlot] = useState<string>('');
   const [userSearchTerm, setUserSearchTerm] = useState<string>('');
   const [isAssigning, setIsAssigning] = useState<boolean>(false);
+
+  // Slot unassign / delete states
+  const [slotToDelete, setSlotToDelete] = useState<{ slotNumber: number; memberName?: string; memberId?: string } | null>(null);
+  const [isDeletingSlot, setIsDeletingSlot] = useState<boolean>(false);
+
+  // Helper to count how many slots a user currently owns across all groups (Max 3 allowed)
+  const getUserOwnedSlotsCount = (u: any) => {
+    if (!u) return 0;
+    let count = 0;
+    (allGroups || []).forEach(grp => {
+      (grp.slots || []).forEach(s => {
+        if (s.status !== 'Available' && s.memberName && s.memberName !== '—') {
+          const isMemberMatch = 
+            (u.memberId && s.memberId === u.memberId) ||
+            (u.email && s.memberName?.toLowerCase() === u.email?.toLowerCase()) ||
+            (u.name && (s.memberName?.toLowerCase() === u.name?.toLowerCase() || u.name?.toLowerCase() === s.memberName?.toLowerCase()));
+          if (isMemberMatch) {
+            count++;
+          }
+        }
+      });
+    });
+    const explicitCount = u.slotsOwned || (Array.isArray(u.assignedSlots) ? u.assignedSlots.length : 0);
+    return Math.max(count, explicitCount);
+  };
+
 
   const getGroupStats = (groupId: string) => {
     const target = (allGroups || []).find(g => g.groupId === groupId);
@@ -125,9 +152,9 @@ export const AdminSlotsControlPage = () => {
   const totalSystemAvailable = 250 - totalSystemFilled;
   const totalSystemWaiting = dbUsers.filter(u => u.deposit !== 'Verified' && u.depositStatus !== 'Verified').length;
 
-  // Real pending queue members derived from dbUsers
+  // Real pending queue members derived from dbUsers (excluding users who reached 3 owned slots limit)
   const waitingQueueMembers = dbUsers
-    .filter(u => u.deposit !== 'Verified' && u.depositStatus !== 'Verified')
+    .filter(u => u.deposit !== 'Verified' && u.depositStatus !== 'Verified' && getUserOwnedSlotsCount(u) < 3)
     .map(u => ({
       id: u.memberId || u.id || 'DEP-NEW',
       name: u.name || u.email,
@@ -514,8 +541,13 @@ export const AdminSlotsControlPage = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
                 {filteredSlots.map((slot) => {
-                  const isOccupied = slot.status !== 'Available';
+                  const isOccupied = slot.status !== 'Available' && slot.memberName && slot.memberName !== '—';
                   const isWon = slot.status === 'Won 1g Gold';
+                  const occUser = dbUsers.find(u => 
+                    (slot.memberId && u.memberId === slot.memberId) || 
+                    (slot.memberName && (u.name === slot.memberName || u.email === slot.memberName)) ||
+                    (u.group === currentBatchInfo.groupId && (u.slot === `#${slot.slotNumber}` || u.slot === slot.slotNumber))
+                  );
 
                   return (
                     <tr 
@@ -532,15 +564,15 @@ export const AdminSlotsControlPage = () => {
                           <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs ${
                             isWon ? 'bg-amber-100 text-amber-900 border border-amber-300' : isOccupied ? 'bg-blue-50 text-[#2F6FED]' : 'bg-blue-100/60 text-blue-700'
                           }`}>
-                            {slot.memberName ? slot.memberName.charAt(0) : '+'}
+                            {isOccupied && slot.memberName ? slot.memberName.charAt(0) : '+'}
                           </div>
                           <div>
                             <p className="font-extrabold text-[#0B1E39] text-xs">
-                              {slot.memberName || <span className="text-[#2F6FED] font-black">+ Available Open Slot</span>}
+                              {isOccupied ? slot.memberName : <span className="text-[#2F6FED] font-black">+ Available Open Slot</span>}
                             </p>
                             {isOccupied ? (
                               <p className="text-[11px] text-slate-500 font-mono">
-                                +91 98765 {10000 + slot.slotNumber}
+                                {occUser?.mobile || occUser?.email || 'Registered Member'}
                               </p>
                             ) : (
                               <p className="text-[11px] text-slate-400 font-medium">Ready for depositor assignment</p>
@@ -584,16 +616,33 @@ export const AdminSlotsControlPage = () => {
 
                       <td className="p-4">
                         {isOccupied ? (
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedMemberModal(slot);
-                            }}
-                            className="text-xs font-bold text-[#2F6FED] hover:underline flex items-center space-x-1 cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>View Details</span>
-                          </button>
+                          <div className="flex items-center space-x-3">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedMemberModal(slot);
+                              }}
+                              className="text-xs font-bold text-[#2F6FED] hover:underline flex items-center space-x-1 cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View Details</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSlotToDelete({
+                                  slotNumber: slot.slotNumber,
+                                  memberName: slot.memberName,
+                                  memberId: slot.memberId,
+                                });
+                              }}
+                              className="text-xs font-bold text-rose-600 hover:text-rose-800 hover:underline flex items-center space-x-1 cursor-pointer"
+                              title="Delete / Unassign this slot"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete Slot</span>
+                            </button>
+                          </div>
                         ) : (
                           <button
                             onClick={(e) => {
@@ -721,8 +770,12 @@ export const AdminSlotsControlPage = () => {
 
                 <label className="block text-xs font-extrabold text-[#0B1E39] pt-1">Select Registered User to Assign:</label>
                 <div className="max-h-56 overflow-y-auto space-y-2 border border-slate-200 rounded-2xl p-2 bg-slate-50/80">
-                  {dbUsers
-                    .filter((u) => {
+                  {(() => {
+                    const eligibleDbUsers = dbUsers.filter((u) => {
+                      // EXCLUDE users who already own 3 or more slots (Max 3 slots per single user limit)
+                      const ownedCount = getUserOwnedSlotsCount(u);
+                      if (ownedCount >= 3) return false;
+
                       if (!userSearchTerm.trim()) return true;
                       const q = userSearchTerm.toLowerCase();
                       return (
@@ -731,12 +784,22 @@ export const AdminSlotsControlPage = () => {
                         (u.memberId && u.memberId.toLowerCase().includes(q)) ||
                         (u.mobile && u.mobile.includes(q))
                       );
-                    })
-                    .map((u) => {
+                    });
+
+                    if (eligibleDbUsers.length === 0) {
+                      return (
+                        <div className="p-4 text-center text-xs text-slate-500 font-medium">
+                          No eligible registered users found (Users with 3 owned slots are automatically excluded).
+                        </div>
+                      );
+                    }
+
+                    return eligibleDbUsers.map((u) => {
                       const val = u.email || u.memberId;
                       const isSelected = selectedUserForSlot === val;
                       const initial = u.name ? u.name.charAt(0).toUpperCase() : 'M';
                       const isVerified = u.deposit === 'Verified';
+                      const ownedSlotsCount = getUserOwnedSlotsCount(u);
 
                       return (
                         <div
@@ -765,6 +828,9 @@ export const AdminSlotsControlPage = () => {
                           </div>
 
                           <div className="flex items-center space-x-2 shrink-0 ml-2">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-blue-50 text-[#2F6FED] border border-blue-200">
+                              {ownedSlotsCount}/3 Slots
+                            </span>
                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
                               isVerified ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-300'
                             }`}>
@@ -776,7 +842,8 @@ export const AdminSlotsControlPage = () => {
                           </div>
                         </div>
                       );
-                    })}
+                    });
+                  })()}
                 </div>
               </div>
 
@@ -865,49 +932,144 @@ export const AdminSlotsControlPage = () => {
               </div>
 
               {/* Detailed Key Value Grid */}
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 text-xs">
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Assigned Group:</span>
-                  <span className="font-extrabold text-[#0B1E39]">{currentBatchInfo.name}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Deposit Requirement:</span>
-                  <span className="font-mono text-emerald-700 font-black">₹10,000 (Verified & Locked)</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Bank Reference UTR:</span>
-                  <span className="font-mono text-slate-800 font-bold">UPI-98234120938{selectedMemberModal.slotNumber}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Mobile Contact:</span>
-                  <span className="font-mono text-slate-800 font-bold">+91 98765 {10000 + selectedMemberModal.slotNumber}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Email Address:</span>
-                  <span className="text-slate-800 font-medium">{selectedMemberModal.memberName ? `${selectedMemberModal.memberName.toLowerCase().replace(/\s+/g, '.')}@infinitygram.in` : 'member@infinitygram.in'}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500 font-medium">Joined Date:</span>
-                  <span className="text-slate-800 font-semibold">{selectedMemberModal.joinedDate || '12 Aug 2026'}</span>
-                </div>
-                <div className="flex justify-between pt-1">
-                  <span className="text-slate-500 font-medium">Gold Reward Status:</span>
-                  <span className="font-bold text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
-                    {selectedMemberModal.status}
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                const occUser = dbUsers.find(u => 
+                  (selectedMemberModal.memberId && u.memberId === selectedMemberModal.memberId) || 
+                  (selectedMemberModal.memberName && (u.name === selectedMemberModal.memberName || u.email === selectedMemberModal.memberName)) ||
+                  (u.group === currentBatchInfo.groupId && (u.slot === `#${selectedMemberModal.slotNumber}` || u.slot === selectedMemberModal.slotNumber))
+                );
 
-              <button
-                onClick={() => setSelectedMemberModal(null)}
-                className="w-full bg-[#0B1E39] hover:bg-[#152D50] text-white font-extrabold py-4 rounded-2xl shadow-xl text-xs uppercase tracking-wider cursor-pointer transition-all border border-amber-400/40"
-              >
-                Close Full Member Inspection Details
-              </button>
+                return (
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 text-xs">
+                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                      <span className="text-slate-500 font-medium">Assigned Group:</span>
+                      <span className="font-extrabold text-[#0B1E39]">{currentBatchInfo.name}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                      <span className="text-slate-500 font-medium">Deposit Requirement:</span>
+                      <span className="font-mono text-emerald-700 font-black">₹10,000 (Verified & Locked)</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                      <span className="text-slate-500 font-medium">Bank Reference UTR:</span>
+                      <span className="font-mono text-slate-800 font-bold">{occUser?.utr || `UPI-98234120938${selectedMemberModal.slotNumber}`}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                      <span className="text-slate-500 font-medium">Mobile Contact:</span>
+                      <span className="font-mono text-slate-800 font-bold">{occUser?.mobile || '+91 98765 43210'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                      <span className="text-slate-500 font-medium">Email Address:</span>
+                      <span className="text-slate-800 font-medium">{occUser?.email || selectedMemberModal.memberName || 'member@infinitygram.in'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                      <span className="text-slate-500 font-medium">Joined Date:</span>
+                      <span className="text-slate-800 font-semibold">{occUser?.regDate || selectedMemberModal.joinedDate || 'Recent'}</span>
+                    </div>
+                    <div className="flex justify-between pt-1">
+                      <span className="text-slate-500 font-medium">Gold Reward Status:</span>
+                      <span className="font-bold text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
+                        {selectedMemberModal.status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  onClick={() => setSelectedMemberModal(null)}
+                  className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3.5 rounded-2xl text-xs cursor-pointer"
+                >
+                  Close Details
+                </button>
+                <button
+                  onClick={() => {
+                    const slotToDel = {
+                      slotNumber: selectedMemberModal.slotNumber,
+                      memberName: selectedMemberModal.memberName,
+                      memberId: selectedMemberModal.memberId,
+                    };
+                    setSelectedMemberModal(null);
+                    setSlotToDelete(slotToDel);
+                  }}
+                  className="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold py-3.5 rounded-2xl text-xs flex items-center justify-center space-x-1.5 cursor-pointer shadow-md shadow-rose-500/20"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete / Release Slot</span>
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* DELETE / UNASSIGN SLOT CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {slotToDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white max-w-md w-full rounded-[2.5rem] p-8 border border-rose-200 shadow-2xl space-y-6 relative text-left"
+            >
+              <button
+                onClick={() => setSlotToDelete(null)}
+                className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-full cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-[#0B1E39]">Confirm Slot Deletion / Unassign</h3>
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  Are you sure you want to remove <strong className="text-slate-900 font-bold">{slotToDelete.memberName || `Member #${slotToDelete.slotNumber}`}</strong> from <strong className="text-[#2F6FED]">Slot #{slotToDelete.slotNumber}</strong> in {currentBatchInfo.name}?
+                </p>
+                <div className="bg-rose-50 p-4 rounded-2xl border border-rose-200 text-[11px] text-rose-800 space-y-1">
+                  <p className="font-bold">⚠️ Warning:</p>
+                  <p>This action will unassign the user from this slot, update the database in real time, and mark Slot #{slotToDelete.slotNumber} as an Available Open Slot.</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  onClick={() => setSlotToDelete(null)}
+                  className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3.5 rounded-2xl text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={isDeletingSlot}
+                  onClick={async () => {
+                    setIsDeletingSlot(true);
+                    const res = await unassignSlot(slotToDelete.slotNumber, currentBatchInfo.groupId, slotToDelete.memberId || slotToDelete.memberName);
+                    setIsDeletingSlot(false);
+                    setSlotToDelete(null);
+                    if (res?.success) {
+                      alert(`✅ Slot #${slotToDelete.slotNumber} was successfully deleted/released and is now available!`);
+                    } else {
+                      alert(`❌ Error releasing slot: ${res?.error || 'Failed to unassign slot.'}`);
+                    }
+                  }}
+                  className="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-black py-3.5 rounded-2xl text-xs cursor-pointer shadow-lg shadow-rose-500/20 disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{isDeletingSlot ? 'Deleting...' : 'Confirm Delete Slot'}</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
 
     </div>
   );

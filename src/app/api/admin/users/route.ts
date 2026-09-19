@@ -164,6 +164,67 @@ export async function POST(request: Request) {
       }, { status: 200 });
     }
 
+    if (action === 'unassign_slot' || action === 'delete_slot') {
+      const isUuid = userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+      const updateObj = {
+        slot_number: null,
+        group: 'Not Assigned Yet',
+        deposit_status: 'Not Started',
+      };
+
+      let updatedUserUuid = isUuid ? userId : null;
+      let updatedRows = false;
+
+      if (isUuid) {
+        const { data } = await dbClient.from('profiles').update(updateObj).eq('id', userId).select();
+        if (data && data.length > 0) updatedRows = true;
+      }
+
+      if (!updatedRows && cleanEmail) {
+        const { data } = await dbClient.from('profiles').update(updateObj).ilike('email', cleanEmail).select();
+        if (data && data.length > 0) {
+          updatedRows = true;
+          if (data[0].id) updatedUserUuid = data[0].id;
+        }
+      }
+
+      if (!updatedRows && cleanMemberId) {
+        const { data } = await dbClient.from('profiles').update(updateObj).eq('member_id', cleanMemberId).select();
+        if (data && data.length > 0) {
+          updatedRows = true;
+          if (data[0].id) updatedUserUuid = data[0].id;
+        }
+      }
+
+      if (!updatedRows && slotNumber) {
+        const parsedSlot = typeof slotNumber === 'number' ? slotNumber : parseInt(String(slotNumber).replace(/[^0-9]/g, ''), 10);
+        if (parsedSlot > 0) {
+          const { data } = await dbClient.from('profiles').update(updateObj).eq('slot_number', parsedSlot).eq('group', groupId || 'GROUP-001').select();
+          if (data && data.length > 0) {
+            updatedRows = true;
+            if (data[0].id) updatedUserUuid = data[0].id;
+          }
+        }
+      }
+
+      if (updatedUserUuid && supabaseAdmin) {
+        try {
+          await supabaseAdmin.auth.admin.updateUserById(updatedUserUuid, {
+            user_metadata: {
+              slot: null,
+              group: 'Not Assigned Yet',
+              depositStatus: 'Not Started',
+            }
+          });
+        } catch (authErr: any) {}
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Slot assignment removed successfully.`,
+      }, { status: 200 });
+    }
+
     const parsedSlot = typeof slotNumber === 'number'
       ? slotNumber
       : (parseInt(String(slotNumber || '').replace(/[^0-9]/g, ''), 10) || 0);

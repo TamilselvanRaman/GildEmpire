@@ -70,35 +70,8 @@ export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
     const letterCode = String.fromCharCode(65 + (gIndex % 26));
     const groupName = `InfinityGram 50 Gold Club - Batch ${letterCode}`;
     
-    // Group-001 (Group - A) is a fully filled 50-member active event cycle
-    const isGroupA = gIndex === 0;
-    const sampleNamesGroupA = [
-      'Suresh P', 'JEYAGURU', 'Anand Kumar', 'Priya Sharma', 'Kavitha N',
-      'Vijay Ram', 'Deepak Verma', 'Meena Kumari', 'Rajesh K', 'Santhosh M',
-      'Lakshmi Narayanan', 'Arun Swaminathan', 'Divya Prabha', 'Karthik Raja', 'Bala Subramanian',
-      'Nisha Devi', 'Ganesh Moorthy', 'Subhashini R', 'Praveen Chandran', 'Venkatesh S',
-      'Aravind B', 'Swathi Reddy', 'Dinesh Kumar', 'Monika S', 'Saravanan P',
-      'Gowtham V', 'Pavithra M', 'Manoj Kumar', 'Revathi S', 'Sridhar R',
-      'Aakash Gupta', 'Shalini P', 'Bharath Kumar', 'Ritu Sharma', 'Gokul Nath',
-      'Kavya Mohan', 'Hemant Patel', 'Sangeetha R', 'Nitin Malhotra', 'Aarti Joshi',
-      'Vimal Raj', 'Geetha Sundaram', 'Surya Prakash', 'Madhumitha K', 'Aswin Kumar',
-      'Preeti Singh', 'Ashok Kumar', 'Anitha R', 'Sunder Rajan', 'Tamilselvan R'
-    ];
-
     const slots = Array.from({ length: 50 }, (_, slotIdx) => {
       const slotNumber = slotIdx + 1;
-      if (isGroupA) {
-        return {
-          slotNumber,
-          memberId: slotIdx === 0 ? 'LOP-897800' : slotIdx === 1 ? 'LOP-485339' : `LOP-${String(897800 + slotIdx).padStart(6, '0')}`,
-          memberName: sampleNamesGroupA[slotIdx] || `Member #${slotNumber}`,
-          status: 'Occupied' as const,
-          joinedDate: '12 Aug 2026',
-          wonDay: undefined,
-          wonDate: undefined,
-        };
-      }
-
       return {
         slotNumber,
         memberId: '—',
@@ -113,14 +86,14 @@ export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
     groups.push({
       groupId,
       groupName,
-      status: isGroupA ? 'active' : 'empty',
+      status: gIndex === 0 ? 'recruiting' : 'empty',
       createdDate: '01 Aug 2026',
-      totalMembers: isGroupA ? 50 : 0,
-      currentCycleDay: isGroupA ? 1 : 0,
+      totalMembers: 0,
+      currentCycleDay: 0,
       totalGoldDistributedGrams: 0,
-      activePoolCount: isGroupA ? 50 : 0,
-      scheduledTime: isGroupA ? '07:00 AM IST' : 'Awaiting Members',
-      startDate: isGroupA ? '2026-08-14' : '',
+      activePoolCount: 0,
+      scheduledTime: 'Awaiting Members',
+      startDate: '',
       slots,
     });
   }

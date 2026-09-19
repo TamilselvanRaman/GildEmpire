@@ -52,6 +52,7 @@ interface AppContextType {
   fetchDbUsers: () => Promise<void>;
   fetchReferrals: (currentUser?: UserProfile, usersList?: any[]) => Promise<void>;
   manualAssignSlot: (identifier: string, slotNo: number, targetBatchId?: string) => Promise<{ success: boolean; error?: string }>;
+  unassignSlot: (slotNo: number, targetBatchId?: string, identifier?: string) => Promise<{ success: boolean; error?: string }>;
   
   // Live 24-Hour Cooldown Lock & Broadcast State
   drawLockedUntil: number | null;
@@ -817,6 +818,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const targetMemberId = targetUser?.memberId || identifier;
       const memberName = targetUser?.name || targetUser?.fullName || targetEmail;
 
+      const targetOwnedCount = (allGroups || []).reduce((acc, grp) => {
+        return acc + grp.slots.filter(s => 
+          s.status !== 'Available' && s.memberName !== '—' && (
+            (targetMemberId && s.memberId === targetMemberId) ||
+            (targetEmail && s.memberName?.toLowerCase() === targetEmail.toLowerCase()) ||
+            (memberName && s.memberName?.toLowerCase() === memberName.toLowerCase())
+          )
+        ).length;
+      }, 0);
+
+      if (targetOwnedCount >= 3) {
+        return { success: false, error: `Maximum slot limit reached! ${memberName} already owns ${targetOwnedCount} slots (Max 3 slots per user allowed).` };
+      }
+
       const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -893,6 +908,102 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, error: err?.message || 'Failed to assign slot manually' };
     }
   };
+
+  const unassignSlot = async (slotNo: number, targetBatchId = 'GROUP-001', identifier?: string) => {
+    try {
+      const targetUser = dbUsers.find(u => 
+        (identifier && (u.email?.toLowerCase() === identifier.toLowerCase() || u.memberId === identifier || u.id === identifier || u.name === identifier)) ||
+        (u.group === targetBatchId && (u.slot === `#${slotNo}` || u.slot === slotNo || u.slot === `Slot #${slotNo}`))
+      );
+
+      const targetUserId = targetUser?.id;
+      const targetEmail = targetUser?.email;
+      const targetMemberId = targetUser?.memberId;
+
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'unassign_slot',
+          email: targetEmail, 
+          memberId: targetMemberId, 
+          userId: targetUserId, 
+          slotNumber: slotNo, 
+          groupId: targetBatchId 
+        }),
+      });
+
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok || !resData.success) {
+        return { success: false, error: resData?.error || 'Failed to unassign slot in database' };
+      }
+
+      setAllGroups(prevGroups => {
+        return prevGroups.map(grp => {
+          if (grp.groupId !== targetBatchId) return grp;
+          const updatedSlots = grp.slots.map(s => {
+            if (s.slotNumber === slotNo) {
+              return {
+                ...s,
+                memberName: '—',
+                memberId: '—',
+                status: 'Available' as const,
+                joinedDate: '-',
+                wonDay: undefined,
+                wonDate: undefined,
+              };
+            }
+            return s;
+          });
+          const newTotalMembers = updatedSlots.filter(s => s.status === 'Occupied' || s.status === 'Won 1g Gold').length;
+          return {
+            ...grp,
+            totalMembers: newTotalMembers,
+            status: newTotalMembers >= 50 ? 'full' : (newTotalMembers > 0 ? 'active' : 'recruiting'),
+            slots: updatedSlots,
+          };
+        });
+      });
+
+      setDbUsers(prev => prev.map(u => {
+        if (
+          (targetEmail && u.email?.toLowerCase() === targetEmail.toLowerCase()) || 
+          (targetMemberId && u.memberId === targetMemberId) || 
+          (targetUserId && u.id === targetUserId) ||
+          (u.group === targetBatchId && (u.slot === `#${slotNo}` || u.slot === slotNo))
+        ) {
+          return {
+            ...u,
+            deposit: 'Not Started',
+            group: 'Not Assigned Yet',
+            slot: 'Not Assigned Yet',
+          };
+        }
+        return u;
+      }));
+
+      await fetchDbUsers();
+
+      const newAudit: AuditLogItem = {
+        id: `audit_${Date.now()}`,
+        timestamp: new Date().toLocaleString('en-IN') + ' IST',
+        actor: 'admin.op@infinitygram.net',
+        role: 'Super Admin',
+        action: 'MANUAL_SLOT_DELETED_UNASSIGNED',
+        module: 'Groups',
+        recordId: `${targetBatchId}-SLOT${slotNo}`,
+        previousStatus: `Occupied Slot #${slotNo}`,
+        newStatus: 'Available Open Slot',
+        ipAddress: '103.45.12.89',
+      };
+      setAuditLogs(prev => [newAudit, ...prev]);
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to unassign slot' };
+    }
+  };
+
 
   // Submit deposit
   const submitDeposit = async (amount: number, refId: string, method: DepositRecord['paymentMethod']) => {
@@ -1129,6 +1240,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       fetchDbUsers,
       fetchReferrals,
       manualAssignSlot,
+      unassignSlot,
       drawLockedUntil,
       isLiveDrawActive,
       currentLiveWinner,

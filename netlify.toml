@@ -4,3 +4,9 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "https://infinitygram.netlify.app/*"
+  to = "https://infinitygram.net/:splat"
+  status = 301
+  force = true
