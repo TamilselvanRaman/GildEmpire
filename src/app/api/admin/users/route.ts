@@ -164,39 +164,75 @@ export async function POST(request: Request) {
       }, { status: 200 });
     }
 
+    const parsedSlot = typeof slotNumber === 'number'
+      ? slotNumber
+      : (parseInt(String(slotNumber || '').replace(/[^0-9]/g, ''), 10) || 0);
+
     let updateObj: any = {
-      deposit_status: depositStatus,
+      deposit_status: depositStatus || 'Verified',
       account_status: 'Active',
-      slot_number: slotNumber || 0,
+      slot_number: parsedSlot,
       group: groupId || 'GROUP-001',
     };
     if (emailVerified !== undefined) {
       updateObj.email_verified = Boolean(emailVerified);
     }
 
-    let targetQuery = dbClient.from('profiles').update(updateObj);
-
     const isUuid = userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
 
+    let updatedUserUuid = isUuid ? userId : null;
+    let updatedRows = false;
+
     if (isUuid) {
-      targetQuery = targetQuery.eq('id', userId);
-    } else if (cleanEmail) {
-      targetQuery = targetQuery.ilike('email', cleanEmail);
-    } else if (cleanMemberId) {
-      targetQuery = targetQuery.eq('member_id', cleanMemberId);
-    } else {
-      return NextResponse.json({ success: false, error: 'User identifier required' }, { status: 400 });
+      const { data, error } = await dbClient.from('profiles').update(updateObj).eq('id', userId).select();
+      if (error) {
+        console.warn('DB update by UUID warning:', error.message);
+      }
+      if (data && data.length > 0) {
+        updatedRows = true;
+      }
     }
 
-    const { error } = await targetQuery;
+    if (!updatedRows && cleanEmail) {
+      const { data, error } = await dbClient.from('profiles').update(updateObj).ilike('email', cleanEmail).select();
+      if (error) {
+        console.warn('DB update by email warning:', error.message);
+      }
+      if (data && data.length > 0) {
+        updatedRows = true;
+        if (data[0].id) updatedUserUuid = data[0].id;
+      }
+    }
 
-    if (error) {
-      console.warn('Manual slot assignment DB update warning:', error.message);
+    if (!updatedRows && cleanMemberId) {
+      const { data, error } = await dbClient.from('profiles').update(updateObj).eq('member_id', cleanMemberId).select();
+      if (error) {
+        console.warn('DB update by member_id warning:', error.message);
+      }
+      if (data && data.length > 0) {
+        updatedRows = true;
+        if (data[0].id) updatedUserUuid = data[0].id;
+      }
+    }
+
+    // Sync to Supabase Auth metadata if admin client is available
+    if (updatedUserUuid && supabaseAdmin) {
+      try {
+        await supabaseAdmin.auth.admin.updateUserById(updatedUserUuid, {
+          user_metadata: {
+            slot: parsedSlot,
+            group: groupId || 'GROUP-001',
+            depositStatus: depositStatus || 'Verified',
+          }
+        });
+      } catch (authErr: any) {
+        console.warn('Auth user metadata update warning:', authErr?.message);
+      }
     }
 
     return NextResponse.json({
       success: true,
-      message: `User deposit status updated to ${depositStatus} and assigned to slot #${slotNumber || 1}.`,
+      message: `User deposit status updated to ${depositStatus || 'Verified'} and assigned to slot #${parsedSlot || 1} in ${groupId || 'GROUP-001'}.`,
     }, { status: 200 });
 
   } catch (error: any) {

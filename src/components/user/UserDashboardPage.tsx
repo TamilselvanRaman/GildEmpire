@@ -25,7 +25,7 @@ import {
 import { motion } from 'framer-motion';
 
 export const UserDashboardPage = () => {
-  const { user, group, deposits, referrals, setCurrentView } = useApp();
+  const { user, group, deposits, referrals, setCurrentView, isAuthenticated } = useApp();
   const [copied, setCopied] = useState(false);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [emailResentToast, setEmailResentToast] = useState<{ type: 'success' | 'error'; message: string; url?: string } | null>(null);
@@ -221,6 +221,49 @@ export const UserDashboardPage = () => {
         </motion.div>
       )}
 
+      {/* FULL ASSIGNED SLOT DETAILS CARD */}
+      {(user.slotNumber ?? 0) > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-[#081E26] via-[#0D3B43] to-[#081E26] border-2 border-[#00C2B8]/80 p-6 sm:p-7 rounded-[2.2rem] shadow-2xl space-y-4 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-80 h-80 bg-[#00C2B8]/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
+            <div className="flex items-start space-x-4">
+              <div className="w-13 h-13 rounded-2xl border flex items-center justify-center shrink-0 shadow-inner bg-[#00C2B8]/20 border-[#00C2B8]/50 text-[#00C2B8]">
+                <Sparkles className="w-6 h-6 text-[#00C2B8]" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-black uppercase px-3 py-0.5 rounded-full tracking-wider bg-[#00C2B8] text-[#081E26]">
+                    ✓ OFFICIAL GROUP SLOT ALLOCATED
+                  </span>
+                  <span className="text-xs text-[#F2C868] font-mono font-bold">{user.groupId || 'GROUP-001'}</span>
+                </div>
+                
+                <h3 className="text-xl font-black text-white flex items-center space-x-2">
+                  <span>Assigned Position: <strong className="text-[#F2C868]">Slot #{user.slotNumber}</strong></span>
+                  <span className="text-xs text-[#00C2B8] bg-[#081E26] px-2.5 py-0.5 rounded-full border border-[#00C2B8]/40 font-mono font-bold">₹10,000 Verified</span>
+                </h3>
+                
+                <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-2xl">
+                  You are officially enrolled in <strong className="text-[#F2C868]">{group.groupName}</strong> at <strong className="text-[#00C2B8]">Slot #{user.slotNumber}</strong>. Your slot is locked in the daily 1g 916 Gold selection pool.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setCurrentView('user-my-group')}
+              className="w-full lg:w-auto bg-[#00C2B8] hover:bg-[#00a8a0] text-[#081E26] text-xs font-black px-6 py-3.5 rounded-xl shadow-xl transition-all flex items-center justify-center space-x-2 cursor-pointer shrink-0"
+            >
+              <span>View Group Grid →</span>
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Executive Dark Sovereign Welcome Banner */}
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
@@ -258,7 +301,13 @@ export const UserDashboardPage = () => {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 relative z-10 w-full lg:w-auto">
           {slotsOwnedCount < 3 && (
             <button
-              onClick={() => setCurrentView('user-deposit-overview')}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  setCurrentView('auth-login');
+                } else {
+                  setCurrentView('user-deposit-overview');
+                }
+              }}
               className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black px-5 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg cursor-pointer hover:-translate-y-0.5"
             >
               <Zap className="w-4 h-4 fill-current text-slate-950" />

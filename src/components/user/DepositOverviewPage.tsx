@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const DepositOverviewPage = () => {
-  const { user, deposits, submitDeposit, setCurrentView, settings } = useApp();
+  const { user, deposits, submitDeposit, setCurrentView, settings, isAuthenticated } = useApp();
   const [amount, setAmount] = useState(settings.depositAmountINR || 10000);
   const [refId, setRefId] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<'Razorpay' | 'UPI' | 'Bank Transfer'>('Razorpay');
@@ -47,12 +47,20 @@ export const DepositOverviewPage = () => {
 
   const handleSubmitManual = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      setCurrentView('auth-login');
+      return;
+    }
     if (!refId) return;
     submitDeposit(amount, refId, selectedMethod === 'UPI' ? 'UPI (Manual UTR)' : 'Bank Transfer (NEFT/IMPS)');
     setSubmitted(true);
   };
 
   const handleRazorpayPay = () => {
+    if (!isAuthenticated) {
+      setCurrentView('auth-login');
+      return;
+    }
     setShowRazorpayModal(true);
     setRazorpayStep('checkout');
   };
@@ -247,15 +255,6 @@ export const DepositOverviewPage = () => {
         </div>
       </motion.div>
 
-      {/* Design Mode Disabled Banner */}
-      <div className="bg-[#081E26] border border-[#F2C868]/40 p-4 rounded-2xl flex items-center space-x-3 text-xs text-[#F2C868] font-bold shadow-inner">
-        <Lock className="w-5 h-5 text-[#F2C868] shrink-0" />
-        <div>
-          <p className="font-extrabold text-[#F2C868] text-sm">Deposit Action Buttons Disabled (Design Mode)</p>
-          <p className="text-[11px] text-slate-300 font-medium">Payment gateway and deposit submission buttons are currently disabled for design preview.</p>
-        </div>
-      </div>
-
       {/* Featured Payment Methods Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         
@@ -264,11 +263,12 @@ export const DepositOverviewPage = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className={`p-6 rounded-[2.5rem] border transition-all relative overflow-hidden flex flex-col justify-between space-y-5 ${
+          className={`p-6 rounded-[2.5rem] border transition-all relative overflow-hidden flex flex-col justify-between space-y-5 cursor-pointer ${
             selectedMethod === 'Razorpay'
               ? 'bg-[#0D3B43] text-white border-[#00C2B8] shadow-2xl ring-2 ring-[#00C2B8]/40'
               : 'bg-[#0D3B43]/80 text-slate-200 border-[#E1A238]/30 shadow-md'
           }`}
+          onClick={() => setSelectedMethod('Razorpay')}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -289,11 +289,11 @@ export const DepositOverviewPage = () => {
 
           <button
             type="button"
-            disabled={true}
-            className="w-full bg-[#081E26]/90 text-slate-400 border border-slate-700/60 opacity-60 cursor-not-allowed text-xs font-black py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-2 shadow-xs"
+            onClick={handleRazorpayPay}
+            className="w-full bg-gradient-to-r from-[#00C2B8] to-[#00A8A0] hover:from-[#00A8A0] hover:to-[#00C2B8] text-[#081E26] text-xs font-black py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-2 shadow-lg cursor-pointer transition-all hover:scale-[1.02]"
           >
-            <Lock className="w-4 h-4 text-slate-400" />
-            <span>Pay ₹10,000 via Razorpay (Disabled)</span>
+            <Zap className="w-4 h-4 text-[#081E26] fill-current" />
+            <span>Pay ₹10,000 via Razorpay (Instant Slot)</span>
           </button>
         </motion.div>
 
@@ -302,11 +302,12 @@ export const DepositOverviewPage = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15 }}
-          className={`p-6 rounded-[2.5rem] border transition-all flex flex-col justify-between space-y-5 ${
+          className={`p-6 rounded-[2.5rem] border transition-all flex flex-col justify-between space-y-5 cursor-pointer ${
             selectedMethod === 'UPI'
               ? 'bg-[#0D3B43] text-white border-[#00C2B8] shadow-2xl ring-2 ring-[#00C2B8]/40'
               : 'bg-[#0D3B43]/80 text-slate-200 border-[#E1A238]/30 shadow-md'
           }`}
+          onClick={() => setSelectedMethod('UPI')}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -328,11 +329,11 @@ export const DepositOverviewPage = () => {
             <span className="truncate">VPA: infinitygram@icici</span>
             <button
               type="button"
-              disabled={true}
-              className="text-slate-500 opacity-60 cursor-not-allowed flex items-center space-x-1 shrink-0 font-sans"
+              onClick={handleCopyUpi}
+              className="text-[#00C2B8] hover:text-white flex items-center space-x-1 shrink-0 font-sans cursor-pointer font-extrabold"
             >
-              <Copy className="w-3.5 h-3.5 text-slate-500" />
-              <span>Copy (Disabled)</span>
+              <Copy className="w-3.5 h-3.5 text-[#00C2B8]" />
+              <span>{copiedUpi ? 'Copied!' : 'Copy UPI VPA'}</span>
             </button>
           </div>
         </motion.div>
@@ -342,11 +343,12 @@ export const DepositOverviewPage = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className={`p-6 rounded-[2.5rem] border transition-all flex flex-col justify-between space-y-5 ${
+          className={`p-6 rounded-[2.5rem] border transition-all flex flex-col justify-between space-y-5 cursor-pointer ${
             selectedMethod === 'Bank Transfer'
               ? 'bg-[#0D3B43] text-white border-[#E1A238] shadow-2xl ring-2 ring-[#E1A238]/40'
               : 'bg-[#0D3B43]/80 text-slate-200 border-[#E1A238]/30 shadow-md'
           }`}
+          onClick={() => setSelectedMethod('Bank Transfer')}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -398,11 +400,11 @@ export const DepositOverviewPage = () => {
             <CheckCircle2 className="w-10 h-10 text-[#00C2B8] mx-auto" />
             <h3 className="text-base font-black text-white">Deposit Reference Logged & Submitted</h3>
             <p className="text-xs font-bold text-[#00C2B8] max-w-md mx-auto">
-              Your deposit reference <span className="font-mono underline">#{refId}</span> has been dispatched to admin reconciliation desk. Status updates to Verified within 2 business hours.
+              Your deposit reference <span className="font-mono underline">#{refId}</span> has been dispatched to admin reconciliation desk and assigned to your active slot.
             </p>
           </div>
         ) : (
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-6 text-xs font-medium">
+          <form onSubmit={handleSubmitManual} className="space-y-6 text-xs font-medium">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               
               <div>
@@ -427,9 +429,8 @@ export const DepositOverviewPage = () => {
                 <div className="relative">
                   <select
                     value={selectedMethod}
-                    disabled={true}
                     onChange={(e) => setSelectedMethod(e.target.value as any)}
-                    className="w-full bg-[#081E26] border border-[#0D3B43] text-slate-400 font-extrabold text-xs px-4 py-4 rounded-2xl focus:outline-none opacity-60 cursor-not-allowed appearance-none shadow-xs"
+                    className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-extrabold text-xs px-4 py-4 rounded-2xl focus:outline-none appearance-none shadow-xs cursor-pointer"
                   >
                     <option value="Razorpay">Razorpay Auto Gateway (Instant Verified)</option>
                     <option value="UPI">UPI (GPay / PhonePe / Paytm / BHIM)</option>
@@ -444,11 +445,11 @@ export const DepositOverviewPage = () => {
                 </label>
                 <input
                   type="text"
-                  disabled={true}
+                  required
                   value={refId}
                   onChange={(e) => setRefId(e.target.value)}
                   placeholder="e.g. UPI-982341209384 or RZP-901824"
-                  className="w-full bg-[#081E26] border border-[#0D3B43] text-slate-400 font-mono font-bold text-xs p-4 rounded-2xl focus:outline-none opacity-60 cursor-not-allowed shadow-xs"
+                  className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-mono font-bold text-xs p-4 rounded-2xl focus:outline-none shadow-xs"
                 />
               </div>
 
@@ -456,28 +457,27 @@ export const DepositOverviewPage = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
               <p className="text-[11px] text-slate-400 font-medium">
-                * Note: All deposit buttons are currently disabled for design and layout preview.
+                * Note: Instant slot auto-allocation active on Razorpay & verified UTR submissions.
               </p>
 
               <div className="flex items-center space-x-3 w-full sm:w-auto">
                 {selectedMethod === 'Razorpay' && (
                   <button
                     type="button"
-                    disabled={true}
-                    className="flex-1 sm:flex-initial bg-[#081E26] text-slate-400 border border-slate-700/60 opacity-60 cursor-not-allowed text-xs font-black px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2"
+                    onClick={handleRazorpayPay}
+                    className="flex-1 sm:flex-initial bg-gradient-to-r from-[#00C2B8] to-[#00A8A0] hover:from-[#00A8A0] hover:to-[#00C2B8] text-[#081E26] text-xs font-black px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2 cursor-pointer transition-all hover:scale-105"
                   >
-                    <Lock className="w-4 h-4 text-slate-400" />
-                    <span>Launch Razorpay Gateway (Disabled)</span>
+                    <Zap className="w-4 h-4 text-[#081E26] fill-current" />
+                    <span>Launch Razorpay Gateway</span>
                   </button>
                 )}
 
                 <button
-                  type="button"
-                  disabled={true}
-                  className="flex-1 sm:flex-initial bg-[#081E26] text-slate-400 border border-slate-700/60 opacity-60 cursor-not-allowed text-xs font-black px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2"
+                  type="submit"
+                  className="flex-1 sm:flex-initial bg-[#00C2B8] hover:bg-[#00a8a0] text-[#081E26] text-xs font-black px-8 py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2 cursor-pointer transition-all"
                 >
-                  <Lock className="w-4 h-4 text-slate-400" />
-                  <span>Submit UTR for Reconciliation (Disabled)</span>
+                  <ShieldCheck className="w-4 h-4 text-[#081E26]" />
+                  <span>Submit UTR for Reconciliation</span>
                 </button>
               </div>
             </div>

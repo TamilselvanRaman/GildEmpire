@@ -437,33 +437,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setUser(currentUser => {
           if (!currentUser || !currentUser.email) return currentUser;
           const dbMatch = data.users.find((u: any) => u.email?.toLowerCase() === currentUser.email?.toLowerCase());
-          const isEmailVerified = dbMatch ? Boolean(dbMatch.emailVerified) : Boolean(currentUser.emailVerified);
+          if (!dbMatch) return currentUser;
 
-          const verifiedUsers = data.users.filter((u: any) => u.deposit === 'Verified' || u.depositStatus === 'Verified');
-          const isUserVerified = currentUser.depositStatus === 'Verified' || verifiedUsers.some((u: any) => u.email?.toLowerCase() === currentUser.email?.toLowerCase());
+          const isEmailVerified = Boolean(dbMatch.emailVerified);
+          const isDepositVerified = dbMatch.deposit === 'Verified' || dbMatch.depositStatus === 'Verified';
 
-          if (isUserVerified) {
-            const uIdx = verifiedUsers.findIndex((u: any) => u.email?.toLowerCase() === currentUser.email?.toLowerCase());
-            if (uIdx !== -1) {
-              const calcGroupIdx = Math.floor(uIdx / 50);
-              const calcGroupId = `GROUP-${String(calcGroupIdx + 1).padStart(3, '0')}`;
-              const calcSlotNumber = (uIdx % 50) + 1;
-              return {
-                ...currentUser,
-                emailVerified: isEmailVerified,
-                depositStatus: 'Verified',
-                groupId: calcGroupId,
-                slotNumber: calcSlotNumber,
-                assignedSlots: [calcSlotNumber],
-              };
-            }
-          }
+          const rawSlot = String(dbMatch.slot || '').replace(/[^0-9]/g, '');
+          const assignedSlotNumber = parseInt(rawSlot, 10) || (isDepositVerified ? 1 : 0);
+          const assignedGroupId = (dbMatch.group && dbMatch.group !== 'Not Assigned Yet' && dbMatch.group !== 'Unassigned') ? dbMatch.group : 'GROUP-001';
+
           return {
             ...currentUser,
+            id: dbMatch.id || currentUser.id,
+            memberId: dbMatch.memberId || currentUser.memberId,
+            fullName: dbMatch.name || currentUser.fullName,
             emailVerified: isEmailVerified,
-            groupId: 'GROUP-001',
-            slotNumber: 0,
-            assignedSlots: [],
+            depositStatus: isDepositVerified ? 'Verified' : (dbMatch.deposit || currentUser.depositStatus),
+            accountStatus: dbMatch.status || currentUser.accountStatus,
+            groupId: assignedGroupId,
+            slotNumber: assignedSlotNumber > 0 ? assignedSlotNumber : currentUser.slotNumber,
+            assignedSlots: assignedSlotNumber > 0 ? [assignedSlotNumber] : currentUser.assignedSlots,
+            slotsOwned: assignedSlotNumber > 0 ? Math.max(1, currentUser.slotsOwned || 1) : currentUser.slotsOwned,
           };
         });
 
@@ -705,27 +699,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Helper function: Automatically allocate user to next available slot in active batch upon admin payment verification
-  const autoAssignSlot = (memberId: string, memberName: string, targetBatchId?: string) => {
+  const autoAssignSlot = async (memberId: string, memberName: string, targetBatchId = 'GROUP-001', targetEmail?: string, userId?: string) => {
     let assignedSlotNumber = 0;
-    let targetBatchName = 'Batch C';
+    let targetBatchName = 'GROUP-001';
+
+    // Target active recruiting batch (or specific batch)
+    const targetGroup = allGroups.find(g => g.groupId === targetBatchId) || allGroups.find(g => g.status === 'recruiting' || g.status === 'empty') || allGroups[0];
+    const resolvedBatchId = targetGroup ? targetGroup.groupId : 'GROUP-001';
+
+    if (targetGroup) {
+      targetBatchName = targetGroup.groupName;
+      const emptySlotIndex = targetGroup.slots.findIndex(s => !s.memberName || s.memberName.trim() === '' || s.memberName === '—' || s.status === 'Available');
+      if (emptySlotIndex !== -1) {
+        assignedSlotNumber = emptySlotIndex + 1;
+      }
+    }
+
+    if (assignedSlotNumber === 0) {
+      assignedSlotNumber = 1;
+    }
 
     setAllGroups(prevGroups => {
       return prevGroups.map(grp => {
-        // Target active recruiting batch (or specific batch)
-        const isTargetBatch = targetBatchId ? grp.groupId === targetBatchId : (grp.status === 'recruiting' || grp.groupId === 'GROUP-003');
-        if (!isTargetBatch) return grp;
+        if (grp.groupId !== resolvedBatchId) return grp;
 
-        targetBatchName = grp.groupName;
-
-        // Find first available open slot
-        const emptySlotIndex = grp.slots.findIndex(s => !s.memberName || s.memberName.trim() === '' || s.status === 'Available');
-        if (emptySlotIndex === -1) return grp;
-
-        const targetSlot = grp.slots[emptySlotIndex];
-        assignedSlotNumber = targetSlot.slotNumber;
-
-        const updatedSlots = grp.slots.map((s, idx) => {
-          if (idx === emptySlotIndex) {
+        const updatedSlots = grp.slots.map((s) => {
+          if (s.slotNumber === assignedSlotNumber) {
             return {
               ...s,
               memberName: memberName,
@@ -737,8 +736,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           return s;
         });
 
-        const newTotalMembers = grp.totalMembers + 1;
-        const newStatus = newTotalMembers >= 50 ? 'full' : grp.status;
+        const newTotalMembers = updatedSlots.filter(s => s.status === 'Occupied').length;
+        const newStatus = newTotalMembers >= 50 ? 'full' : (newTotalMembers > 0 ? 'active' : grp.status);
 
         return {
           ...grp,
@@ -749,8 +748,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       });
     });
 
+    // Update user state if current user matches
+    setUser(prev => {
+      if (!prev) return prev;
+      const isMatch = (targetEmail && prev.email?.toLowerCase() === targetEmail.toLowerCase()) || 
+                      (memberId && prev.memberId === memberId) || 
+                      (userId && prev.id === userId);
+      if (!isMatch) return prev;
+
+      return {
+        ...prev,
+        depositStatus: 'Verified',
+        accountStatus: 'Active',
+        groupId: resolvedBatchId,
+        slotNumber: assignedSlotNumber,
+        assignedSlots: prev.assignedSlots && prev.assignedSlots.length > 0 ? Array.from(new Set([...prev.assignedSlots, assignedSlotNumber])) : [assignedSlotNumber],
+        slotsOwned: Math.max(1, prev.slotsOwned || 1),
+      };
+    });
+
     if (assignedSlotNumber > 0) {
-      // Add notification for automatic slot assignment
       const newNotif: NotificationItem = {
         id: `notif_slot_${Date.now()}`,
         title: `⚡ Automatic Slot Allocation Verified`,
@@ -760,6 +777,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         read: false,
       };
       setNotifications(prev => [newNotif, ...prev]);
+    }
+
+    // Persist slot allocation to Supabase Database
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: targetEmail || user.email,
+          memberId: memberId || user.memberId,
+          userId: userId || user.id,
+          slotNumber: assignedSlotNumber,
+          groupId: resolvedBatchId,
+          depositStatus: 'Verified',
+        }),
+      });
+      const resData = await res.json().catch(() => ({}));
+      if (resData.success) {
+        await fetchDbUsers();
+      }
+    } catch (err) {
+      console.error('Error persisting auto slot allocation to DB:', err);
     }
 
     return assignedSlotNumber;
@@ -856,7 +895,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Submit deposit
-  const submitDeposit = (amount: number, refId: string, method: DepositRecord['paymentMethod']) => {
+  const submitDeposit = async (amount: number, refId: string, method: DepositRecord['paymentMethod']) => {
     const newDep: DepositRecord = {
       id: `dep_${Date.now()}`,
       referenceId: refId,
@@ -879,8 +918,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       slotsOwned: newOwned 
     }));
 
-    // AUTOMATICALLY ASSIGN TO NEXT AVAILABLE SLOT!
-    autoAssignSlot(user.memberId, user.fullName);
+    // AUTOMATICALLY ASSIGN TO NEXT AVAILABLE SLOT AND SAVE TO DB!
+    await autoAssignSlot(user.memberId, user.fullName, 'GROUP-001', user.email, user.id);
 
     // Add Audit Log
     const newAudit: AuditLogItem = {
@@ -899,7 +938,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Review deposit (Admin)
-  const reviewDeposit = (depositId: string, status: 'Verified' | 'Rejected', notes: string) => {
+  const reviewDeposit = async (depositId: string, status: 'Verified' | 'Rejected', notes: string) => {
     let targetMemberId = user.memberId;
     let targetMemberName = user.fullName;
 
@@ -920,7 +959,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (status === 'Verified') {
       setUser(prev => ({ ...prev, depositStatus: 'Verified', accountStatus: 'Active' }));
       // AUTOMATICALLY ASSIGN TO NEXT AVAILABLE SLOT ON ADMIN VERIFICATION!
-      autoAssignSlot(targetMemberId, targetMemberName);
+      await autoAssignSlot(targetMemberId, targetMemberName, 'GROUP-001', user.email, user.id);
     } else if (status === 'Rejected') {
       setUser(prev => ({ ...prev, depositStatus: 'Rejected' }));
     }
