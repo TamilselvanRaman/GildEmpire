@@ -66,6 +66,12 @@ interface AppContextType {
   timerConfig: { hours: number; minutes: number; seconds: number };
   setTimerConfig: (hours: number, minutes: number, seconds: number) => void;
 
+  // In-Dashboard Deposit Payment Modal State
+  isDepositModalOpen: boolean;
+  setIsDepositModalOpen: (open: boolean) => void;
+  openDepositModal: () => void;
+  closeDepositModal: () => void;
+
   // Navigation & Viewport Actions
   setCurrentView: (view: ViewMode) => void;
   setViewportMode: (mode: ViewportMode) => void;
@@ -479,6 +485,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       fetchReferrals(user, dbUsers);
     }
   }, [user.email, user.referralId, user.memberId, dbUsers.length]);
+
+  // In-Dashboard Deposit Payment Modal State
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState<boolean>(false);
+  const openDepositModal = () => {
+    setCurrentView('user-dashboard');
+    setIsDepositModalOpen(true);
+  };
+  const closeDepositModal = () => {
+    setIsDepositModalOpen(false);
+  };
 
   // 24-Hour Cooldown Lock & Broadcast State
   const [drawLocks, setDrawLocks] = useState<Record<string, number>>({});
@@ -1247,6 +1263,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       programEvents,
       resetDrawLock,
       updateGroupSchedule,
+      isDepositModalOpen,
+      setIsDepositModalOpen,
+      openDepositModal,
+      closeDepositModal,
       timerConfig,
       setTimerConfig,
       setCurrentView,

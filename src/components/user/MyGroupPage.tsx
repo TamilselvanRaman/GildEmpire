@@ -147,7 +147,7 @@ export const MyGroupPage = () => {
           <div>
             <span className="font-extrabold text-[#00C2B8]">🔒 Audited Privacy Mode Active:</span>
             <span className="text-slate-300 ml-1">
-              Only your personal owned slot details are displayed in full clarity. Other member entries are anonymized as Verified Participants for security & privacy compliance.
+              Only your personal owned slot details are displayed in full clarity. All other member slots are locked & protected for strict security & privacy compliance.
             </span>
           </div>
         </div>
@@ -193,17 +193,11 @@ export const MyGroupPage = () => {
 
                   const displayMemberName = isCurrentUser
                     ? (slot.memberName || user.fullName || 'Your Account')
-                    : slot.status === 'Available'
-                      ? 'Slot Open for Member'
-                      : `Verified Participant #${slot.slotNumber.toString().padStart(2, '0')}`;
+                    : '🔒 Protected Member Slot';
 
                   const displayMemberId = isCurrentUser
                     ? (slot.memberId || user.memberId || `LOP-${String(slot.slotNumber).padStart(6, '0')}`)
-                    : slot.status === 'Available'
-                      ? '—'
-                      : slot.memberId && slot.memberId.startsWith('LOP-')
-                        ? `LOP-***${slot.memberId.slice(-3)}`
-                        : `LOP-***${slot.slotNumber.toString().padStart(2, '0')}`;
+                    : '🔒 Protected';
 
                   return (
                     <tr
@@ -223,19 +217,15 @@ export const MyGroupPage = () => {
                       {/* Member Name Field */}
                       <td className="p-3.5 font-bold whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          {slot.status === 'Available' ? (
-                            <span className="text-slate-400 font-normal italic">Slot Open for Member</span>
-                          ) : (
-                            <span className={isCurrentUser ? 'text-white font-black' : 'text-slate-300'}>
-                              {displayMemberName}
-                            </span>
-                          )}
+                          <span className={isCurrentUser ? 'text-white font-black' : 'text-slate-300'}>
+                            {displayMemberName}
+                          </span>
                           {isCurrentUser ? (
                             <span className="text-[9px] bg-[#E1A238] text-[#081E26] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 shadow-xs">
                               ★ YOUR OWNED SLOT
                             </span>
-                          ) : slot.status !== 'Available' && (
-                            <span className="text-[9px] text-slate-500 font-mono flex items-center space-x-1 shrink-0">
+                          ) : (
+                            <span className="text-[9px] text-slate-400 font-mono flex items-center space-x-1 shrink-0 bg-[#081E26] px-2 py-0.5 rounded-full border border-slate-700/60">
                               <span>🔒</span>
                               <span>Protected</span>
                             </span>
@@ -245,13 +235,9 @@ export const MyGroupPage = () => {
 
                       {/* Member ID Field */}
                       <td className="p-3.5 font-mono whitespace-nowrap">
-                        {slot.status === 'Available' ? (
-                          <span className="text-slate-500">—</span>
-                        ) : (
-                          <span className={isCurrentUser ? 'text-[#00C2B8] font-bold' : 'text-slate-400'}>
-                            {displayMemberId}
-                          </span>
-                        )}
+                        <span className={isCurrentUser ? 'text-[#00C2B8] font-bold' : 'text-slate-400'}>
+                          {displayMemberId}
+                        </span>
                       </td>
 
                       <td className="p-3.5 whitespace-nowrap">
@@ -260,24 +246,18 @@ export const MyGroupPage = () => {
                             <Award className="w-3 h-3" />
                             <span>Won 1g 916 Gold</span>
                           </span>
-                        ) : slot.status === 'Occupied' ? (
+                        ) : (
                           <span className="inline-flex items-center space-x-1 bg-[#00C2B8]/10 text-[#00C2B8] border border-[#00C2B8]/30 px-2.5 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#00C2B8]"></span>
                             <span>Active Pool</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center space-x-1 bg-slate-800/60 text-slate-400 border border-slate-700/60 px-2.5 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap">
-                            <span>Slot Not Open Yet</span>
                           </span>
                         )}
                       </td>
                       <td className="p-3.5 font-mono text-xs whitespace-nowrap">
                         {isWon ? (
                           <span className="text-[#F2C868]">Awarded Day {slot.wonDay}</span>
-                        ) : slot.status === 'Occupied' ? (
-                          <span className="text-[#00C2B8]">Eligible Daily Draw</span>
                         ) : (
-                          <span className="text-slate-500">Unlocks Upon ₹10,000 Deposit</span>
+                          <span className="text-[#00C2B8]">Eligible Daily Draw</span>
                         )}
                       </td>
                     </tr>
@@ -302,17 +282,11 @@ export const MyGroupPage = () => {
 
               const displayMemberName = isCurrentUser
                 ? (slot.memberName || user.fullName || 'Your Account')
-                : slot.status === 'Available'
-                  ? 'Slot Open'
-                  : `Participant #${slot.slotNumber.toString().padStart(2, '0')}`;
+                : '🔒 Protected Slot';
 
               const displayMemberId = isCurrentUser
                 ? (slot.memberId || user.memberId || `LOP-${String(slot.slotNumber).padStart(6, '0')}`)
-                : slot.status === 'Available'
-                  ? '—'
-                  : slot.memberId && slot.memberId.startsWith('LOP-')
-                    ? `LOP-***${slot.memberId.slice(-3)}`
-                    : `LOP-***${slot.slotNumber.toString().padStart(2, '0')}`;
+                : '🔒 Protected';
 
               return (
                 <motion.div
@@ -337,7 +311,7 @@ export const MyGroupPage = () => {
                   </div>
 
                   <div>
-                    <p className={`text-xs font-bold truncate ${isCurrentUser ? 'text-white font-extrabold' : isWon ? 'text-[#F2C868]' : slot.status === 'Available' ? 'text-slate-400 font-normal italic' : 'text-slate-300'}`}>
+                    <p className={`text-xs font-bold truncate ${isCurrentUser ? 'text-white font-extrabold' : isWon ? 'text-[#F2C868]' : 'text-slate-300'}`}>
                       {displayMemberName}
                     </p>
                     <p className={`text-[10px] font-mono ${isCurrentUser ? 'text-[#F2C868] font-bold' : 'text-slate-400'}`}>
@@ -350,14 +324,10 @@ export const MyGroupPage = () => {
                       <span className="text-[9px] font-extrabold text-[#E1A238] uppercase">
                         Won Day {slot.wonDay}
                       </span>
-                    ) : slot.status === 'Occupied' ? (
+                    ) : (
                       <span className="text-[9px] font-bold flex items-center space-x-1 text-[#00C2B8]">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#00C2B8]"></span>
                         <span>Active Pool</span>
-                      </span>
-                    ) : (
-                      <span className="text-[9px] font-bold text-slate-500">
-                        Not Open Yet
                       </span>
                     )}
                   </div>

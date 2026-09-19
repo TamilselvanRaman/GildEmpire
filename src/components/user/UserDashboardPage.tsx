@@ -20,15 +20,82 @@ import {
   Check,
   Mail,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  X,
+  CreditCard,
+  QrCode,
+  Building2,
+  Lock,
+  Upload
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const UserDashboardPage = () => {
-  const { user, group, deposits, referrals, setCurrentView, isAuthenticated } = useApp();
+  const { 
+    user, 
+    group, 
+    deposits, 
+    referrals, 
+    setCurrentView, 
+    isAuthenticated,
+    isDepositModalOpen,
+    closeDepositModal,
+    openDepositModal,
+    submitDeposit,
+    settings
+  } = useApp();
   const [copied, setCopied] = useState(false);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [emailResentToast, setEmailResentToast] = useState<{ type: 'success' | 'error'; message: string; url?: string } | null>(null);
+
+  // In-Dashboard Deposit Payment Modal State
+  const [depositAmount, setDepositAmount] = useState(settings?.depositAmountINR || 10000);
+  const [depositMethod, setDepositMethod] = useState<'Razorpay' | 'UPI' | 'Bank Transfer'>('Razorpay');
+  const [utrRefId, setUtrRefId] = useState('');
+  const [depositSubmitted, setDepositSubmitted] = useState(false);
+  const [copiedUpi, setCopiedUpi] = useState(false);
+  const [razorpayStep, setRazorpayStep] = useState<'checkout' | 'processing' | 'success'>('checkout');
+
+  const handleRazorpayInstantPay = () => {
+    if (!isAuthenticated) {
+      setCurrentView('auth-login');
+      return;
+    }
+    setRazorpayStep('processing');
+    setTimeout(() => {
+      const generatedRzpId = 'RZP-' + Math.floor(100000000 + Math.random() * 900000000);
+      submitDeposit(depositAmount, generatedRzpId, 'Razorpay Instant Gateway');
+      setRazorpayStep('success');
+      setTimeout(() => {
+        setRazorpayStep('checkout');
+        closeDepositModal();
+      }, 2000);
+    }, 2000);
+  };
+
+  const handleManualSubmitDeposit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      setCurrentView('auth-login');
+      return;
+    }
+    if (!utrRefId.trim()) return;
+    submitDeposit(depositAmount, utrRefId.trim(), depositMethod === 'UPI' ? 'UPI (Manual UTR)' : 'Bank Transfer (NEFT/IMPS)');
+    setDepositSubmitted(true);
+    setTimeout(() => {
+      setDepositSubmitted(false);
+      setUtrRefId('');
+      closeDepositModal();
+    }, 2500);
+  };
+
+  const handleCopyUpi = () => {
+    navigator.clipboard.writeText('infinitygram@icici');
+    setCopiedUpi(true);
+    setTimeout(() => setCopiedUpi(false), 2000);
+  };
+
+  const [showDisabledDepositToast, setShowDisabledDepositToast] = useState(false);
 
   const slotsOwnedCount = user.slotsOwned || (user.slotNumber ? 1 : 0);
 
@@ -86,9 +153,38 @@ export const UserDashboardPage = () => {
 
   const isEmailVerified = user.emailVerified === true || (user.accountStatus === 'Active' && user.emailVerified !== false);
 
+  const handleTriggerDepositDisabledNotice = () => {
+    setShowDisabledDepositToast(true);
+    setTimeout(() => setShowDisabledDepositToast(false), 5000);
+  };
+
   return (
     <div className="space-y-6 relative z-10 font-sans pb-10 text-white">
       
+      {/* Deposit Payment Disabled Toast Banner */}
+      {showDisabledDepositToast && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="bg-[#0B1E39] border-2 border-amber-500 text-white font-extrabold p-4 sm:p-5 rounded-2xl shadow-2xl flex items-center justify-between gap-3 text-xs"
+        >
+          <div className="flex items-center space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-400/50 flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-amber-400 font-mono text-[10px] uppercase font-black tracking-widest flex items-center gap-1">
+                <span>🔒 SYSTEM NOTICE</span>
+              </p>
+              <p className="text-white text-sm font-black">Deposit Module Currently Disabled</p>
+              <p className="text-slate-300 text-xs font-medium">Deposit payments and slot purchases are currently disabled by administrator system configuration.</p>
+            </div>
+          </div>
+          <button onClick={() => setShowDisabledDepositToast(false)} className="text-slate-400 hover:text-white font-bold px-2 py-1 rounded hover:bg-slate-800 cursor-pointer text-xs">✕</button>
+        </motion.div>
+      )}
+
       {/* Toast Notification for Resend Email */}
       {emailResentToast && (
         <motion.div
@@ -167,11 +263,11 @@ export const UserDashboardPage = () => {
 
               {user.depositStatus !== 'Verified' && (
                 <button
-                  onClick={() => setCurrentView('user-deposit-overview')}
-                  className="w-full sm:w-auto bg-slate-900/80 hover:bg-slate-800 text-amber-300 border border-amber-500/40 text-xs font-black px-5 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                  onClick={handleTriggerDepositDisabledNotice}
+                  className="w-full sm:w-auto bg-slate-900/80 hover:bg-slate-800 text-amber-400 border border-amber-500/40 text-xs font-black px-5 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
                 >
-                  <Wallet className="w-4 h-4" />
-                  <span>Deposit Portal →</span>
+                  <Lock className="w-4 h-4 text-amber-400" />
+                  <span>Deposit Portal Disabled 🔒</span>
                 </button>
               )}
             </div>
@@ -199,22 +295,22 @@ export const UserDashboardPage = () => {
                 </div>
                 
                 <h3 className="text-lg font-black text-white">
-                  Email Confirmed — Complete Your First Gold Deposit
+                  Email Confirmed — Deposit Module Temporarily Locked
                 </h3>
                 
                 <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-2xl">
-                  Your email (<strong className="text-emerald-300">{user.email}</strong>) is verified. Proceed to deposit your ₹10,000 monthly scheme installment to claim your 50-member group slot.
+                  Your email (<strong className="text-emerald-300">{user.email}</strong>) is verified. Gold Scheme deposit payments are currently disabled by administrator system configuration.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0 w-full lg:w-auto">
               <button
-                onClick={() => setCurrentView('user-deposit-overview')}
-                className="w-full sm:w-auto bg-gradient-to-r from-[#00C2B8] to-[#00A8A0] hover:from-[#00A8A0] hover:to-[#00C2B8] text-[#081E26] text-xs font-black px-7 py-3.5 rounded-xl shadow-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                onClick={handleTriggerDepositDisabledNotice}
+                className="w-full sm:w-auto bg-[#081E26] hover:bg-[#081E26]/80 text-amber-400 border border-amber-500/40 text-xs font-black px-7 py-3.5 rounded-xl shadow-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
               >
-                <Wallet className="w-4.5 h-4.5" />
-                <span>Proceed to Deposit Portal →</span>
+                <Lock className="w-4.5 h-4.5 text-amber-400" />
+                <span>Deposit Portal Disabled 🔒</span>
               </button>
             </div>
           </div>
@@ -299,21 +395,13 @@ export const UserDashboardPage = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 relative z-10 w-full lg:w-auto">
-          {slotsOwnedCount < 3 && (
-            <button
-              onClick={() => {
-                if (!isAuthenticated) {
-                  setCurrentView('auth-login');
-                } else {
-                  setCurrentView('user-deposit-overview');
-                }
-              }}
-              className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black px-5 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg cursor-pointer hover:-translate-y-0.5"
-            >
-              <Zap className="w-4 h-4 fill-current text-slate-950" />
-              <span>Buy Extra Slot ({slotsOwnedCount + 1}/3 Max)</span>
-            </button>
-          )}
+          <button
+            onClick={handleTriggerDepositDisabledNotice}
+            className="bg-[#081E26] hover:bg-[#081E26]/80 text-amber-400 border border-amber-500/40 text-xs font-black px-5 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg cursor-pointer"
+          >
+            <Lock className="w-4 h-4 text-amber-400" />
+            <span>Extra Slot Purchase Disabled (Locked)</span>
+          </button>
 
           <button
             onClick={() => setCurrentView('user-my-group')}

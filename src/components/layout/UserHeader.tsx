@@ -21,7 +21,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const UserHeader = () => {
-  const { currentView, setCurrentView, user, deposits, logout } = useApp();
+  const { currentView, setCurrentView, user, deposits, logout, openDepositModal, closeDepositModal, isDepositModalOpen } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const userBalance = deposits
@@ -206,30 +206,43 @@ export const UserHeader = () => {
                   <nav className="space-y-1.5">
                     {menuItems.map(item => {
                       const Icon = item.icon;
-                      const isActive = currentView === item.id || 
-                        (item.id === 'user-deposit-overview' && currentView.startsWith('user-deposit')) || 
+                      const isDepositItem = item.id === 'user-deposit-overview';
+                      const isActive = !isDepositItem && (
+                        currentView === item.id || 
                         (item.id === 'user-my-group' && currentView.startsWith('user-group')) || 
-                        (item.id === 'user-rewards-overview' && currentView.startsWith('user-reward'));
+                        (item.id === 'user-rewards-overview' && currentView.startsWith('user-reward'))
+                      );
 
                       return (
                         <button
                           key={item.id}
                           onClick={() => {
-                            setCurrentView(item.id as ViewMode);
+                            if (isDepositItem) {
+                              alert('🔒 Deposit Payment Currently Disabled: Deposit module and payment processing are disabled by system administrator.');
+                            } else {
+                              closeDepositModal();
+                              setCurrentView(item.id as ViewMode);
+                            }
                             setMobileMenuOpen(false);
                           }}
                           className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-extrabold transition-all cursor-pointer ${
-                            isActive 
-                              ? 'bg-gradient-to-r from-[#00C2B8] to-[#009890] text-[#081E26] font-black shadow-lg border border-[#00C2B8]' 
-                              : 'text-slate-200 hover:bg-[#0D3B43] hover:text-white border border-transparent'
+                            isDepositItem
+                              ? 'bg-[#081E26]/60 text-slate-400 border border-amber-500/30'
+                              : isActive 
+                                ? 'bg-gradient-to-r from-[#00C2B8] to-[#009890] text-[#081E26] font-black shadow-lg border border-[#00C2B8]' 
+                                : 'text-slate-200 hover:bg-[#0D3B43] hover:text-white border border-transparent'
                           }`}
                         >
                           <div className="flex items-center space-x-3 min-w-0">
-                            <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-[#081E26]' : item.highlight ? 'text-[#E1A238]' : 'text-slate-400'}`} />
-                            <span className="truncate">{item.label}</span>
+                            <Icon className={`w-4.5 h-4.5 shrink-0 ${isDepositItem ? 'text-amber-400/80' : isActive ? 'text-[#081E26]' : item.highlight ? 'text-[#E1A238]' : 'text-slate-400'}`} />
+                            <span className={`truncate ${isDepositItem ? 'text-slate-400 line-through decoration-amber-500/60' : ''}`}>{item.label}</span>
                           </div>
 
-                          {item.badge && (
+                          {isDepositItem ? (
+                            <span className="text-[9px] font-mono font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/50">
+                              🔒 DISABLED
+                            </span>
+                          ) : item.badge && (
                             <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-[#0D3B43] text-[#F2C868] border border-[#E1A238]/30">
                               {item.badge}
                             </span>

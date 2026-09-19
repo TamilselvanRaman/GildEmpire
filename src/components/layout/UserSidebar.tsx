@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ViewMode } from '../../types';
 import { 
@@ -15,11 +15,13 @@ import {
   ShieldCheck,
   Sparkles,
   ChevronRight,
-  Infinity as InfinityIcon
+  Infinity as InfinityIcon,
+  Lock
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const UserSidebar = () => {
-  const { currentView, setCurrentView, user, logout } = useApp();
+  const { currentView, setCurrentView, user, logout, closeDepositModal } = useApp();
 
   const menuItems = [
     { id: 'user-dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -35,13 +37,16 @@ export const UserSidebar = () => {
   const userInitial = user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'N';
 
   return (
-    <aside className="w-68 bg-[#081E26] text-white min-h-screen border-r border-[#0D3B43] flex flex-col justify-between p-5 hidden md:flex sticky top-0 shrink-0 select-none">
+    <aside className="w-68 bg-[#081E26] text-white min-h-screen border-r border-[#0D3B43] flex flex-col justify-between p-5 hidden md:flex sticky top-0 shrink-0 select-none z-50">
       
       <div className="space-y-6">
         
         {/* Sleek InfinityGram Corporate Brand Header Image & Name */}
         <div 
-          onClick={() => setCurrentView('public-landing')}
+          onClick={() => {
+            closeDepositModal();
+            setCurrentView('public-landing');
+          }}
           className="flex items-center space-x-2.5 p-3 cursor-pointer group rounded-2xl bg-[#0D3B43]/40 hover:bg-[#0D3B43] border border-[#E1A238]/20 transition-all duration-300 select-none"
         >
           <img 
@@ -60,38 +65,74 @@ export const UserSidebar = () => {
           <nav className="space-y-1.5">
             {menuItems.map(item => {
               const Icon = item.icon;
-              const isActive = currentView === item.id || 
-                (item.id === 'user-deposit-overview' && currentView.startsWith('user-deposit')) || 
+              const isDepositItem = item.id === 'user-deposit-overview';
+              const isActive = !isDepositItem && (
+                currentView === item.id || 
                 (item.id === 'user-my-group' && currentView.startsWith('user-group')) || 
-                (item.id === 'user-rewards-overview' && currentView.startsWith('user-reward'));
+                (item.id === 'user-rewards-overview' && currentView.startsWith('user-reward'))
+              );
 
               return (
-                <button
-                  key={item.id}
-                  onClick={() => setCurrentView(item.id as ViewMode)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-extrabold transition-all relative group cursor-pointer ${
-                    isActive 
-                      ? 'bg-gradient-to-r from-[#00C2B8] to-[#009890] text-[#081E26] shadow-lg shadow-[#00C2B8]/25 font-black border border-[#00C2B8]' 
-                      : 'text-slate-200 hover:bg-[#0D3B43] hover:text-white border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3.5 min-w-0 pr-2">
-                    <Icon className={`w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110 ${
-                      isActive ? 'text-[#081E26]' : item.highlight ? 'text-[#E1A238]' : 'text-slate-400 group-hover:text-white'
-                    }`} />
-                    <span className="tracking-tight truncate">{item.label}</span>
-                  </div>
+                <div key={item.id} className="relative group/tooltip">
+                  <button
+                    onClick={() => {
+                      if (!isDepositItem) {
+                        closeDepositModal();
+                        setCurrentView(item.id as ViewMode);
+                      }
+                    }}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-extrabold transition-all relative cursor-pointer ${
+                      isDepositItem
+                        ? 'bg-[#081E26]/60 text-slate-400 border border-amber-500/30 hover:border-amber-400/70 hover:bg-amber-500/10'
+                        : isActive 
+                          ? 'bg-gradient-to-r from-[#00C2B8] to-[#009890] text-[#081E26] shadow-lg shadow-[#00C2B8]/25 font-black border border-[#00C2B8]' 
+                          : 'text-slate-200 hover:bg-[#0D3B43] hover:text-white border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3.5 min-w-0 pr-2">
+                      <Icon className={`w-4.5 h-4.5 shrink-0 transition-transform ${
+                        isDepositItem 
+                          ? 'text-amber-400/80' 
+                          : isActive 
+                            ? 'text-[#081E26]' 
+                            : item.highlight 
+                              ? 'text-[#E1A238]' 
+                              : 'text-slate-400 group-hover:text-white'
+                      }`} />
+                      <span className={`tracking-tight truncate ${isDepositItem ? 'text-slate-400 line-through decoration-amber-500/60' : ''}`}>
+                        {item.label}
+                      </span>
+                    </div>
 
-                  {item.badge && (
-                    <span className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap ${
-                      isActive 
-                        ? 'bg-[#081E26]/30 text-[#081E26]' 
-                        : 'bg-[#0D3B43] text-[#F2C868] border border-[#E1A238]/30'
-                    }`}>
-                      {item.badge}
-                    </span>
+                    {isDepositItem ? (
+                      <span className="text-[9px] font-mono font-black px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap bg-amber-500/20 text-amber-300 border border-amber-400/50 flex items-center space-x-1">
+                        <Lock className="w-2.5 h-2.5" />
+                        <span>DISABLED</span>
+                      </span>
+                    ) : item.badge && (
+                      <span className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap ${
+                        isActive 
+                          ? 'bg-[#081E26]/30 text-[#081E26]' 
+                          : 'bg-[#0D3B43] text-[#F2C868] border border-[#E1A238]/30'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Hover Tooltip Popup specifically for Deposit Module */}
+                  {isDepositItem && (
+                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 w-68 p-3.5 bg-[#0B1E39] border-2 border-amber-400 text-white text-[11px] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] opacity-0 pointer-events-none group-hover/tooltip:opacity-100 group-hover/tooltip:pointer-events-auto transition-all z-[9999] space-y-1 font-sans">
+                      <div className="flex items-center space-x-1.5 text-amber-400 font-mono font-black text-[10px] uppercase">
+                        <Lock className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                        <span>Payment Currently Disabled</span>
+                      </div>
+                      <p className="text-slate-200 font-medium leading-relaxed">
+                        Deposit module & payment processing are disabled by administrator system configuration.
+                      </p>
+                    </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </nav>
