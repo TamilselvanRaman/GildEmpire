@@ -129,24 +129,7 @@ export const ForgotPasswordPage = () => {
                 </p>
               </div>
 
-              {/* Direct Verification Link (For Sandbox Mode) */}
-              {resetData?.resetUrl && (
-                <div className="p-4 bg-[#071322] border border-amber-400/40 rounded-2xl text-left space-y-2">
-                  <div className="flex items-center justify-between text-xs font-bold text-amber-300">
-                    <span className="flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      Direct Reset Access (Test Mode)
-                    </span>
-                  </div>
-                  <a
-                    href={resetData.resetUrl}
-                    className="text-xs text-amber-400 underline break-all hover:text-amber-300 flex items-center gap-1.5 transition-colors pt-1"
-                  >
-                    <span>{resetData.resetUrl}</span>
-                    <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-                  </a>
-                </div>
-              )}
+
 
               {/* Clean Single View Actions */}
               <div className="space-y-3 pt-2">

@@ -244,38 +244,10 @@ function VerifyEmailContent() {
                 </p>
               </div>
 
-              {/* Sandbox Direct Test Link Banner (If Present) */}
-              {resentData?.url && (
-                <div className="p-4 bg-[#071322] border border-amber-400/40 rounded-2xl text-left space-y-2">
-                  <div className="flex items-center justify-between text-xs font-bold text-amber-300">
-                    <span className="flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      Direct Verification Access (Test Mode)
-                    </span>
-                  </div>
-                  <a
-                    href={resentData.url}
-                    className="text-xs text-amber-400 underline break-all hover:text-amber-300 flex items-center gap-1.5 transition-colors pt-1"
-                  >
-                    <span>{resentData.url}</span>
-                    <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                  </a>
-                </div>
-              )}
-
               <div className="space-y-3 pt-2">
-                {resentData?.url ? (
-                  <a
-                    href={resentData.url}
-                    className="w-full inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-sm py-3.5 px-6 rounded-2xl shadow-lg transition-all hover:scale-[1.02]"
-                  >
-                    <span>Verify Account Now →</span>
-                  </a>
-                ) : null}
-
                 <button
                   onClick={() => setStatus('error')}
-                  className="w-full inline-flex items-center justify-center space-x-2 bg-[#081E26] hover:bg-[#0D3B43] text-slate-300 border border-slate-700 text-xs font-bold py-3 px-4 rounded-xl transition-all"
+                  className="w-full inline-flex items-center justify-center space-x-2 bg-[#081E26] hover:bg-[#0D3B43] text-slate-300 border border-slate-700 text-xs font-bold py-3.5 px-4 rounded-xl transition-all cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
                   <span>Request Another Link</span>
