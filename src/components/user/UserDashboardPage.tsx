@@ -106,16 +106,6 @@ export const UserDashboardPage = () => {
               <AlertCircle className="w-5 h-5 shrink-0" />
             )}
             <span>{emailResentToast.message}</span>
-            {emailResentToast.url && (
-              <a
-                href={emailResentToast.url}
-                target="_blank"
-                rel="noreferrer"
-                className="underline ml-2 bg-slate-950 text-amber-400 px-2.5 py-1 rounded-lg hover:bg-slate-900 transition-colors"
-              >
-                Open Verification Link →
-              </a>
-            )}
           </div>
           <button onClick={() => setEmailResentToast(null)} className="font-bold px-2 py-0.5 rounded hover:bg-black/20 cursor-pointer">✕</button>
         </motion.div>
