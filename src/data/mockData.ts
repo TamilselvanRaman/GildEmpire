@@ -19,6 +19,7 @@ export const currentUserMock: UserProfile = {
   avatar: '',
   registrationDate: '',
   accountStatus: 'Pending Verification',
+  emailVerified: false,
   referralId: '',
   referredBy: '',
   depositStatus: 'Not Started',

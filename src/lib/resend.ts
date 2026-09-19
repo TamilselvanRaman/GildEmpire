@@ -13,8 +13,9 @@ const isApiKeyConfigured = Boolean(
 // Lazy/Safe initialization of Resend instance
 export const resend = isApiKeyConfigured ? new Resend(rawApiKey) : null;
 
-// Default email sender configuration
-export const DEFAULT_FROM_EMAIL = process.env.EMAIL_FROM || 'InfinityGram Support <onboarding@resend.dev>';
+// Default email sender configuration (stripping outer quotes if present in env)
+const rawFromEnv = (process.env.EMAIL_FROM || '').replace(/^["']|["']$/g, '').trim();
+export const DEFAULT_FROM_EMAIL = rawFromEnv || 'InfinityGram Support <onboarding@resend.dev>';
 
 /**
  * Interface for email verification payload
@@ -171,9 +172,10 @@ export function getVerificationEmailHtml(name: string, verificationUrl: string):
 }
 
 export function getAppBaseUrl(): string {
-  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.URL;
-  if (envUrl && !envUrl.includes('localhost')) {
-    return envUrl.replace(/\/$/, '');
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || process.env.URL;
+  if (envUrl) {
+    const formatted = envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
+    return formatted.replace(/\/$/, '');
   }
   return 'https://infinitygram.net';
 }
@@ -273,6 +275,126 @@ export async function sendVerificationEmail({ email, name, token }: SendVerifica
       success: false,
       error: err?.message || 'Server error while delivering email',
       verificationUrl,
+    };
+  }
+}
+
+/**
+ * Generates branded HTML template for Password Reset
+ */
+export function getResetPasswordEmailHtml(name: string, resetUrl: string): string {
+  const recipientName = name ? name.split(' ')[0] : 'Valued Member';
+  
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Reset Your Password - InfinityGram</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0b0f17; color: #e2e8f0; margin: 0; padding: 0; }
+        .wrapper { width: 100%; background-color: #0b0f17; padding: 40px 0; }
+        .container { max-width: 560px; margin: 0 auto; background-color: #161e2e; border-radius: 16px; border: 1px solid #2d3748; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); padding: 32px 24px; text-align: center; }
+        .header h1 { color: #ffffff; margin: 0; font-size: 24px; }
+        .content { padding: 36px 32px; }
+        .button-wrapper { text-align: center; margin: 32px 0; }
+        .button { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff !important; text-decoration: none; font-weight: 700; padding: 14px 36px; border-radius: 10px; display: inline-block; }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="container">
+          <div class="header">
+            <h1>InfinityGram Gold Scheme</h1>
+            <p style="color: #fef3c7; margin: 4px 0 0 0;">Password Reset Authorization</p>
+          </div>
+          <div class="content">
+            <h2 style="color: #ffffff; font-size: 18px;">Hello ${recipientName},</h2>
+            <p style="font-size: 15px; line-height: 1.6; color: #cbd5e1;">
+              We received a request to reset the password for your InfinityGram Gold Scheme account. Click the button below to authorize and set a new password:
+            </p>
+            <div class="button-wrapper">
+              <a href="${resetUrl}" class="button" target="_blank">Reset Account Password</a>
+            </div>
+            <p style="font-size: 13px; color: #94a3b8;">
+              ⏱️ This link will expire in <strong>30 minutes</strong>. If you did not request a password reset, please ignore this email.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Sends Password Reset email safely via Resend
+ */
+export async function sendPasswordResetEmail({ email, name, token }: SendVerificationParams) {
+  const baseUrl = getAppBaseUrl();
+  const resetUrl = `${baseUrl}/auth-reset?token=${token}`;
+
+  if (!resend || !isApiKeyConfigured) {
+    console.log(`[Resend API] Graceful Credentials Notice: Skipping live reset email for ${email}.`);
+    console.log(`[Resend API] Reset Link generated for testing: ${resetUrl}`);
+    return {
+      success: true,
+      mocked: true,
+      message: 'Graceful Mode: Password reset link generated.',
+      resetUrl,
+    };
+  }
+
+  try {
+    const html = getResetPasswordEmailHtml(name, resetUrl);
+    
+    const response = await resend.emails.send({
+      from: DEFAULT_FROM_EMAIL,
+      to: [email],
+      subject: 'Password Reset Request - InfinityGram Gold Scheme',
+      html,
+    });
+
+    if (response.error) {
+      if (response.error.message?.toLowerCase().includes('testing emails') || response.error.message?.includes('verify a domain')) {
+        try {
+          const fallbackRes = await resend.emails.send({
+            from: DEFAULT_FROM_EMAIL,
+            to: ['infinitygram916@gmail.com'],
+            subject: `[Sandbox Test for ${email}] Password Reset - InfinityGram Gold Scheme`,
+            html: getResetPasswordEmailHtml(name, resetUrl),
+          });
+
+          if (!fallbackRes.error) {
+            return {
+              success: true,
+              sandboxFallback: true,
+              message: `Resend Sandbox Mode: Reset link sent to registered admin inbox (infinitygram916@gmail.com).`,
+              resetUrl,
+            };
+          }
+        } catch (e) {}
+      }
+
+      return {
+        success: false,
+        error: response.error.message || 'Failed to dispatch reset email via Resend API',
+        resetUrl,
+      };
+    }
+
+    return {
+      success: true,
+      data: response.data,
+      resetUrl,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || 'Server error delivering reset email',
+      resetUrl,
     };
   }
 }

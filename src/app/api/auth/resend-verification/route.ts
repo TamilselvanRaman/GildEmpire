@@ -20,15 +20,31 @@ export async function POST(request: Request) {
     const dbClient = supabaseAdmin || supabase;
 
     // Retrieve user profile
-    const { data: profile } = await dbClient
-      .from('profiles')
-      .select('id, full_name, email, email_verified')
-      .eq('email', cleanEmail)
-      .single();
+    let profileName = 'Member';
+    let isAlreadyVerified = false;
+    let userId = null;
 
-    if (profile?.email_verified) {
+    try {
+      const { data: profiles } = await dbClient
+        .from('profiles')
+        .select('id, full_name, email, email_verified')
+        .eq('email', cleanEmail);
+
+      if (Array.isArray(profiles) && profiles.length > 0) {
+        const p = profiles[0];
+        userId = p.id;
+        profileName = p.full_name || 'Member';
+        if (p.email_verified) {
+          isAlreadyVerified = true;
+        }
+      }
+    } catch (e) {
+      console.warn('[Resend Verification API] Profile lookup notice:', e);
+    }
+
+    if (isAlreadyVerified) {
       return NextResponse.json(
-        { success: true, message: 'This email address is already verified. You can log in.' },
+        { success: true, message: 'This email address is already verified. Your account is active.' },
         { status: 200 }
       );
     }
@@ -37,7 +53,7 @@ export async function POST(request: Request) {
     const token = createVerificationToken(cleanEmail);
     const tokenExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-    if (profile?.id) {
+    if (userId) {
       try {
         await dbClient
           .from('profiles')
@@ -45,22 +61,24 @@ export async function POST(request: Request) {
             verification_token: token,
             verification_token_expires_at: tokenExpiresAt,
           })
-          .eq('id', profile.id);
+          .eq('id', userId);
       } catch (e) {
         console.warn('[Resend Verification API] Token column update notice:', e);
       }
     }
 
-    // Dispatch email
+    // Dispatch email via Resend
     const emailResult = await sendVerificationEmail({
       email: cleanEmail,
-      name: profile?.full_name || 'Member',
+      name: profileName,
       token,
     });
 
     return NextResponse.json({
       success: true,
-      message: 'A new verification link has been sent to your email address.',
+      message: emailResult.sandboxFallback 
+        ? `Resend Sandbox Mode: Verification link generated and sent to admin inbox (infinitygram916@gmail.com).`
+        : `A new verification link has been sent to ${cleanEmail}.`,
       mocked: emailResult.mocked || false,
       verificationUrl: emailResult.verificationUrl,
     }, { status: 200 });

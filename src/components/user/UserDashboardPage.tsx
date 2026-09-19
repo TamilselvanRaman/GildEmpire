@@ -121,12 +121,12 @@ export const UserDashboardPage = () => {
         </motion.div>
       )}
 
-      {/* EMAIL VERIFICATION & DEPOSIT INSTRUCTION BANNER */}
-      {user.depositStatus !== 'Verified' && (
+      {/* DYNAMIC EMAIL VERIFICATION & DEPOSIT BANNER */}
+      {!user.emailVerified ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="border-2 p-6 sm:p-7 rounded-[2.2rem] shadow-2xl space-y-4 relative overflow-hidden transition-all duration-500 bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#0A192F] border-amber-400/90"
+          className="border-2 p-6 sm:p-7 rounded-[2.2rem] shadow-2xl space-y-4 relative overflow-hidden transition-all duration-500 bg-gradient-to-r from-[#1e1b4b] via-[#0f172a] to-[#1e1b4b] border-amber-500/80"
         >
           <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"></div>
 
@@ -137,18 +137,81 @@ export const UserDashboardPage = () => {
               </div>
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] font-black uppercase px-3 py-0.5 rounded-full tracking-wider bg-amber-400 text-amber-950">
-                    EMAIL DISPATCHED & VERIFIED
+                  <span className="text-[10px] font-black uppercase px-3 py-0.5 rounded-full tracking-wider bg-amber-400 text-amber-950 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    EMAIL VERIFICATION REQUIRED
                   </span>
                   <span className="text-xs text-amber-300 font-mono font-bold">Target Email: {user.email}</span>
                 </div>
                 
                 <h3 className="text-lg font-black text-white">
-                  Payment Verification Email Dispatched to {user.email}
+                  Confirm Your Email to Activate Account ({user.email})
                 </h3>
                 
                 <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-2xl">
-                  We have sent official deposit instructions and secure payment link to your verified email (<strong className="text-amber-300">{user.email}</strong>). Check your inbox or proceed to deposit options below.
+                  We sent a verification link to <strong className="text-amber-300">{user.email}</strong>. Please check your inbox and click the verification button to confirm your account and start your Gold Scheme participation.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0 w-full lg:w-auto">
+              <button
+                onClick={handleResendEmail}
+                disabled={isResendingEmail}
+                className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 text-xs font-black px-6 py-3.5 rounded-xl shadow-xl transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+              >
+                {isResendingEmail ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                    <span>Sending Verification Email...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 text-slate-950" />
+                    <span>Resend Verification Email</span>
+                  </>
+                )}
+              </button>
+
+              {user.depositStatus !== 'Verified' && (
+                <button
+                  onClick={() => setCurrentView('user-deposit-overview')}
+                  className="w-full sm:w-auto bg-slate-900/80 hover:bg-slate-800 text-amber-300 border border-amber-500/40 text-xs font-black px-5 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <Wallet className="w-4 h-4" />
+                  <span>Deposit Portal →</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      ) : user.depositStatus !== 'Verified' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="border-2 p-6 sm:p-7 rounded-[2.2rem] shadow-2xl space-y-4 relative overflow-hidden transition-all duration-500 bg-gradient-to-r from-[#0B1E39] via-[#0F284B] to-[#0A192F] border-emerald-400/80"
+        >
+          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
+            <div className="flex items-start space-x-4">
+              <div className="w-13 h-13 rounded-2xl border flex items-center justify-center shrink-0 shadow-inner bg-emerald-500/20 border-emerald-400/50 text-emerald-300">
+                <CheckCircle2 className="w-6 h-6 text-emerald-300" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-black uppercase px-3 py-0.5 rounded-full tracking-wider bg-emerald-400 text-slate-950">
+                    EMAIL VERIFIED & ACCOUNT ACTIVE
+                  </span>
+                  <span className="text-xs text-emerald-300 font-mono font-bold">Verified Email: {user.email}</span>
+                </div>
+                
+                <h3 className="text-lg font-black text-white">
+                  Email Confirmed — Complete Your First Gold Deposit
+                </h3>
+                
+                <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-2xl">
+                  Your email (<strong className="text-emerald-300">{user.email}</strong>) is verified. Proceed to deposit your ₹10,000 monthly scheme installment to claim your 50-member group slot.
                 </p>
               </div>
             </div>

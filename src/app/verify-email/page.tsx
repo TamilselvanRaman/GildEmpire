@@ -3,15 +3,29 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle2, AlertCircle, Loader2, Mail, ArrowRight, ShieldCheck, RefreshCw, ExternalLink } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  AlertCircle, 
+  Loader2, 
+  Mail, 
+  ArrowRight, 
+  ShieldCheck, 
+  RefreshCw, 
+  ExternalLink,
+  Sparkles,
+  Lock,
+  ChevronRight,
+  ShieldAlert
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'resent'>('loading');
-  const [message, setMessage] = useState<string>('Verifying your email address...');
-  const [userInfo, setUserInfo] = useState<{ email?: string; fullName?: string } | null>(null);
+  const [message, setMessage] = useState<string>('Verifying your security credentials...');
+  const [userInfo, setUserInfo] = useState<{ email?: string; fullName?: string; memberId?: string } | null>(null);
 
   // State for resending verification link
   const [resendEmail, setResendEmail] = useState<string>('');
@@ -22,7 +36,7 @@ function VerifyEmailContent() {
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setMessage('No verification token provided. Please check the link from your email or request a new one below.');
+      setMessage('No verification token provided. Please check the link from your email or request a fresh link below.');
       return;
     }
 
@@ -35,7 +49,7 @@ function VerifyEmailContent() {
 
         if (res.ok && data.success) {
           setStatus('success');
-          setMessage(data.message || 'Email successfully verified!');
+          setMessage(data.message || 'Email address successfully verified!');
           if (data.user) {
             setUserInfo(data.user);
             setResendEmail(data.user.email || '');
@@ -46,7 +60,7 @@ function VerifyEmailContent() {
         }
       } catch (err: any) {
         setStatus('error');
-        setMessage('Network error verifying email. Please check your internet connection.');
+        setMessage('Network connection issue verifying email. Please check your internet connection and try again.');
       }
     }
 
@@ -73,10 +87,9 @@ function VerifyEmailContent() {
 
       if (res.ok && data.success) {
         setResentData({
-          message: data.message || `A new verification link has been sent to ${resendEmail}.`,
+          message: data.message || `A new verification link has been dispatched to ${resendEmail}.`,
           url: data.verificationUrl,
         });
-        // Switch main screen status to 'resent' to eliminate duplicate red/green error boxes
         setStatus('resent');
       } else {
         setResendError(data.error || 'Failed to resend verification email. Please try again.');
@@ -89,157 +102,288 @@ function VerifyEmailContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 relative overflow-hidden">
-      {/* Background Glow Overlay */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-gradient-to-br from-[#061222] via-[#0A192F] to-[#040D1A] text-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 relative overflow-hidden font-sans">
+      {/* Background Ambient Radial Spotlights */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#00C2B8]/10 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-amber-500/20 rounded-2xl p-8 shadow-2xl relative z-10">
-        {/* Header Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-600 to-yellow-400 text-slate-950 font-bold text-2xl shadow-lg shadow-amber-500/20 mb-4">
-            <ShieldCheck className="w-8 h-8 text-slate-950" />
+      {/* Main Glassmorphic Corporate Security Container */}
+      <motion.div 
+        initial={{ opacity: 0, y: 25, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-lg bg-[#0B1E39]/85 backdrop-blur-2xl border border-amber-400/40 rounded-[2.5rem] p-7 sm:p-10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] relative z-10 overflow-hidden"
+      >
+        {/* Top Decorative Gold Accent Line */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-600"></div>
+
+        {/* Corporate Header & Hallmark Badge */}
+        <div className="text-center mb-8 space-y-3">
+          <div className="relative inline-flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 flex items-center justify-center shadow-lg shadow-amber-500/25 border border-amber-300/60">
+              <ShieldCheck className="w-9 h-9 text-slate-950 stroke-[2.2]" />
+            </div>
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 border-2 border-[#0B1E39] rounded-full animate-ping"></span>
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 border-2 border-[#0B1E39] rounded-full"></span>
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
-            InfinityGram Gold Scheme
-          </h1>
-          <p className="text-slate-400 text-sm mt-1">Account Security & Email Verification</p>
+
+          <div>
+            <div className="inline-flex items-center space-x-1.5 bg-amber-400/10 border border-amber-400/30 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-300 mb-2">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span>InfinityGram Sovereign Security</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Gold Scheme Verification
+            </h1>
+            <p className="text-xs text-slate-300 mt-1 font-medium">
+              Official Account Security & Member Authentication
+            </p>
+          </div>
         </div>
 
-        {/* 1. Verification Loading State */}
-        {status === 'loading' && (
-          <div className="text-center py-8">
-            <Loader2 className="w-12 h-12 text-amber-500 animate-spin mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-slate-200 mb-2">Verifying Link</h2>
-            <p className="text-slate-400 text-sm">{message}</p>
-          </div>
-        )}
-
-        {/* 2. Verification Success State */}
-        {status === 'success' && (
-          <div className="text-center py-6">
-            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-400">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
-            <h2 className="text-2xl font-bold text-emerald-400 mb-2">Email Verified!</h2>
-            <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-              {userInfo?.fullName ? `Welcome aboard, ${userInfo.fullName}!` : 'Your email address has been successfully confirmed.'} You can now log in and access all premium gold scheme features.
-            </p>
-
-            <Link
-              href="/login"
-              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-bold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/20 hover:scale-[1.02]"
+        {/* Dynamic State Panels */}
+        <AnimatePresence mode="wait">
+          
+          {/* 1. Loading State */}
+          {status === 'loading' && (
+            <motion.div 
+              key="loading"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-center py-10 space-y-4"
             >
-              Proceed to Login <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
-        )}
-
-        {/* 3. New Link Resent Success State (Replaces old red error box completely) */}
-        {status === 'resent' && (
-          <div className="text-center py-4">
-            <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-400">
-              <Mail className="w-9 h-9 animate-pulse" />
-            </div>
-            <h2 className="text-xl font-bold text-amber-400 mb-2">New Verification Link Sent!</h2>
-            <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-              {resentData?.message || `A new verification email has been dispatched to ${resendEmail}.`} Please check your inbox.
-            </p>
-
-            {/* Direct Verification Link (For Testing / Sandbox) */}
-            {resentData?.url && (
-              <div className="mb-6 p-4 bg-slate-950 border border-amber-500/30 rounded-xl text-left">
-                <span className="text-xs font-semibold text-amber-400 block mb-1">🔗 Direct Link (Ready to Verify):</span>
-                <a
-                  href={resentData.url}
-                  className="text-xs text-yellow-300 underline break-all hover:text-yellow-200 flex items-center gap-1 mt-1"
-                >
-                  {resentData.url} <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                </a>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              {resentData?.url && (
-                <a
-                  href={resentData.url}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-amber-500/20"
-                >
-                  Open Verification Link <ArrowRight className="w-5 h-5" />
-                </a>
-              )}
-              
-              <button
-                onClick={() => setStatus('error')}
-                className="w-full inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2.5 px-4 rounded-xl border border-slate-700 transition-colors"
-              >
-                Request Another Link
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 4. Initial Verification Error / Expired Token State */}
-        {status === 'error' && (
-          <div className="py-4">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-400">
-                <AlertCircle className="w-10 h-10" />
-              </div>
-              <h2 className="text-xl font-bold text-slate-100 mb-2">Verification Link Expired</h2>
-              <p className="text-red-400 text-sm bg-red-950/40 border border-red-900/50 rounded-xl p-3 mb-6">
-                {message}
-              </p>
-            </div>
-
-            {/* Resend Link Form */}
-            <form onSubmit={handleResend} className="space-y-4 border-t border-slate-800 pt-6">
-              <label className="block text-xs font-medium text-slate-400">
-                Enter your registered email address to receive a fresh link:
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                <input
-                  type="email"
-                  value={resendEmail}
-                  onChange={(e) => setResendEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  required
-                  className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-200 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
-                />
+              <div className="relative inline-flex items-center justify-center w-20 h-20">
+                <div className="absolute inset-0 border-4 border-amber-400/20 border-t-amber-400 rounded-full animate-spin"></div>
+                <Lock className="w-8 h-8 text-amber-300 animate-pulse" />
               </div>
 
-              {resendError && (
-                <div className="text-xs p-3 rounded-lg border bg-red-950/40 border-red-900/50 text-red-400">
-                  {resendError}
+              <div>
+                <h2 className="text-lg font-bold text-white tracking-wide">Authenticating Verification Token</h2>
+                <p className="text-xs text-slate-300 mt-1">{message}</p>
+              </div>
+
+              <div className="pt-2 flex justify-center items-center space-x-2 text-[11px] text-amber-400/80 font-mono font-bold">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>SOC-2 256-Bit SSL Handshake in progress...</span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* 2. Success State */}
+          {status === 'success' && (
+            <motion.div 
+              key="success"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-4 space-y-6"
+            >
+              <div className="w-20 h-20 bg-gradient-to-tr from-emerald-500/20 to-emerald-400/10 border-2 border-emerald-400/60 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/20 text-emerald-300 relative">
+                <CheckCircle2 className="w-11 h-11" />
+                <Sparkles className="w-5 h-5 text-amber-400 absolute -top-1 -right-1 animate-bounce" />
+              </div>
+
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+                  VERIFICATION SUCCESSFUL
+                </span>
+                <h2 className="text-2xl font-black text-white mt-2">Email Confirmed & Active!</h2>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-sm mx-auto">
+                  {userInfo?.fullName ? `Welcome to InfinityGram Gold Scheme, ${userInfo.fullName}!` : 'Your email address has been verified successfully.'} You are now authorized to participate in 50-member groups.
+                </p>
+              </div>
+
+              {/* Verified Account Details Box */}
+              {userInfo?.email && (
+                <div className="bg-[#071322]/90 border border-amber-400/30 rounded-2xl p-4 text-left space-y-2 font-mono text-xs">
+                  <div className="flex justify-between items-center text-slate-400">
+                    <span>Verified Email:</span>
+                    <strong className="text-amber-300 font-bold">{userInfo.email}</strong>
+                  </div>
+                  {userInfo.memberId && (
+                    <div className="flex justify-between items-center text-slate-400 pt-1 border-t border-slate-800">
+                      <span>Member ID:</span>
+                      <strong className="text-emerald-400 font-bold">{userInfo.memberId}</strong>
+                    </div>
+                  )}
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={isResending}
-                className="w-full inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold py-3 px-4 rounded-xl border border-amber-500/30 transition-all duration-200 hover:border-amber-500/60 disabled:opacity-50"
+              <Link
+                href="/login"
+                className="w-full inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm py-4 px-6 rounded-2xl shadow-xl shadow-amber-500/20 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
               >
-                {isResending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Sending Link...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4" /> Send New Verification Link
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="text-center mt-6">
-              <Link href="/login" className="text-xs text-slate-400 hover:text-amber-400 transition-colors">
-                Back to Sign In
+                <span>Proceed to Portal Sign In</span>
+                <ArrowRight className="w-4 h-4 text-slate-950" />
               </Link>
-            </div>
+            </motion.div>
+          )}
+
+          {/* 3. Resent Link Confirmation State */}
+          {status === 'resent' && (
+            <motion.div 
+              key="resent"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-4 space-y-6"
+            >
+              <div className="w-18 h-18 bg-amber-500/20 border-2 border-amber-400/60 rounded-full flex items-center justify-center mx-auto shadow-xl text-amber-300">
+                <Mail className="w-9 h-9 animate-pulse" />
+              </div>
+
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                  NEW LINK DISPATCHED
+                </span>
+                <h2 className="text-xl font-black text-white mt-2">Check Your Inbox</h2>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-sm mx-auto">
+                  {resentData?.message || `A fresh verification link has been dispatched to ${resendEmail}.`} Please check your primary inbox or spam folder.
+                </p>
+              </div>
+
+              {/* Sandbox Direct Test Link Banner (If Present) */}
+              {resentData?.url && (
+                <div className="p-4 bg-[#071322] border border-amber-400/40 rounded-2xl text-left space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-amber-300">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      Direct Verification Access (Test Mode)
+                    </span>
+                  </div>
+                  <a
+                    href={resentData.url}
+                    className="text-xs text-amber-400 underline break-all hover:text-amber-300 flex items-center gap-1.5 transition-colors pt-1"
+                  >
+                    <span>{resentData.url}</span>
+                    <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                  </a>
+                </div>
+              )}
+
+              <div className="space-y-3 pt-2">
+                {resentData?.url ? (
+                  <a
+                    href={resentData.url}
+                    className="w-full inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-sm py-3.5 px-6 rounded-2xl shadow-lg transition-all hover:scale-[1.02]"
+                  >
+                    <span>Verify Account Now →</span>
+                  </a>
+                ) : null}
+
+                <button
+                  onClick={() => setStatus('error')}
+                  className="w-full inline-flex items-center justify-center space-x-2 bg-[#081E26] hover:bg-[#0D3B43] text-slate-300 border border-slate-700 text-xs font-bold py-3 px-4 rounded-xl transition-all"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Request Another Link</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* 4. Expired Token / Verification Error State */}
+          {status === 'error' && (
+            <motion.div 
+              key="error"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="py-2 space-y-6"
+            >
+              {/* Sovereign Red Alert Badge */}
+              <div className="bg-red-500/10 border border-red-500/40 rounded-2xl p-4 text-center space-y-2 relative overflow-hidden">
+                <div className="w-12 h-12 bg-red-500/20 border border-red-400/50 rounded-full flex items-center justify-center mx-auto text-red-400">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-red-200">Verification Link Expired or Invalid</h3>
+                  <p className="text-xs text-red-300/90 mt-1 leading-relaxed">
+                    {message}
+                  </p>
+                </div>
+              </div>
+
+              {/* Resend Link Form */}
+              <form onSubmit={handleResend} className="space-y-4 border-t border-slate-800/80 pt-5">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-300">
+                    Request Fresh Verification Link
+                  </label>
+                  <p className="text-[11px] text-slate-400">
+                    Enter your registered email address to receive an immediate token:
+                  </p>
+                </div>
+
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-amber-400/70" />
+                  <input
+                    type="email"
+                    value={resendEmail}
+                    onChange={(e) => setResendEmail(e.target.value)}
+                    placeholder="Enter registered email address..."
+                    required
+                    className="w-full pl-11 pr-4 py-3.5 bg-[#071322] border border-amber-400/30 rounded-xl text-white text-xs font-semibold placeholder:text-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all shadow-inner"
+                  />
+                </div>
+
+                {resendError && (
+                  <div className="text-xs p-3 rounded-xl border bg-red-950/60 border-red-500/40 text-red-300 font-medium flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                    <span>{resendError}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isResending}
+                  className="w-full inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs py-4 px-5 rounded-xl shadow-lg transition-all duration-300 hover:scale-[1.01] cursor-pointer disabled:opacity-50"
+                >
+                  {isResending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                      <span>Dispatching New Verification Link...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 text-slate-950" />
+                      <span>Send New Verification Link</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="text-center pt-2">
+                <Link 
+                  href="/login" 
+                  className="inline-flex items-center space-x-1 text-xs text-slate-400 hover:text-amber-300 font-bold transition-colors"
+                >
+                  <span>Return to Sign In</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-amber-400" />
+                </Link>
+              </div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+
+        {/* Corporate Trust & Encryption Footer */}
+        <div className="mt-8 pt-5 border-t border-slate-800/80 text-center flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-400">
+          <div className="flex items-center space-x-1.5">
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
+            <span>256-Bit SSL Encrypted</span>
           </div>
-        )}
-      </div>
+          <div className="flex items-center space-x-2">
+            <span>Need help?</span>
+            <a href="mailto:infinitygram916@gmail.com" className="text-amber-400 hover:underline font-semibold">
+              Support Desk
+            </a>
+          </div>
+        </div>
+
+      </motion.div>
     </div>
   );
 }
@@ -248,8 +392,8 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-950 text-slate-100 flex justify-center items-center">
-          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+        <div className="min-h-screen bg-[#061222] text-slate-100 flex justify-center items-center">
+          <Loader2 className="w-9 h-9 text-amber-400 animate-spin" />
         </div>
       }
     >

@@ -170,6 +170,8 @@ const viewToPathMap: Record<string, string> = {
   'system-403': '/403',
   'system-500': '/500',
   'system-states': '/system-states',
+  'auth-forgot': '/forgot-password',
+  'auth-reset': '/reset-password',
 };
 
 const pathToViewMap: Record<string, ViewMode> = {
@@ -182,6 +184,11 @@ const pathToViewMap: Record<string, ViewMode> = {
   '/contact': 'public-contact',
   '/login': 'auth-login',
   '/register': 'auth-register',
+  '/forgot-password': 'auth-forgot',
+  '/forgot': 'auth-forgot',
+  '/auth-forgot': 'auth-forgot',
+  '/reset-password': 'auth-reset',
+  '/auth-reset': 'auth-reset',
   '/admin': 'auth-admin-login',
   '/admin/login': 'auth-admin-login',
   '/admin/dashboard': 'admin-dashboard',

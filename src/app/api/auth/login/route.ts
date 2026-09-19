@@ -69,6 +69,7 @@ export async function POST(request: Request) {
         email: profileData?.email || email.trim(),
         mobile: profileData?.mobile || '+91 98765 43210',
         accountStatus: profileData?.account_status || 'Active',
+        emailVerified: Boolean(profileData?.email_verified),
         depositStatus: profileData?.deposit_status || 'Not Started',
         rewardStatus: profileData?.reward_status || 'In Selection Pool',
         slotNumber: profileData?.slot_number || 0,

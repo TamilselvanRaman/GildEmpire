@@ -98,6 +98,7 @@ export interface UserProfile {
   avatar: string;
   registrationDate: string;
   accountStatus: 'Active' | 'Pending Verification' | 'Suspended' | 'Deactivated';
+  emailVerified?: boolean;
   referralId: string;
   referredBy?: string;
   depositStatus: 'Not Started' | 'Submitted' | 'Under Review' | 'Verified' | 'Rejected';

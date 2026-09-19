@@ -128,12 +128,13 @@ export async function POST(request: Request) {
     const verificationTokenExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
     // 3. Insert User Profile into Supabase profiles table
+    let emailResult: any = null;
     try {
       const profileRecord = {
         id: userId,
         full_name: fullName,
-        email: email.trim(),
-        mobile,
+        email: cleanEmail,
+        mobile: cleanMobile,
         member_id: memberId,
         referral_code: ownReferralCode,
         referred_by: referralCode || null,
@@ -182,14 +183,17 @@ export async function POST(request: Request) {
         } catch (refErr) {}
       }
 
-      // Dispatch Verification Email via Resend safely in background (graceful mode fallback)
-      sendVerificationEmail({
-        email: email.trim(),
-        name: fullName,
-        token: verificationToken,
-      }).catch((emailErr) => {
-        console.warn('Background Resend Verification Email Notice:', emailErr);
-      });
+      // Dispatch Verification Email via Resend directly and await completion
+      try {
+        emailResult = await sendVerificationEmail({
+          email: email.trim(),
+          name: fullName,
+          token: verificationToken,
+        });
+        console.log(`[Register API] Verification email send result:`, emailResult);
+      } catch (emailErr) {
+        console.warn('[Register API] Resend Verification Email Notice:', emailErr);
+      }
 
     } catch (dbErr) {
       console.warn('Supabase DB Insert Warning:', dbErr);
@@ -197,7 +201,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Registration successful',
+      message: 'Registration successful! A verification link has been sent to your email address.',
+      emailSent: Boolean(emailResult?.success),
+      verificationUrl: emailResult?.verificationUrl || null,
       user: {
         id: userId,
         memberId,
@@ -206,6 +212,7 @@ export async function POST(request: Request) {
         mobile,
         address: userAddress,
         accountStatus: 'Active',
+        emailVerified: false,
         depositStatus: 'Not Started',
         rewardStatus: 'In Selection Pool',
         slotNumber: 0,
