@@ -297,6 +297,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       } catch (e) {}
     }
 
+    const storedAdmin = localStorage.getItem('infinity_gold_admin_session');
+    if (storedAdmin === 'true') {
+      setIsAdminAuthenticated(true);
+    }
+
     const syncUserSession = (newUser: UserProfile | null) => {
       if (newUser && newUser.email) {
         setUser(newUser);
@@ -390,7 +395,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(true);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [deposits, setDeposits] = useState<DepositRecord[]>(depositHistoryMock);
   const [allGroups, setAllGroups] = useState<GroupDetails[]>(allGroupsMock);
   const [selectedBatchId, setSelectedBatchId] = useState<string>('GROUP-001');

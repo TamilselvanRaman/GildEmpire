@@ -63,15 +63,10 @@ export const RegisterPage = () => {
   const cleanMobile = mobile.replace(/\D/g, '');
 
   const registeredEmailsList = [
-    'tamilselvan@infinitygram.net',
-    'navin@infinitygram.net',
-    'ceittamilselvanr26@gmail.com',
-    'rajesh@gmail.com',
     ...(Array.isArray(dbUsers) ? dbUsers.map(u => u.email?.toLowerCase()).filter(Boolean) : [])
   ];
 
   const registeredMobilesList = [
-    '9876543210',
     ...(Array.isArray(dbUsers) ? dbUsers.map(u => u.mobile).filter(Boolean) : [])
   ];
 

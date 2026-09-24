@@ -21,7 +21,6 @@ export async function POST(request: Request) {
       'superadmin@infinitygram.in',
       'admin.op@infinitygram.in',
       'admin.verify@infinitygram.in',
-      'gilddemphire07@gmail.com',
     ];
 
     const isValidAdmin = validAdmins.some(a => cleanEmail.includes(a.split('@')[0]) || cleanEmail === a);
