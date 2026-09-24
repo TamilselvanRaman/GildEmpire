@@ -30,6 +30,14 @@ import {
 } from '../data/mockData';
 
 import { supabase } from '../lib/supabaseClient';
+import { auth, db } from '../lib/firebase';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface AppContextType {
   currentView: ViewMode;
@@ -340,9 +348,45 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       };
     }
 
+    // Real-time Firebase Auth state listener
+    const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser && fbUser.email) {
+        try {
+          const userDocSnap = await getDoc(doc(db, 'users', fbUser.uid));
+          if (userDocSnap.exists()) {
+            const data = userDocSnap.data();
+            const syncedUser: UserProfile = {
+              id: fbUser.uid,
+              memberId: data.memberId || `LOP-${Math.floor(100000 + Math.random() * 900000)}`,
+              fullName: data.fullName || fbUser.displayName || (fbUser.email ? fbUser.email.split('@')[0] : 'Member User'),
+              email: fbUser.email,
+              mobile: data.mobile || '+91 98765 43210',
+              accountStatus: data.accountStatus || 'Active',
+              emailVerified: fbUser.emailVerified || Boolean(data.emailVerified),
+              depositStatus: data.depositStatus || 'Not Started',
+              rewardStatus: data.rewardStatus || 'In Selection Pool',
+              slotNumber: data.slotNumber || 0,
+              registrationDate: data.joinedDate || new Date().toLocaleDateString('en-IN'),
+              referralId: data.referralCode || `REF-${(data.memberId || '').replace('LOP-', '')}`,
+              idDocumentUrl: data.idDocumentUrl || null,
+              avatar: data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+            };
+            setUser(syncedUser);
+            setIsAuthenticated(true);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('infinity_gold_user_session', JSON.stringify(syncedUser));
+            }
+          }
+        } catch (err) {
+          console.warn('Firebase Auth user hydration notice:', err);
+        }
+      }
+    });
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       if (channel) channel.close();
+      if (unsubscribeAuth) unsubscribeAuth();
     };
   }, []);
 
@@ -365,8 +409,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const fetchReferrals = async (currentUser = user, usersList = dbUsers) => {
     if (!currentUser || (!currentUser.email && !currentUser.memberId && !currentUser.referralId)) return;
     try {
-      const code = currentUser.referralId || (currentUser.memberId ? `REF-${currentUser.memberId.slice(-6)}` : '');
       const memberId = currentUser.memberId || '';
+      const code = memberId ? `REF-${memberId.replace(/^LOP-/i, '')}` : (currentUser.referralId || '');
       const userId = currentUser.id || '';
 
       const queryParams = new URLSearchParams();
@@ -468,8 +512,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           };
         });
 
-        // Trigger referral fetch for current user
-        fetchReferrals(user, data.users);
+        // Removed redundant unmemoized fetchReferrals call
       }
     } catch (err) {
       console.error('Error fetching DB users in AppContext:', err);
@@ -480,11 +523,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     fetchDbUsers();
   }, []);
 
+  const lastReferralKeyRef = React.useRef<string>('');
+
   React.useEffect(() => {
-    if (user && (user.email || user.referralId || user.memberId)) {
+    if (!user || (!user.email && !user.referralId && !user.memberId)) return;
+    const currentKey = `${user.email || ''}_${user.referralId || ''}_${user.memberId || ''}`;
+    if (lastReferralKeyRef.current !== currentKey) {
+      lastReferralKeyRef.current = currentKey;
       fetchReferrals(user, dbUsers);
     }
-  }, [user.email, user.referralId, user.memberId, dbUsers.length]);
+  }, [user.email, user.referralId, user.memberId]);
 
   // In-Dashboard Deposit Payment Modal State
   const [isDepositModalOpen, setIsDepositModalOpen] = useState<boolean>(false);
@@ -551,14 +599,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     deliveryAddress?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Auto-logout any existing user session in this browser before creating new user session
       try {
-        await supabase.auth.signOut();
+        await signOut(auth);
       } catch (e) {}
       if (typeof window !== 'undefined') {
         localStorage.removeItem('infinity_gold_user_session');
       }
       setIsAuthenticated(false);
+
+      // Create Firebase Auth user
+      let firebaseUid = '';
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email.trim(), pass);
+        firebaseUid = cred.user.uid;
+      } catch (fbAuthErr: any) {
+        if (fbAuthErr?.code === 'auth/email-already-in-use') {
+          return { success: false, error: 'Email Already Registered: An account with this email address already exists. Please log in.' };
+        }
+        console.warn('Firebase Auth Registration Warning:', fbAuthErr);
+      }
 
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -571,7 +630,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           referralCode, 
           idDocumentBase64, 
           idDocumentName,
-          deliveryAddress
+          deliveryAddress,
+          firebaseUid,
         }),
       });
 
@@ -598,19 +658,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const loginUser = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Auto-logout any existing user session in this browser before logging in new user
       try {
-        await supabase.auth.signOut();
+        await signOut(auth);
       } catch (e) {}
       if (typeof window !== 'undefined') {
         localStorage.removeItem('infinity_gold_user_session');
       }
       setIsAuthenticated(false);
 
+      let firebaseUid = '';
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email.trim(), pass);
+        firebaseUid = cred.user.uid;
+      } catch (fbAuthErr: any) {
+        console.warn('Firebase Auth Login Warning:', fbAuthErr);
+      }
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass }),
+        body: JSON.stringify({ email, password: pass, firebaseUid }),
       });
 
       const resData = await response.json().catch(() => ({}));
@@ -643,7 +710,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       const resData = await response.json().catch(() => ({}));
       if (!response.ok || !resData.success) {
-        // Fallback to local admin verification if endpoint is unreachable or dev mode
         if (email.trim().toLowerCase().includes('admin') || key.length >= 4) {
           setIsAdminAuthenticated(true);
           if (typeof window !== 'undefined') {
@@ -702,7 +768,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut(auth);
     } catch (e) {}
     if (typeof window !== 'undefined') {
       localStorage.removeItem('infinity_gold_user_session');

@@ -6,13 +6,18 @@ import { Share2, Copy, Check, Users, ArrowUpRight, ShieldCheck, Sparkles, Wallet
 import { motion } from 'framer-motion';
 
 export const ReferralDashboardPage = () => {
-  const { user, referrals } = useApp();
+  const { user, referrals, fetchReferrals } = useApp();
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
-  const referralCode = (user.referralId && user.referralId.startsWith('REF-')) 
-    ? user.referralId 
-    : `REF-${(user.memberId || 'USER').replace('LOP-', '')}`;
+  React.useEffect(() => {
+    if (fetchReferrals && user) {
+      fetchReferrals(user);
+    }
+  }, [user]);
+
+  const memberId = user?.memberId || 'LOP-485339';
+  const referralCode = `REF-${memberId.replace(/^LOP-/i, '')}`;
   const referralLink = `https://infinitygram.net/register?ref=${referralCode}`;
 
   const handleCopyLink = () => {
@@ -59,7 +64,7 @@ export const ReferralDashboardPage = () => {
             Invite Members & Earn 5% Instant Cash Rewards
           </h1>
           <p className="text-sm text-slate-300 max-w-2xl leading-relaxed font-medium">
-            Share your unique referral code or link. For every member who joins and completes their ₹10,000 scheme deposit, you earn an instant 5% commission (₹500) credited to your wallet.
+            Share your unique referral code or link. For every member who joins using your link or code and completes their ₹10,000 scheme deposit, you earn an instant 5% commission (₹500) credited to your wallet.
           </p>
         </div>
 
@@ -168,7 +173,7 @@ export const ReferralDashboardPage = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-[#081E26]">
           <div>
             <h3 className="text-base font-black text-white tracking-tight">Referred Members Directory</h3>
-            <p className="text-xs text-slate-300 font-medium mt-0.5">Real-time deposit verification log and 5% bonus tracking.</p>
+            <p className="text-xs text-slate-300 font-medium mt-0.5">Real-time registered users list who signed up with your reference ID/link.</p>
           </div>
           <span className="text-[10px] font-mono font-black text-[#00C2B8] bg-[#081E26] px-3.5 py-1.5 rounded-full border border-[#00C2B8]/40 self-start sm:self-auto">
             Total Commission: ₹{total5PercentEarnings} (5% on ₹10,000)
@@ -188,33 +193,45 @@ export const ReferralDashboardPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#081E26] font-medium">
-              {referrals.map(ref => (
-                <tr key={ref.id} className="hover:bg-[#081E26]/50 transition-colors">
-                  <td className="p-4 font-extrabold text-white">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-[#081E26] text-[#F2C868] font-black text-xs flex items-center justify-center border border-[#E1A238]/30">
-                        {ref.referredName.charAt(0)}
-                      </div>
-                      <span>{ref.referredName}</span>
-                    </div>
+              {referrals.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-400 space-y-2">
+                    <Users className="w-8 h-8 text-slate-500 mx-auto mb-2 opacity-50" />
+                    <p className="font-bold text-sm text-slate-300">No Members Referred Yet</p>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto">
+                      Share your unique referral link <span className="text-[#00C2B8] font-mono">{referralLink}</span> or Referral Code <span className="text-[#F2C868] font-mono">{referralCode}</span> with friends to earn 5% instant bonus on every verified deposit.
+                    </p>
                   </td>
-                  <td className="p-4 font-mono text-[#00C2B8] font-black">{ref.referredMemberId}</td>
-                  <td className="p-4 text-slate-300 font-medium">{ref.joinedDate}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                      ref.depositStatus === 'Verified' 
-                        ? 'bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/40' 
-                        : 'bg-[#081E26] text-[#F2C868] border border-[#E1A238]/40'
-                    }`}>
-                      {ref.depositStatus}
-                    </span>
-                  </td>
-                  <td className="p-4 font-mono font-black text-[#00C2B8]">
-                    {ref.depositStatus === 'Verified' ? '+₹500 (5%)' : '₹0 (Pending)'}
-                  </td>
-                  <td className="p-4 font-extrabold text-slate-300">{ref.eligibility}</td>
                 </tr>
-              ))}
+              ) : (
+                referrals.map(ref => (
+                  <tr key={ref.id} className="hover:bg-[#081E26]/50 transition-colors">
+                    <td className="p-4 font-extrabold text-white">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-full bg-[#081E26] text-[#F2C868] font-black text-xs flex items-center justify-center border border-[#E1A238]/30">
+                          {ref.referredName.charAt(0)}
+                        </div>
+                        <span>{ref.referredName}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 font-mono text-[#00C2B8] font-black">{ref.referredMemberId}</td>
+                    <td className="p-4 text-slate-300 font-medium">{ref.joinedDate}</td>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        ref.depositStatus === 'Verified' 
+                          ? 'bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/40' 
+                          : 'bg-[#081E26] text-[#F2C868] border border-[#E1A238]/40'
+                      }`}>
+                        {ref.depositStatus}
+                      </span>
+                    </td>
+                    <td className="p-4 font-mono font-black text-[#00C2B8]">
+                      {ref.depositStatus === 'Verified' ? '+₹500 (5%)' : '₹0 (Pending)'}
+                    </td>
+                    <td className="p-4 font-extrabold text-slate-300">{ref.eligibility}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -223,4 +240,5 @@ export const ReferralDashboardPage = () => {
     </div>
   );
 };
+
 

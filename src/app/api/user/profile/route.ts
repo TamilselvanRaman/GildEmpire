@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../../lib/supabaseClient';
+import { db } from '../../../../lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 export async function GET(request: Request) {
   try {
@@ -13,26 +14,26 @@ export async function GET(request: Request) {
       );
     }
 
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const userDocRef = doc(db, 'users', userId);
+    const userDocSnap = await getDoc(userDocRef);
 
-    if (error && error.code !== 'PGRST116') {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
-      );
+    if (!userDocSnap.exists()) {
+      return NextResponse.json({
+        success: true,
+        profile: null,
+      });
     }
 
     return NextResponse.json({
       success: true,
-      profile: profile || null,
+      profile: {
+        id: userDocSnap.id,
+        ...userDocSnap.data(),
+      },
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error?.message || 'Failed to retrieve profile' },
+      { success: false, error: error?.message || 'Failed to retrieve profile from Firebase' },
       { status: 500 }
     );
   }
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { userId, fullName, mobile } = body;
+    const { userId, fullName, mobile, address } = body;
 
     if (!userId) {
       return NextResponse.json(
@@ -51,31 +52,26 @@ export async function PUT(request: Request) {
     }
 
     const updates: Record<string, any> = {};
-    if (fullName) updates.full_name = fullName;
+    if (fullName) updates.fullName = fullName;
     if (mobile) updates.mobile = mobile;
+    if (address) updates.address = address;
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId)
-      .select()
-      .single();
+    const userDocRef = doc(db, 'users', userId);
+    await updateDoc(userDocRef, updates);
 
-    if (error) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
-      );
-    }
+    const updatedSnap = await getDoc(userDocRef);
 
     return NextResponse.json({
       success: true,
-      message: 'Profile updated successfully',
-      profile: data,
+      message: 'Profile updated successfully in Firebase',
+      profile: {
+        id: updatedSnap.id,
+        ...updatedSnap.data(),
+      },
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error?.message || 'Failed to update profile' },
+      { success: false, error: error?.message || 'Failed to update profile in Firebase' },
       { status: 500 }
     );
   }

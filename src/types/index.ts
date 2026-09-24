@@ -109,6 +109,7 @@ export interface UserProfile {
   rewardStatus: 'In Selection Pool' | 'Won 1g Gold' | 'Pending Group Formation' | 'Completed';
   wonDay?: number;
   wonDate?: string;
+  idDocumentUrl?: string | null;
 }
 
 export interface DepositRecord {

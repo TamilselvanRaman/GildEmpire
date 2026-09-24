@@ -149,12 +149,21 @@ export const LoginPage = () => {
             <p className="text-xs text-slate-500 font-medium">Enter your registered mobile or email to access dashboard</p>
           </div>
 
-          {/* Error Message */}
+          {/* Executive Corporate Error Alert Card */}
           {errorMessage && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-xs flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, y: -6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-rose-500/10 border border-rose-500/30 text-rose-900 p-4 rounded-2xl text-xs flex items-start space-x-3.5 shadow-sm"
+            >
+              <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0 text-rose-600 mt-0.5">
+                <AlertCircle className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <div className="space-y-0.5 min-w-0">
+                <p className="font-black text-rose-950 text-xs uppercase tracking-wider">Account Verification Alert</p>
+                <p className="text-rose-800 font-medium leading-relaxed">{errorMessage.replace(/^❌\s*/, '')}</p>
+              </div>
+            </motion.div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4 text-xs font-medium">

@@ -14,7 +14,7 @@ export const currentUserMock: UserProfile = {
   id: 'usr_jeyaguru_485339',
   memberId: 'LOP-485339',
   fullName: 'JEYAGURU',
-  email: 'jeyaguru@infinitygram.net',
+  email: 'rebornxuniverse777@gmail.com',
   mobile: '+91 98765 43210',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
   registrationDate: '10 Aug 2026',

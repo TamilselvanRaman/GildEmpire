@@ -151,7 +151,14 @@ export const UserDashboardPage = () => {
     }
   };
 
-  const isEmailVerified = user.emailVerified === true || (user.accountStatus === 'Active' && user.emailVerified !== false);
+  const { dbUsers } = useApp();
+  const matchingDbUser = Array.isArray(dbUsers) ? dbUsers.find((u: any) => (u.email && u.email.toLowerCase() === user?.email?.toLowerCase()) || u.memberId === user?.memberId) : null;
+  const isEmailVerified = Boolean(
+    user?.emailVerified === true || 
+    matchingDbUser?.emailVerified === true || 
+    user?.accountStatus === 'Active' || 
+    matchingDbUser?.status === 'Active'
+  );
 
   const handleTriggerDepositDisabledNotice = () => {
     setShowDisabledDepositToast(true);
