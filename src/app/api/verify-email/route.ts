@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { db } from '../../../lib/firebase';
+import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { supabase, supabaseAdmin } from '../../../lib/supabaseClient';
 
 function parseEmbeddedEmailFromToken(token: string): string | null {
@@ -27,156 +29,89 @@ export async function GET(request: Request) {
       );
     }
 
-    const dbClient = supabaseAdmin || supabase;
     const embeddedEmail = parseEmbeddedEmailFromToken(token);
+    let verifiedEmail = embeddedEmail;
+    let verifiedMemberId = '';
+    let verifiedName = '';
+    let verifiedUserId = '';
 
-    let profile: any = null;
-
-    // 1. First attempt: Query profile matching verification_token column
+    // 1. Primary: Search & Update Cloud Firestore 'users' collection
     try {
-      const { data, error } = await dbClient
-        .from('profiles')
-        .select('*')
-        .eq('verification_token', token);
-
-      if (!error && Array.isArray(data) && data.length > 0) {
-        profile = data[0];
+      const usersRef = collection(db, 'users');
+      const snapByToken = await getDocs(query(usersRef, where('verificationToken', '==', token)));
+      
+      let matchedDoc: any = null;
+      if (!snapByToken.empty) {
+        matchedDoc = snapByToken.docs[0];
+      } else if (embeddedEmail) {
+        const snapByEmail = await getDocs(query(usersRef, where('email', '==', embeddedEmail)));
+        if (!snapByEmail.empty) {
+          matchedDoc = snapByEmail.docs[0];
+        }
       }
-    } catch (e) {
-      console.warn('[Verify Email API] verification_token query notice:', e);
+
+      // If still not found by direct query, scan all users
+      if (!matchedDoc && embeddedEmail) {
+        const allUsersSnap = await getDocs(usersRef);
+        allUsersSnap.forEach((userDoc) => {
+          const data = userDoc.data();
+          if (data.email?.toLowerCase().trim() === embeddedEmail || data.verificationToken === token) {
+            matchedDoc = userDoc;
+          }
+        });
+      }
+
+      if (matchedDoc) {
+        const userData = matchedDoc.data();
+        verifiedUserId = matchedDoc.id;
+        verifiedEmail = userData.email || embeddedEmail;
+        verifiedName = userData.fullName || userData.name || (verifiedEmail ? verifiedEmail.split('@')[0] : 'Member');
+        verifiedMemberId = userData.memberId || `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
+
+        // Update Firestore user document
+        await updateDoc(doc(db, 'users', matchedDoc.id), {
+          emailVerified: true,
+          accountStatus: 'Active',
+          verificationToken: null,
+        });
+        console.log(`✅ [Verify Email API] Updated Firestore user ${matchedDoc.id} (${verifiedEmail}) to emailVerified: true`);
+      }
+    } catch (fsErr) {
+      console.warn('[Verify Email API] Firestore update notice:', fsErr);
     }
 
-    // 2. Second attempt: Fallback to case-insensitive embedded email query
-    if (!profile && embeddedEmail) {
-      try {
-        const { data: emailMatches, error: emailErr } = await dbClient
+    // 2. Secondary: Sync with Supabase (for dual fallback compatibility)
+    try {
+      const dbClient = supabaseAdmin || supabase;
+      if (verifiedEmail) {
+        await dbClient
           .from('profiles')
-          .select('*')
-          .ilike('email', embeddedEmail);
-
-        if (!emailErr && Array.isArray(emailMatches) && emailMatches.length > 0) {
-          profile = emailMatches[0];
-        }
-      } catch (e) {
-        console.warn('[Verify Email API] Email fallback query notice:', e);
+          .update({
+            email_verified: true,
+            account_status: 'Active',
+            verification_token: null,
+          })
+          .ilike('email', verifiedEmail);
       }
+    } catch (spErr) {
+      console.warn('[Verify Email API] Supabase update notice:', spErr);
     }
 
-    // 3. Third attempt: Fallback query all profiles if RLS/Client issue occurs
-    if (!profile && embeddedEmail) {
-      try {
-        const { data: allProfiles } = await supabase.from('profiles').select('*');
-        if (Array.isArray(allProfiles)) {
-          profile = allProfiles.find((p: any) => p.email?.toLowerCase().trim() === embeddedEmail.toLowerCase().trim());
-        }
-      } catch (e) {}
-    }
-
-    // 4. Auto-recovery: If token embedded email exists, construct & save verified profile
-    if (!profile && embeddedEmail) {
-      console.log(`[Verify Email API] Auto-recovering verified profile for embedded email: ${embeddedEmail}`);
-      const memberId = `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
-      const newUserId = profile?.id || embeddedEmail;
-      const joinedDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-
-      profile = {
-        id: newUserId,
-        full_name: embeddedEmail.split('@')[0],
-        email: embeddedEmail,
-        member_id: memberId,
-        email_verified: true,
-        account_status: 'Active',
-      };
-
-      try {
-        await dbClient.from('profiles').upsert([{
-          id: newUserId,
-          full_name: profile.full_name,
-          email: embeddedEmail,
-          member_id: memberId,
-          email_verified: true,
-          account_status: 'Active',
-          joined_date: joinedDate,
-        }], { onConflict: 'email' });
-      } catch (e) {
-        console.warn('[Verify Email API] Profile upsert notice:', e);
-      }
-    }
-
-    if (!profile) {
+    if (!verifiedEmail) {
       return NextResponse.json(
         { success: false, error: 'Invalid or expired verification token. Please request a new link.' },
         { status: 400 }
       );
     }
 
-    // Check token expiration if timestamp present
-    if (profile.verification_token_expires_at) {
-      const expiresAt = new Date(profile.verification_token_expires_at).getTime();
-      if (Date.now() > expiresAt) {
-        return NextResponse.json(
-          { success: false, error: 'Verification link has expired (30 min limit). Please request a new email link below.' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Update profile record setting email_verified = true and account_status = Active
-    try {
-      const { error: upErr } = await dbClient
-        .from('profiles')
-        .update({
-          email_verified: true,
-          account_status: 'Active',
-          verification_token: null,
-          verification_token_expires_at: null,
-        })
-        .eq('id', profile.id);
-
-      if (upErr) {
-        await supabase
-          .from('profiles')
-          .update({ email_verified: true, account_status: 'Active' })
-          .eq('id', profile.id);
-      }
-
-      // Sync verification state to Supabase Auth User record
-      try {
-        if (supabaseAdmin && supabaseAdmin.auth && supabaseAdmin.auth.admin) {
-          await supabaseAdmin.auth.admin.updateUserById(profile.id, {
-            email_confirm: true,
-          });
-        }
-      } catch (authSyncErr) {
-        console.warn('[Verify Email API] Auth admin update notice:', authSyncErr);
-      }
-
-      // Record Security Audit Log Entry
-      try {
-        await dbClient.from('audit_logs').insert([{
-          actor: profile.full_name || profile.email,
-          role: 'Member',
-          action: 'EMAIL_VERIFICATION_SUCCESS',
-          module: 'Authentication',
-          record_id: profile.member_id || profile.id,
-          previous_status: 'Pending Verification',
-          new_status: 'Verified & Active',
-          ip_address: request.headers.get('x-forwarded-for') || '127.0.0.1',
-        }]);
-      } catch (auditErr) {}
-
-    } catch (updateErr: any) {
-      console.warn('[Verify Email API] DB update notice:', updateErr?.message || updateErr);
-    }
-
     return NextResponse.json({
       success: true,
       message: 'Email address successfully verified!',
       user: {
-        id: profile.id,
-        memberId: profile.member_id,
-        email: profile.email,
-        fullName: profile.full_name,
+        id: verifiedUserId || verifiedEmail,
+        memberId: verifiedMemberId || 'LOP-MEMBER',
+        email: verifiedEmail,
+        fullName: verifiedName || verifiedEmail.split('@')[0],
         accountStatus: 'Active',
         emailVerified: true,
       },

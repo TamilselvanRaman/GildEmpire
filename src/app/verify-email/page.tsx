@@ -53,6 +53,20 @@ function VerifyEmailContent() {
           if (data.user) {
             setUserInfo(data.user);
             setResendEmail(data.user.email || '');
+
+            if (typeof window !== 'undefined') {
+              const stored = localStorage.getItem('infinity_gold_user_session');
+              if (stored) {
+                try {
+                  const parsed = JSON.parse(stored);
+                  if (parsed && parsed.email?.toLowerCase() === data.user.email?.toLowerCase()) {
+                    parsed.emailVerified = true;
+                    parsed.accountStatus = 'Active';
+                    localStorage.setItem('infinity_gold_user_session', JSON.stringify(parsed));
+                  }
+                } catch (e) {}
+              }
+            }
           }
         } else {
           setStatus('error');

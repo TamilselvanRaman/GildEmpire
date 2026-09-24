@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { db } from '../../../../lib/firebase';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { supabase, supabaseAdmin } from '../../../../lib/supabaseClient';
 import { sendVerificationEmail } from '../../../../lib/resend';
 import { createVerificationToken } from '../../send-verification/route';
@@ -17,29 +18,24 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const dbClient = supabaseAdmin || supabase;
 
-    // Retrieve user profile
+    // 1. Check Firestore 'users' collection
     let profileName = 'Member';
     let isAlreadyVerified = false;
-    let userId = null;
 
     try {
-      const { data: profiles } = await dbClient
-        .from('profiles')
-        .select('id, full_name, email, email_verified')
-        .eq('email', cleanEmail);
-
-      if (Array.isArray(profiles) && profiles.length > 0) {
-        const p = profiles[0];
-        userId = p.id;
-        profileName = p.full_name || 'Member';
-        if (p.email_verified) {
+      const usersRef = collection(db, 'users');
+      const snap = await getDocs(query(usersRef, where('email', '==', cleanEmail)));
+      if (!snap.empty) {
+        const userDoc = snap.docs[0];
+        const data = userDoc.data();
+        profileName = data.fullName || data.name || cleanEmail.split('@')[0];
+        if (data.emailVerified === true) {
           isAlreadyVerified = true;
         }
       }
     } catch (e) {
-      console.warn('[Resend Verification API] Profile lookup notice:', e);
+      console.warn('[Resend Verification API] Firestore check notice:', e);
     }
 
     if (isAlreadyVerified) {
@@ -49,22 +45,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate resilient token with 30-min expiry
+    // Generate token
     const token = createVerificationToken(cleanEmail);
-    const tokenExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-    if (userId) {
-      try {
-        await dbClient
-          .from('profiles')
-          .update({
-            verification_token: token,
-            verification_token_expires_at: tokenExpiresAt,
-          })
-          .eq('id', userId);
-      } catch (e) {
-        console.warn('[Resend Verification API] Token column update notice:', e);
+    // Save token to Firestore
+    try {
+      const usersRef = collection(db, 'users');
+      const snap = await getDocs(query(usersRef, where('email', '==', cleanEmail)));
+      if (!snap.empty) {
+        await updateDoc(doc(db, 'users', snap.docs[0].id), {
+          verificationToken: token,
+        });
       }
+    } catch (e) {
+      console.warn('[Resend Verification API] Firestore token update notice:', e);
     }
 
     // Dispatch email via Resend
