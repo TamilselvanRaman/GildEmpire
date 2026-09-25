@@ -61,7 +61,7 @@ export async function POST(request: Request) {
           referredName: fullName,
           referredMemberId: memberId,
           depositStatus: 'Not Started',
-          bonusAmount: 500,
+          bonusAmount: 0,
           createdAt: serverTimestamp(),
         });
       } catch (refErr) {

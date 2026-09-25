@@ -79,6 +79,44 @@ export const AdminUsersPage = () => {
     }
   };
 
+  const handleVerifyUserDeposit = async (u: any) => {
+    if (!u) return;
+    try {
+      const targetGroupId = (u.group && u.group !== 'Not Assigned Yet' && u.group !== 'Unassigned') ? u.group : 'GROUP-001';
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: u.id,
+          email: u.email,
+          memberId: u.memberId,
+          depositStatus: 'Verified',
+          groupId: targetGroupId,
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        const updatedUser = { 
+          ...u, 
+          deposit: 'Verified', 
+          depositStatus: 'Verified', 
+          status: 'Active',
+          group: targetGroupId
+        };
+        setUsersList(prev => prev.map(item => (item.id === u.id || item.memberId === u.memberId || item.email === u.email) ? updatedUser : item));
+        if (selectedUserModal && (selectedUserModal.id === u.id || selectedUserModal.memberId === u.memberId)) {
+          setSelectedUserModal(updatedUser);
+        }
+        alert(`🎉 Deposit for ${u.name || u.memberId} (₹10,000) has been VERIFIED by Admin!\nAssigned to group ${targetGroupId}.`);
+        await fetchDbUsers();
+      } else {
+        alert(`❌ Failed to verify deposit: ${data?.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      alert(`❌ Network error while verifying deposit: ${err?.message || err}`);
+    }
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedUserModal) return;
@@ -524,9 +562,24 @@ export const AdminUsersPage = () => {
 
               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Scheme Deposit Status</span>
-                <span className="text-xs font-mono font-extrabold text-emerald-700 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-full inline-block mt-2">
-                  {selectedUserModal.deposit === 'Verified' ? '₹10,000 Verified' : selectedUserModal.deposit}
-                </span>
+                <div className="flex flex-col items-start gap-2 mt-2">
+                  <span className={`text-xs font-mono font-extrabold px-3 py-1 rounded-full inline-block ${
+                    selectedUserModal.deposit === 'Verified'
+                      ? 'text-emerald-700 bg-emerald-100 border border-emerald-300'
+                      : 'text-amber-800 bg-amber-100 border border-amber-300'
+                  }`}>
+                    {selectedUserModal.deposit === 'Verified' ? '₹10,000 Verified' : selectedUserModal.deposit}
+                  </span>
+                  {selectedUserModal.deposit !== 'Verified' && (
+                    <button
+                      onClick={() => handleVerifyUserDeposit(selectedUserModal)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-md cursor-pointer transition-all active:scale-95"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                      <span>Verify ₹10,000 Scheme Deposit Now</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
@@ -773,15 +826,30 @@ export const AdminUsersPage = () => {
                     </td>
 
                     <td className="p-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
-                        u.deposit === 'Verified' 
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
-                          : u.deposit === 'Pending'
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-rose-50 text-rose-800 border border-rose-200'
-                      }`}>
-                        {u.deposit === 'Verified' ? '₹10,000 Verified' : u.deposit}
-                      </span>
+                      <div className="flex flex-col items-start gap-1">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          u.deposit === 'Verified' 
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                            : u.deposit === 'Pending'
+                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                              : 'bg-rose-50 text-rose-800 border border-rose-200'
+                        }`}>
+                          {u.deposit === 'Verified' ? '₹10,000 Verified' : u.deposit}
+                        </span>
+                        {u.deposit !== 'Verified' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVerifyUserDeposit(u);
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-2 py-0.5 rounded-lg text-[9px] cursor-pointer shadow-xs transition-all flex items-center space-x-1"
+                            title="Verify ₹10,000 Deposit"
+                          >
+                            <CheckCircle2 className="w-3 h-3 text-emerald-200" />
+                            <span>Verify ₹10k Deposit</span>
+                          </button>
+                        )}
+                      </div>
                     </td>
 
                     <td className="p-4 font-mono font-bold text-slate-700">

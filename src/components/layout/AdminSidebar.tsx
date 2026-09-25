@@ -18,18 +18,22 @@ import {
   Menu,
   X,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  ArrowUpRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminSidebar = () => {
-  const { currentView, setCurrentView, logout } = useApp();
+  const { currentView, setCurrentView, logout, withdrawals } = useApp();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const pendingWithdrawalCount = (withdrawals || []).filter(w => w.status === 'Pending').length;
 
   const adminMenu = [
     { id: 'admin-dashboard', label: 'Overview', icon: LayoutDashboard },
     { id: 'admin-users', label: 'User Management', icon: Users },
     { id: 'admin-deposits', label: 'Deposit Queue', icon: Wallet },
+    { id: 'admin-withdrawals', label: 'Withdrawal Requests', icon: ArrowUpRight, badge: pendingWithdrawalCount },
     { id: 'admin-groups', label: '50-Member Groups', icon: Layers },
     { id: 'admin-slots', label: 'Slot Control Grid', icon: Grid },
     { id: 'admin-rewards', label: 'Reward Program', icon: Award },
@@ -202,7 +206,7 @@ export const AdminSidebar = () => {
             </div>
           </div>
 
-          {/* Menu Items */}
+                {/* Menu Items */}
           <nav className="space-y-1">
             {adminMenu.map(item => {
               const Icon = item.icon;
@@ -215,14 +219,21 @@ export const AdminSidebar = () => {
                 <button
                   key={item.id}
                   onClick={() => handleSelectView(item.id as ViewMode)}
-                  className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     isActive 
                       ? 'bg-[#2F6FED] text-white shadow-md shadow-blue-500/20 font-extrabold' 
                       : 'text-[#0B1E39] hover:bg-blue-200/60 hover:text-[#2F6FED]'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-600/80'}`} />
-                  <span>{item.label}</span>
+                  <div className="flex items-center space-x-3">
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-600/80'}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && item.badge > 0 ? (
+                    <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-amber-500 text-slate-950 shadow-xs">
+                      {item.badge}
+                    </span>
+                  ) : null}
                 </button>
               );
             })}

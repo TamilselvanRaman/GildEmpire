@@ -40,6 +40,7 @@ export type ViewMode =
   | 'admin-group-detail'
   | 'admin-slots'
   | 'admin-referrals'
+  | 'admin-withdrawals'
   | 'admin-rewards'
   | 'admin-reward-cycle-detail'
   | 'admin-reward-flow-control'
@@ -126,6 +127,22 @@ export interface DepositRecord {
   reviewerNotes?: string;
 }
 
+export interface WithdrawalRecord {
+  id: string;
+  userId: string;
+  memberId: string;
+  memberName: string;
+  amount: number;
+  payoutMethod: 'UPI' | 'Bank Transfer (NEFT/IMPS)';
+  upiId?: string;
+  bankAccount?: string;
+  ifscCode?: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  requestDate: string;
+  processedDate?: string;
+  adminNotes?: string;
+}
+
 export interface GroupSlot {
   slotNumber: number; // 1 to 50
   memberId?: string;
@@ -191,8 +208,11 @@ export interface ReferralItem {
   referredMemberId: string;
   joinedDate: string;
   depositStatus: 'Verified' | 'Pending' | 'Not Started';
-  eligibility: 'Eligible' | 'Pending Deposit' | 'Pending Verification';
+  eligibility: 'Eligible' | 'Pending Deposit' | 'Pending Verification' | 'Claim Locked';
   bonusEarnedAmount?: number;
+  bonusAmount?: number;
+  claimed?: boolean;
+  claimable?: boolean;
 }
 
 export interface NotificationItem {

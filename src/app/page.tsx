@@ -49,6 +49,7 @@ import { AdminGroupDetailPage } from '../components/admin/AdminGroupDetailPage';
 import { AdminAuditLogsPage } from '../components/admin/AdminAuditLogsPage';
 import { AdminSettingsPage } from '../components/admin/AdminSettingsPage';
 import { AdminReferralsPage } from '../components/admin/AdminReferralsPage';
+import { AdminWithdrawalsPage } from '../components/admin/AdminWithdrawalsPage';
 import { AdminMobileRestrictionPage } from '../components/admin/AdminMobileRestrictionPage';
 
 // Pre-Deployment System, Payment, Support, Legal & Error Components
@@ -204,6 +205,7 @@ export default function Home() {
               {currentView.startsWith('admin-reward') && <AdminRewardFlowControlPage />}
               {(currentView === 'admin-audit-logs' || currentView === 'admin-reports') && <AdminAuditLogsPage />}
               {currentView === 'admin-referrals' && <AdminReferralsPage />}
+              {currentView === 'admin-withdrawals' && <AdminWithdrawalsPage />}
               {(currentView === 'admin-settings' || currentView === 'admin-notifications') && <AdminSettingsPage />}
             </main>
           </div>

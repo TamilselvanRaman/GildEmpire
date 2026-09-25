@@ -13,7 +13,8 @@ import {
   AuditLogItem, 
   AdminUser, 
   SystemSettingsConfig,
-  ProgramEvent 
+  ProgramEvent,
+  WithdrawalRecord
 } from '../types';
 import { 
   currentUserMock, 
@@ -92,6 +93,11 @@ interface AppContextType {
   submitDeposit: (amount: number, refId: string, method: DepositRecord['paymentMethod']) => void;
   reviewDeposit: (depositId: string, status: 'Verified' | 'Rejected', notes: string) => void;
   executeDailySpin: () => DailyGoldWinner | null;
+  withdrawals: WithdrawalRecord[];
+  claimReferralBonus: (referralId: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  requestWithdrawal: (amount: number, upiId?: string, bankAccount?: string, ifscCode?: string, payoutMethod?: 'UPI' | 'Bank Transfer (NEFT/IMPS)') => Promise<{ success: boolean; error?: string; withdrawal?: WithdrawalRecord }>;
+  reviewWithdrawal: (withdrawalId: string, status: 'Approved' | 'Rejected', notes?: string) => Promise<{ success: boolean; error?: string }>;
+  
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   updateUserProfile: (name: string, email: string, mobile: string) => void;
@@ -173,6 +179,7 @@ const viewToPathMap: Record<string, string> = {
   'admin-group-detail': '/admin/group-detail',
   'admin-slots': '/admin/slots',
   'admin-referrals': '/admin/referrals',
+  'admin-withdrawals': '/admin/withdrawals',
   'admin-rewards': '/admin/rewards',
   'admin-reward-cycle-detail': '/admin/rewards',
   'admin-reward-flow-control': '/admin/rewards',
@@ -214,6 +221,7 @@ const pathToViewMap: Record<string, ViewMode> = {
   '/admin/groups/detail': 'admin-group-detail',
   '/admin/slots': 'admin-slots',
   '/admin/referrals': 'admin-referrals',
+  '/admin/withdrawals': 'admin-withdrawals',
   '/admin/rewards': 'admin-rewards',
   '/admin/notifications': 'admin-notifications',
   '/admin/reports': 'admin-reports',
@@ -410,6 +418,47 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>(adminUsersMock);
   const [settings, setSettings] = useState<SystemSettingsConfig>(systemSettingsMock);
   const [dbUsers, setDbUsers] = useState<any[]>([]);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRecord[]>([]);
+
+  const [claimedReferralIds, setClaimedReferralIds] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('infinity_gold_claimed_referrals');
+        if (stored) return new Set(JSON.parse(stored));
+      } catch (e) {}
+    }
+    return new Set();
+  });
+
+  const fetchWithdrawals = async () => {
+    try {
+      const res = await fetch('/api/withdrawals');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.withdrawals) && data.withdrawals.length > 0) {
+        setWithdrawals(data.withdrawals);
+      } else if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('infinity_gold_withdrawals');
+        if (stored) {
+          try {
+            setWithdrawals(JSON.parse(stored));
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('infinity_gold_withdrawals');
+        if (stored) {
+          try {
+            setWithdrawals(JSON.parse(stored));
+          } catch (e) {}
+        }
+      }
+    }
+  };
+
+  React.useEffect(() => {
+    fetchWithdrawals();
+  }, []);
 
   const fetchReferrals = async (currentUser = user, usersList = dbUsers) => {
     if (!currentUser || (!currentUser.email && !currentUser.memberId && !currentUser.referralId)) return;
@@ -431,6 +480,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         apiRefs = data.referrals;
       }
 
+      const listToScan = Array.isArray(usersList) && usersList.length > 0 ? usersList : dbUsers;
+
+      // Update apiRefs with real-time deposit/slot status from dbUsers
+      apiRefs = apiRefs.map((r: any) => {
+        const uMatch = Array.isArray(listToScan) ? listToScan.find((u: any) => 
+          (u.memberId && u.memberId === r.referredMemberId) || 
+          (u.id && u.id === r.referredUserId) ||
+          (u.name && r.referredName && u.name.toLowerCase() === r.referredName.toLowerCase()) ||
+          (u.email && r.referredName && u.email.toLowerCase().includes(r.referredName.toLowerCase()))
+        ) : null;
+
+        if (uMatch) {
+          const isVerified = uMatch.deposit === 'Verified' || uMatch.depositStatus === 'Verified' || Number(uMatch.slotNumber || 0) > 0 || (uMatch.slot && uMatch.slot !== 'Not Assigned Yet' && uMatch.slot !== 'Unassigned' && uMatch.slot !== '-');
+          if (isVerified) {
+            return {
+              ...r,
+              depositStatus: 'Verified' as const,
+              eligibility: 'Eligible' as const,
+              bonusEarnedAmount: 500,
+              bonusAmount: 500,
+            };
+          }
+        }
+        return r;
+      });
+
       const apiRefMemberIds = new Set(apiRefs.map((r: any) => r.referredMemberId));
 
       const numPart = (code?.replace(/\D/g, '') || memberId?.replace(/\D/g, '') || '');
@@ -444,7 +519,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       ].filter(Boolean);
 
       const localRefsFromDbUsers: ReferralItem[] = [];
-      const listToScan = Array.isArray(usersList) && usersList.length > 0 ? usersList : dbUsers;
 
       if (Array.isArray(listToScan)) {
         listToScan.forEach((u: any) => {
@@ -458,7 +532,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
           if (isMatch) {
             if (!apiRefMemberIds.has(u.memberId)) {
-              const isVerified = u.deposit === 'Verified' || u.depositStatus === 'Verified';
+              const isVerified = u.deposit === 'Verified' || u.depositStatus === 'Verified' || Number(u.slotNumber || 0) > 0 || (u.slot && u.slot !== 'Not Assigned Yet' && u.slot !== 'Unassigned' && u.slot !== '-');
               localRefsFromDbUsers.push({
                 id: u.id || `ref_local_${u.memberId}`,
                 referredName: u.name || u.fullName || u.email?.split('@')[0] || 'Referred Member',
@@ -467,6 +541,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 depositStatus: isVerified ? 'Verified' : 'Not Started',
                 eligibility: isVerified ? 'Eligible' : 'Pending Verification',
                 bonusEarnedAmount: isVerified ? 500 : 0,
+                bonusAmount: isVerified ? 500 : 0,
               });
             }
           }
@@ -496,7 +571,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           if (!dbMatch) return currentUser;
 
           const isEmailVerified = Boolean(dbMatch.emailVerified);
-          const isDepositVerified = dbMatch.deposit === 'Verified' || dbMatch.depositStatus === 'Verified';
+          const isDepositVerified = dbMatch.deposit === 'Verified' || dbMatch.depositStatus === 'Verified' || Number(dbMatch.slotNumber || 0) > 0;
 
           const rawSlot = String(dbMatch.slot || '').replace(/[^0-9]/g, '');
           const assignedSlotNumber = parseInt(rawSlot, 10) || (isDepositVerified ? 1 : 0);
@@ -517,7 +592,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           };
         });
 
-        // Removed redundant unmemoized fetchReferrals call
+        // Trigger fetchReferrals with updated users list
+        fetchReferrals(user, data.users);
       }
     } catch (err) {
       console.error('Error fetching DB users in AppContext:', err);
@@ -1305,6 +1381,171 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setTimerConfigState({ hours, minutes, seconds });
   };
 
+  const claimReferralBonus = async (referralId: string) => {
+    if (user.depositStatus !== 'Verified') {
+      return { success: false, error: 'Your ₹10,000 scheme deposit must be verified first before claiming referral bonuses.' };
+    }
+
+    const targetRef = referrals.find(r => r.id === referralId);
+    if (!targetRef) {
+      return { success: false, error: 'Referral record not found.' };
+    }
+
+    if (targetRef.depositStatus !== 'Verified') {
+      return { success: false, error: 'Referred member has not completed their deposit yet.' };
+    }
+
+    if (targetRef.claimed || claimedReferralIds.has(referralId)) {
+      return { success: false, error: '5% bonus has already been claimed for this member.' };
+    }
+
+    const newClaimedSet = new Set(claimedReferralIds);
+    newClaimedSet.add(referralId);
+    setClaimedReferralIds(newClaimedSet);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('infinity_gold_claimed_referrals', JSON.stringify(Array.from(newClaimedSet)));
+    }
+
+    setReferrals(prev => prev.map(r => {
+      if (r.id === referralId) {
+        return {
+          ...r,
+          claimed: true,
+          claimable: false,
+          eligibility: 'Eligible' as const,
+        };
+      }
+      return r;
+    }));
+
+    const bonusVal = targetRef.bonusEarnedAmount || 500;
+    const newNotif: NotificationItem = {
+      id: `notif_claim_${Date.now()}`,
+      title: '🎉 5% Referral Bonus Claimed!',
+      description: `Successfully claimed ₹${bonusVal} referral bonus for ${targetRef.referredName} (${targetRef.referredMemberId}). Credited to your withdrawable wallet balance.`,
+      category: 'Referral',
+      timestamp: 'Just now',
+      read: false,
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+
+    return { success: true, message: `₹${bonusVal} 5% Referral bonus credited to withdrawable balance!` };
+  };
+
+  const requestWithdrawal = async (
+    amount: number,
+    upiId?: string,
+    bankAccount?: string,
+    ifscCode?: string,
+    payoutMethod: 'UPI' | 'Bank Transfer (NEFT/IMPS)' = 'UPI'
+  ) => {
+    if (amount < 500) {
+      return { success: false, error: 'Minimum withdrawal amount is ₹500.' };
+    }
+
+    const newWithdrawal: WithdrawalRecord = {
+      id: `wth_${Date.now()}`,
+      userId: user.id,
+      memberId: user.memberId,
+      memberName: user.fullName,
+      amount: Number(amount),
+      payoutMethod,
+      upiId: upiId || '',
+      bankAccount: bankAccount || '',
+      ifscCode: ifscCode || '',
+      status: 'Pending',
+      requestDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    };
+
+    const updatedWithdrawals = [newWithdrawal, ...withdrawals];
+    setWithdrawals(updatedWithdrawals);
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('infinity_gold_withdrawals', JSON.stringify(updatedWithdrawals));
+    }
+
+    try {
+      await fetch('/api/withdrawals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newWithdrawal),
+      });
+    } catch (err) {
+      console.warn('Backend sync warning for withdrawal:', err);
+    }
+
+    const newAudit: AuditLogItem = {
+      id: `audit_${Date.now()}`,
+      timestamp: new Date().toLocaleString('en-IN') + ' IST',
+      actor: user.email,
+      role: 'System',
+      action: 'WITHDRAWAL_REQUEST_SUBMITTED',
+      module: 'User Management',
+      recordId: newWithdrawal.id,
+      previousStatus: 'Available Balance',
+      newStatus: `Pending Admin Approval (₹${amount})`,
+      ipAddress: '103.45.12.89',
+    };
+    setAuditLogs(prev => [newAudit, ...prev]);
+
+    return { success: true, withdrawal: newWithdrawal };
+  };
+
+  const reviewWithdrawal = async (
+    withdrawalId: string,
+    status: 'Approved' | 'Rejected',
+    notes?: string
+  ) => {
+    const updated = withdrawals.map(w => {
+      if (w.id === withdrawalId) {
+        return {
+          ...w,
+          status,
+          processedDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          adminNotes: notes || (status === 'Approved' ? 'IMPS Payout Dispatched & Approved by Admin' : 'Withdrawal Request Rejected by Admin'),
+        };
+      }
+      return w;
+    });
+
+    setWithdrawals(updated);
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('infinity_gold_withdrawals', JSON.stringify(updated));
+    }
+
+    try {
+      await fetch('/api/withdrawals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'review',
+          withdrawalId,
+          status,
+          adminNotes: notes,
+        }),
+      });
+    } catch (err) {
+      console.warn('Backend sync warning for withdrawal review:', err);
+    }
+
+    const newAudit: AuditLogItem = {
+      id: `audit_${Date.now()}`,
+      timestamp: new Date().toLocaleString('en-IN') + ' IST',
+      actor: 'admin.op@infinitygram.net',
+      role: 'Super Admin',
+      action: status === 'Approved' ? 'WITHDRAWAL_APPROVED_AND_PAID' : 'WITHDRAWAL_REJECTED_REFUNDED',
+      module: 'Deposits',
+      recordId: withdrawalId,
+      previousStatus: 'Pending',
+      newStatus: status,
+      ipAddress: '103.45.12.89',
+    };
+    setAuditLogs(prev => [newAudit, ...prev]);
+
+    return { success: true };
+  };
+
   return (
     <AppContext.Provider value={{
       currentView,
@@ -1317,6 +1558,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setSelectedBatchId,
       pastWinners,
       referrals,
+      withdrawals,
+      claimReferralBonus,
+      requestWithdrawal,
+      reviewWithdrawal,
       notifications,
       auditLogs,
       adminUsers,

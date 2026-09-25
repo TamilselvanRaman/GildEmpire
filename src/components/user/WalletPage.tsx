@@ -19,34 +19,56 @@ import {
   Filter, 
   FileText,
   TrendingUp,
-  Award
+  Award,
+  AlertCircle,
+  Clock,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const WalletPage = () => {
-  const { user, group, deposits, referrals, submitDeposit, setCurrentView } = useApp();
+  const { user, group, deposits, referrals, withdrawals, submitDeposit, requestWithdrawal, setCurrentView } = useApp();
   const [activeTab, setActiveTab] = useState<'all' | 'deposit' | 'referral' | 'withdrawal'>('all');
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showAddFundsModal, setShowAddFundsModal] = useState(false);
-  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
+  const [withdrawSuccess, setWithdrawSuccess] = useState<string | null>(null);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
   const [buySlotSuccess, setBuySlotSuccess] = useState<string | null>(null);
   const [addFundsAmount, setAddFundsAmount] = useState(10000);
 
   const slotsOwnedCount = user.slotsOwned || (user.slotNumber ? 1 : 0);
   const maxSlots = 3;
 
-  const [withdrawForm, setWithdrawForm] = useState({
-    amount: '2500',
-    upiId: 'rajesh.sharma@upi',
-    bankAccount: '918234120938',
-    ifscCode: 'HDFC0001234',
-    payoutMethod: 'upi',
-  });
+  const userVerifiedDeposits = deposits.filter(d => d.memberId === user.memberId && d.status === 'Verified');
+  const depositTotal = userVerifiedDeposits.reduce((acc, curr) => acc + curr.amount, 0);
 
-  const userVerifiedDeposits = deposits.filter(d => d.memberId === user.memberId);
-  const depositTotal = userVerifiedDeposits.filter(d => d.status === 'Verified').reduce((acc, curr) => acc + curr.amount, 0);
-  const referralBonus = (referrals || []).filter(r => r.depositStatus === 'Verified').length * 500;
-  const userBalance = depositTotal + referralBonus;
+  const isUserDepositVerified = user.depositStatus === 'Verified';
+
+  // Calculate withdrawable balance (Only claimed 5% referral bonuses minus non-rejected withdrawals)
+  const claimedReferralBonuses = (referrals || [])
+    .filter(r => r.claimed || (r.depositStatus === 'Verified' && isUserDepositVerified))
+    .reduce((sum, r) => sum + (r.bonusEarnedAmount || 500), 0);
+
+  const userWithdrawals = (withdrawals || []).filter(w => w.memberId === user.memberId);
+  const totalSubtractedWithdrawals = userWithdrawals
+    .filter(w => w.status !== 'Rejected')
+    .reduce((sum, w) => sum + w.amount, 0);
+
+  const withdrawableBalance = Math.max(0, claimedReferralBonuses - totalSubtractedWithdrawals);
+  const totalWalletValue = depositTotal + withdrawableBalance;
+
+  // Pending / Locked Bonuses (Referred members verified but referrer not verified or not claimed yet)
+  const pendingLockedBonuses = (referrals || [])
+    .filter(r => r.depositStatus === 'Verified' && !r.claimed && !isUserDepositVerified)
+    .reduce((sum, r) => sum + 500, 0);
+
+  const [withdrawForm, setWithdrawForm] = useState({
+    amount: '500',
+    upiId: '',
+    bankAccount: '',
+    ifscCode: '',
+    payoutMethod: 'UPI' as 'UPI' | 'Bank Transfer (NEFT/IMPS)',
+  });
 
   const handleAddFundsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +85,7 @@ export const WalletPage = () => {
       return;
     }
 
-    if (userBalance < 10000) {
+    if (totalWalletValue < 10000) {
       setShowAddFundsModal(true);
       return;
     }
@@ -74,32 +96,85 @@ export const WalletPage = () => {
     setTimeout(() => setBuySlotSuccess(null), 5000);
   };
 
-  // Dynamic Ledger Data from actual user state
-  const walletTransactions = userVerifiedDeposits.map((d, index) => ({
-    id: d.id || `tx-${index}`,
+  // Compile Dynamic Ledger Transactions
+  const depositTxList = userVerifiedDeposits.map((d, index) => ({
+    id: d.id || `dep-${index}`,
     date: d.transactionDate,
-    type: 'Membership Deposit',
+    type: 'Scheme Deposit (Active Slot)',
     category: 'deposit' as const,
     refId: d.referenceId,
     method: d.paymentMethod,
     amount: d.amount,
     direction: 'in' as const,
     status: d.status,
-    balanceAfter: d.status === 'Verified' ? d.amount : 0,
   }));
 
-  const filteredTransactions = walletTransactions.filter(tx => {
+  const referralTxList = (referrals || [])
+    .filter(r => r.claimed || (r.depositStatus === 'Verified' && isUserDepositVerified))
+    .map((r, index) => ({
+      id: `ref-tx-${r.id || index}`,
+      date: r.joinedDate || new Date().toLocaleDateString('en-IN'),
+      type: `5% Referral Bonus (${r.referredName})`,
+      category: 'referral' as const,
+      refId: `REF-${r.referredMemberId}`,
+      method: '5% Instant Cash Credit',
+      amount: r.bonusEarnedAmount || 500,
+      direction: 'in' as const,
+      status: 'Verified',
+    }));
+
+  const withdrawalTxList = userWithdrawals.map(w => ({
+    id: w.id,
+    date: w.requestDate,
+    type: 'Bank Withdrawal Request',
+    category: 'withdrawal' as const,
+    refId: w.id,
+    method: w.payoutMethod === 'UPI' ? `UPI: ${w.upiId}` : `A/C: ${w.bankAccount}`,
+    amount: w.amount,
+    direction: 'out' as const,
+    status: w.status === 'Pending' ? 'Pending Admin Approval' : w.status === 'Approved' ? 'Approved & Paid' : 'Rejected & Refunded',
+  }));
+
+  const allTransactions = [...depositTxList, ...referralTxList, ...withdrawalTxList].sort((a, b) => b.id.localeCompare(a.id));
+
+  const filteredTransactions = allTransactions.filter(tx => {
     if (activeTab === 'all') return true;
     return tx.category === activeTab;
   });
 
-  const handleWithdrawSubmit = (e: React.FormEvent) => {
+  const handleWithdrawSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setWithdrawSuccess(true);
-    setTimeout(() => {
-      setWithdrawSuccess(false);
-      setShowWithdrawModal(false);
-    }, 3000);
+    setWithdrawError(null);
+    setWithdrawSuccess(null);
+
+    const amt = Number(withdrawForm.amount);
+    if (amt < 500) {
+      setWithdrawError('Minimum withdrawal amount is ₹500.');
+      return;
+    }
+
+    if (amt > withdrawableBalance) {
+      setWithdrawError(`Requested ₹${amt.toLocaleString('en-IN')} exceeds your available withdrawable bonus balance of ₹${withdrawableBalance.toLocaleString('en-IN')}.`);
+      return;
+    }
+
+    const res = await requestWithdrawal(
+      amt,
+      withdrawForm.upiId,
+      withdrawForm.bankAccount,
+      withdrawForm.ifscCode,
+      withdrawForm.payoutMethod
+    );
+
+    if (res.success) {
+      setWithdrawSuccess(`Withdrawal request of ₹${amt.toLocaleString('en-IN')} submitted successfully! Status: Pending Admin Approval.`);
+      setTimeout(() => {
+        setWithdrawSuccess(null);
+        setShowWithdrawModal(false);
+      }, 3500);
+    } else {
+      setWithdrawError(res.error || 'Failed to submit withdrawal request.');
+    }
   };
 
   return (
@@ -172,32 +247,49 @@ export const WalletPage = () => {
             )}
 
             <button
-              onClick={() => setShowWithdrawModal(true)}
+              onClick={() => {
+                setWithdrawError(null);
+                setWithdrawSuccess(null);
+                setShowWithdrawModal(true);
+              }}
               className="bg-[#081E26] hover:bg-[#081E26]/80 text-white border border-[#E1A238]/40 text-xs font-black px-5 py-4 rounded-2xl shadow-md transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer hover:-translate-y-0.5"
             >
               <ArrowUpRight className="w-4 h-4 text-[#F2C868]" />
-              <span>Withdrawal</span>
+              <span>Withdraw Request</span>
             </button>
           </div>
         </div>
 
         {/* Balance Breakdown Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-[#0D3B43] relative z-10 text-xs">
-          <div>
-            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Available Wallet Balance</p>
-            <p className="text-2xl font-black text-[#F2C868] font-mono tracking-tight mt-0.5">₹{userBalance.toLocaleString('en-IN')}.00</p>
+          <div className="bg-[#081E26]/60 p-4 rounded-2xl border border-[#00C2B8]/40">
+            <p className="text-[10px] text-[#00C2B8] font-extrabold uppercase tracking-widest flex items-center space-x-1">
+              <Sparkles className="w-3 h-3" />
+              <span>Withdrawable Bonus Balance</span>
+            </p>
+            <p className="text-2xl font-black text-[#00C2B8] font-mono tracking-tight mt-1">₹{withdrawableBalance.toLocaleString('en-IN')}.00</p>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Min ₹500 withdrawal limit</p>
           </div>
-          <div>
+
+          <div className="bg-[#081E26]/60 p-4 rounded-2xl border border-[#E1A238]/30">
             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Verified Group Deposit</p>
-            <p className="text-2xl font-black text-white font-mono tracking-tight mt-0.5">₹{depositTotal.toLocaleString('en-IN')}.00</p>
+            <p className="text-2xl font-black text-white font-mono tracking-tight mt-1">₹{depositTotal.toLocaleString('en-IN')}.00</p>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Active in 50-Day Pool</p>
           </div>
-          <div>
-            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">5% Referral Bonus Earned</p>
-            <p className="text-2xl font-black text-[#00C2B8] font-mono tracking-tight mt-0.5">₹{referralBonus.toLocaleString('en-IN')}.00</p>
+
+          <div className="bg-[#081E26]/60 p-4 rounded-2xl border border-[#E1A238]/30">
+            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Total Wallet Value</p>
+            <p className="text-2xl font-black text-[#F2C868] font-mono tracking-tight mt-1">₹{totalWalletValue.toLocaleString('en-IN')}.00</p>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Combined financial status</p>
           </div>
-          <div>
-            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Group Slots Owned</p>
-            <p className="text-2xl font-black text-[#00C2B8] font-mono tracking-tight mt-0.5">{slotsOwnedCount} / 3 Max</p>
+
+          <div className="bg-[#081E26]/60 p-4 rounded-2xl border border-amber-500/30">
+            <p className="text-[10px] text-amber-400 font-extrabold uppercase tracking-widest flex items-center space-x-1">
+              <Lock className="w-3 h-3" />
+              <span>Pending Locked Bonuses</span>
+            </p>
+            <p className="text-2xl font-black text-amber-300 font-mono tracking-tight mt-1">₹{pendingLockedBonuses.toLocaleString('en-IN')}.00</p>
+            <p className="text-[10px] text-amber-200/70 font-medium mt-0.5">{isUserDepositVerified ? 'Claim in referral tab' : 'Deposit required to unlock'}</p>
           </div>
         </div>
 
@@ -261,8 +353,8 @@ export const WalletPage = () => {
               <tr>
                 <th className="p-3.5 rounded-l-xl whitespace-nowrap">Transaction Date</th>
                 <th className="p-3.5 whitespace-nowrap">Type & Description</th>
-                <th className="p-3.5 whitespace-nowrap">Reference / UTR Code</th>
-                <th className="p-3.5 whitespace-nowrap">Payment Method</th>
+                <th className="p-3.5 whitespace-nowrap">Reference / ID Code</th>
+                <th className="p-3.5 whitespace-nowrap">Payment Details</th>
                 <th className="p-3.5 whitespace-nowrap">Amount (INR)</th>
                 <th className="p-3.5 rounded-r-xl whitespace-nowrap">Audit Status</th>
               </tr>
@@ -271,7 +363,7 @@ export const WalletPage = () => {
               {filteredTransactions.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-400 font-medium">
-                    No transactions recorded. Verified membership deposits will appear here.
+                    No transactions recorded for selected filter. Verified membership deposits and withdrawal requests will appear here.
                   </td>
                 </tr>
               ) : (
@@ -294,7 +386,13 @@ export const WalletPage = () => {
                       {tx.direction === 'in' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
                     </td>
                     <td className="p-3.5 whitespace-nowrap">
-                      <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/40">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        tx.status.includes('Verified') || tx.status.includes('Approved') || tx.status === 'Verified'
+                          ? 'bg-[#081E26] text-[#00C2B8] border border-[#00C2B8]/40'
+                          : tx.status.includes('Pending')
+                          ? 'bg-[#081E26] text-amber-300 border border-amber-500/40'
+                          : 'bg-[#081E26] text-rose-400 border border-rose-500/40'
+                      }`}>
                         {tx.status}
                       </span>
                     </td>
@@ -306,7 +404,7 @@ export const WalletPage = () => {
         </div>
       </motion.div>
 
-      {/* Withdrawal Modal */}
+      {/* Withdrawal Request Modal */}
       <AnimatePresence>
         {showWithdrawModal && (
           <motion.div
@@ -333,64 +431,131 @@ export const WalletPage = () => {
                   <ArrowUpRight className="w-6 h-6 stroke-[3]" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white">Instant Wallet Withdrawal</h3>
-                  <p className="text-xs text-slate-300 font-medium">Available to withdraw: ₹3,500.00</p>
+                  <h3 className="text-xl font-black text-white">Withdrawal Request</h3>
+                  <p className="text-xs text-[#00C2B8] font-bold">Withdrawable Balance: ₹{withdrawableBalance.toLocaleString('en-IN')}.00</p>
                 </div>
               </div>
 
               {withdrawSuccess && (
                 <div className="bg-[#081E26] border border-[#00C2B8]/40 text-[#00C2B8] p-4 rounded-2xl text-xs font-bold flex items-center space-x-2">
                   <CheckCircle2 className="w-5 h-5 text-[#00C2B8] shrink-0" />
-                  <span>Withdrawal request of ₹{withdrawForm.amount} initiated. Reference #WTH-8924012. IMPS payout dispatched to bank.</span>
+                  <span>{withdrawSuccess}</span>
+                </div>
+              )}
+
+              {withdrawError && (
+                <div className="bg-rose-500/10 border border-rose-500/40 text-rose-300 p-4 rounded-2xl text-xs font-bold flex items-center space-x-2">
+                  <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                  <span>{withdrawError}</span>
                 </div>
               )}
 
               <form onSubmit={handleWithdrawSubmit} className="space-y-4 text-xs font-medium">
                 <div>
                   <label className="block text-slate-400 font-extrabold mb-1.5 uppercase tracking-widest text-[10px]">
-                    Withdrawal Amount (₹)
+                    Payout Method
                   </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setWithdrawForm({ ...withdrawForm, payoutMethod: 'UPI' })}
+                      className={`p-3 rounded-xl border text-xs font-extrabold transition-all cursor-pointer ${
+                        withdrawForm.payoutMethod === 'UPI' 
+                          ? 'bg-[#00C2B8] text-[#081E26] border-[#00C2B8]' 
+                          : 'bg-[#081E26] text-slate-300 border-[#0D3B43]'
+                      }`}
+                    >
+                      UPI Payment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWithdrawForm({ ...withdrawForm, payoutMethod: 'Bank Transfer (NEFT/IMPS)' })}
+                      className={`p-3 rounded-xl border text-xs font-extrabold transition-all cursor-pointer ${
+                        withdrawForm.payoutMethod === 'Bank Transfer (NEFT/IMPS)' 
+                          ? 'bg-[#00C2B8] text-[#081E26] border-[#00C2B8]' 
+                          : 'bg-[#081E26] text-slate-300 border-[#0D3B43]'
+                      }`}
+                    >
+                      Bank Account
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-slate-400 font-extrabold uppercase tracking-widest text-[10px]">
+                      Withdrawal Amount (Min ₹500)
+                    </label>
+                    <span className="text-[10px] text-amber-300 font-bold">Available: ₹{withdrawableBalance}</span>
+                  </div>
                   <input
                     type="number"
                     required
-                    max={3500}
+                    min={500}
+                    max={withdrawableBalance}
                     value={withdrawForm.amount}
                     onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
                     className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-black text-lg p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8]"
                   />
+                  <p className="text-[10px] text-slate-400 font-medium mt-1">Minimum withdrawal amount is ₹500.</p>
                 </div>
 
-                <div>
-                  <label className="block text-slate-400 font-extrabold mb-1.5 uppercase tracking-widest text-[10px]">
-                    Receiving Bank UPI ID
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={withdrawForm.upiId}
-                    onChange={(e) => setWithdrawForm({ ...withdrawForm, upiId: e.target.value })}
-                    className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-bold p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8]"
-                  />
-                </div>
+                {withdrawForm.payoutMethod === 'UPI' ? (
+                  <div>
+                    <label className="block text-slate-400 font-extrabold mb-1.5 uppercase tracking-widest text-[10px]">
+                      Receiving UPI ID
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="username@upi / mobile@paytm"
+                      value={withdrawForm.upiId}
+                      onChange={(e) => setWithdrawForm({ ...withdrawForm, upiId: e.target.value })}
+                      className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-bold p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8]"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-slate-400 font-extrabold mb-1.5 uppercase tracking-widest text-[10px]">
+                        Bank Account Number
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 918234120938"
+                        value={withdrawForm.bankAccount}
+                        onChange={(e) => setWithdrawForm({ ...withdrawForm, bankAccount: e.target.value })}
+                        className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-mono font-bold p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8]"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-slate-400 font-extrabold mb-1.5 uppercase tracking-widest text-[10px]">
-                    HDFC Bank Account Number
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={withdrawForm.bankAccount}
-                    onChange={(e) => setWithdrawForm({ ...withdrawForm, bankAccount: e.target.value })}
-                    className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-mono font-bold p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8]"
-                  />
-                </div>
+                    <div>
+                      <label className="block text-slate-400 font-extrabold mb-1.5 uppercase tracking-widest text-[10px]">
+                        Bank IFSC Code
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. HDFC0001234"
+                        value={withdrawForm.ifscCode}
+                        onChange={(e) => setWithdrawForm({ ...withdrawForm, ifscCode: e.target.value })}
+                        className="w-full bg-[#081E26] border border-[#0D3B43] text-white font-mono font-bold p-3.5 rounded-2xl focus:outline-none focus:border-[#00C2B8]"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <button
                   type="submit"
-                  className="w-full btn-infinity-cyan font-black py-4 rounded-2xl shadow-lg transition-all text-xs uppercase tracking-wider cursor-pointer"
+                  disabled={withdrawableBalance < 500}
+                  className={`w-full font-black py-4 rounded-2xl shadow-lg transition-all text-xs uppercase tracking-wider cursor-pointer ${
+                    withdrawableBalance >= 500
+                      ? 'btn-infinity-cyan'
+                      : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                  }`}
                 >
-                  Submit Instant IMPS Withdrawal Request
+                  {withdrawableBalance >= 500 ? 'Submit Withdrawal Request to Admin' : 'Min ₹500 Withdrawable Balance Required'}
                 </button>
               </form>
             </motion.div>
