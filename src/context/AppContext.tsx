@@ -577,6 +577,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           const assignedSlotNumber = parseInt(rawSlot, 10) || (isDepositVerified ? 1 : 0);
           const assignedGroupId = (dbMatch.group && dbMatch.group !== 'Not Assigned Yet' && dbMatch.group !== 'Unassigned') ? dbMatch.group : 'GROUP-001';
 
+          const resolvedAllocatedSlots = Array.isArray(dbMatch.allocatedSlots) && dbMatch.allocatedSlots.length > 0
+            ? dbMatch.allocatedSlots
+            : (assignedSlotNumber > 0 ? [{
+                group: assignedGroupId,
+                groupId: assignedGroupId,
+                slotNumber: assignedSlotNumber,
+                slot: `#${assignedSlotNumber}`,
+                joinedDate: currentUser.registrationDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+                depositStatus: 'Verified',
+              }] : []);
+
           return {
             ...currentUser,
             id: dbMatch.id || currentUser.id,
@@ -587,8 +598,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             accountStatus: dbMatch.status || currentUser.accountStatus,
             groupId: assignedGroupId,
             slotNumber: assignedSlotNumber > 0 ? assignedSlotNumber : currentUser.slotNumber,
-            assignedSlots: assignedSlotNumber > 0 ? [assignedSlotNumber] : currentUser.assignedSlots,
-            slotsOwned: assignedSlotNumber > 0 ? Math.max(1, currentUser.slotsOwned || 1) : currentUser.slotsOwned,
+            assignedSlots: Array.isArray(dbMatch.assignedSlots) ? dbMatch.assignedSlots : (assignedSlotNumber > 0 ? [assignedSlotNumber] : currentUser.assignedSlots),
+            allocatedSlots: resolvedAllocatedSlots,
+            slotsOwned: resolvedAllocatedSlots.length > 0 ? resolvedAllocatedSlots.length : (assignedSlotNumber > 0 ? 1 : currentUser.slotsOwned),
           };
         });
 

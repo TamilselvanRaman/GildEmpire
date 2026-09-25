@@ -89,6 +89,15 @@ export type ViewportMode = 'desktop' | 'tablet' | 'mobile';
 
 export type PortalType = 'public' | 'auth' | 'user' | 'admin' | 'system';
 
+export interface GroupSlotAllocation {
+  group: string;
+  groupId: string;
+  slotNumber: number;
+  slot: string;
+  joinedDate: string;
+  depositStatus: string;
+}
+
 export interface UserProfile {
   id: string;
   memberId: string;
@@ -107,6 +116,7 @@ export interface UserProfile {
   slotNumber?: number;
   slotsOwned?: number; // Max 3 slots per member in 1 group
   assignedSlots?: number[]; // e.g. [1, 14, 28]
+  allocatedSlots?: GroupSlotAllocation[];
   rewardStatus: 'In Selection Pool' | 'Won 1g Gold' | 'Pending Group Formation' | 'Completed';
   wonDay?: number;
   wonDate?: string;

@@ -13,7 +13,18 @@ export async function GET() {
       const u = docSnap.data();
       const resolvedMemberId = u.memberId || `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
       const isDepositVerified = u.depositStatus === 'Verified';
-      
+      const resolvedSlotNumber = Number(u.slotNumber || 0);
+      const rawAllocatedSlots = Array.isArray(u.allocatedSlots) && u.allocatedSlots.length > 0 
+        ? u.allocatedSlots 
+        : (resolvedSlotNumber > 0 || isDepositVerified ? [{
+            group: u.group || 'GROUP-001',
+            groupId: u.group || 'GROUP-001',
+            slotNumber: resolvedSlotNumber || 1,
+            slot: `#${resolvedSlotNumber || 1}`,
+            joinedDate: u.joinedDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            depositStatus: u.depositStatus || 'Verified',
+          }] : []);
+
       formattedUsers.push({
         id: docSnap.id || u.uid,
         memberId: resolvedMemberId,
@@ -32,6 +43,9 @@ export async function GET() {
         }] : []),
         group: u.group || 'Not Assigned Yet',
         slot: u.slotNumber ? `#${u.slotNumber}` : 'Not Assigned Yet',
+        slotNumber: resolvedSlotNumber,
+        allocatedSlots: rawAllocatedSlots,
+        assignedSlots: Array.isArray(u.assignedSlots) ? u.assignedSlots : (resolvedSlotNumber > 0 ? [resolvedSlotNumber] : []),
         status: u.accountStatus || 'Active',
         emailVerified: Boolean(u.emailVerified),
         role: u.role || 'Member',
@@ -112,6 +126,8 @@ export async function POST(request: Request) {
         slotNumber: 0,
         group: 'Not Assigned Yet',
         depositStatus: 'Not Started',
+        allocatedSlots: [],
+        assignedSlots: [],
       });
       return NextResponse.json({
         success: true,
@@ -138,12 +154,26 @@ export async function POST(request: Request) {
       status: 'Verified',
     };
 
+    const newSlotAllocation = {
+      group: groupId || 'GROUP-001',
+      groupId: groupId || 'GROUP-001',
+      slotNumber: parsedSlot,
+      slot: `#${parsedSlot}`,
+      joinedDate: dateStr,
+      depositStatus: depositStatus || 'Verified',
+    };
+
     const updateFields: any = {
       depositStatus: depositStatus || 'Verified',
       accountStatus: 'Active',
       slotNumber: parsedSlot,
       group: groupId || 'GROUP-001',
     };
+
+    if (parsedSlot > 0) {
+      updateFields.allocatedSlots = arrayUnion(newSlotAllocation);
+      updateFields.assignedSlots = arrayUnion(parsedSlot);
+    }
 
     if (isVerifiedAction) {
       updateFields.deposits = arrayUnion(newDepositEntry);
