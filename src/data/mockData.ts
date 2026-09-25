@@ -139,18 +139,33 @@ export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
     const filledSlots = grp.slots.filter(s => s.status === 'Occupied' || s.status === 'Won 1g Gold');
     grp.totalMembers = filledSlots.length;
     grp.activePoolCount = grp.slots.filter(s => s.status === 'Occupied').length;
-    grp.currentCycleDay = grp.totalMembers > 0 ? Math.min(15, grp.totalMembers) : 0;
-    grp.scheduledTime = grp.totalMembers > 0 ? '07:00 AM IST' : 'Awaiting Members';
-    grp.startDate = grp.totalMembers > 0 ? '2026-08-14' : '';
+    const wonCount = grp.slots.filter(s => s.status === 'Won 1g Gold').length;
 
     if (grp.totalMembers === 50) {
-      grp.status = 'active';
+      grp.status = wonCount > 0 ? 'active' : 'full';
+      grp.currentCycleDay = wonCount > 0 ? Math.min(50, wonCount + 1) : 0;
+      grp.scheduledTime = grp.scheduledTime || (
+        gIndex === 0 ? '07:00 AM IST' :
+        gIndex === 1 ? '09:00 AM IST' :
+        gIndex === 2 ? '08:00 PM IST' :
+        gIndex === 3 ? '02:00 PM IST' : '07:00 AM IST'
+      );
+      grp.startDate = grp.startDate || '2026-08-14';
     } else if (grp.totalMembers > 0) {
-      grp.status = 'active';
+      grp.status = 'recruiting';
+      grp.currentCycleDay = 0;
+      grp.scheduledTime = 'Awaiting 50 Members';
+      grp.startDate = 'Event Not Started (Awaiting 50 Members)';
     } else if (gIndex === 0 || (gIndex > 0 && groups[gIndex - 1]?.totalMembers > 0)) {
       grp.status = 'recruiting';
+      grp.currentCycleDay = 0;
+      grp.scheduledTime = 'Awaiting Members';
+      grp.startDate = 'Event Not Started';
     } else {
       grp.status = 'empty';
+      grp.currentCycleDay = 0;
+      grp.scheduledTime = 'Awaiting Members';
+      grp.startDate = 'Event Not Started';
     }
   });
 

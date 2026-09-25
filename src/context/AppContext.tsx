@@ -63,6 +63,7 @@ interface AppContextType {
   manualAssignSlot: (identifier: string, slotNo: number, targetBatchId?: string) => Promise<{ success: boolean; error?: string }>;
   unassignSlot: (slotNo: number, targetBatchId?: string, identifier?: string) => Promise<{ success: boolean; error?: string }>;
   autoFillGroupWithSystemUsers: (targetBatchId?: string) => Promise<{ success: boolean; count?: number; message?: string; error?: string }>;
+  createNewBatchGroup: (customName?: string) => { success: boolean; newGroup: GroupDetails };
   
   // Live 24-Hour Cooldown Lock & Broadcast State
   drawLockedUntil: number | null;
@@ -110,12 +111,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // Helper function to generate 50 daily program events
 const generate50DayProgramEvents = (startDateStr: string, pastWinners: DailyGoldWinner[]): ProgramEvent[] => {
   const events: ProgramEvent[] = [];
-  const baseDate = new Date(startDateStr || '2026-08-14');
+  let baseDate = new Date(startDateStr || '2026-08-14');
+  if (isNaN(baseDate.getTime())) {
+    baseDate = new Date('2026-08-14');
+  }
 
   for (let i = 1; i <= 50; i++) {
     const eventDate = new Date(baseDate);
     eventDate.setDate(baseDate.getDate() + (i - 1));
-    const dateStr = eventDate.toISOString().split('T')[0];
+    const dateStr = isNaN(eventDate.getTime()) ? '2026-08-14' : eventDate.toISOString().split('T')[0];
 
     const winner = pastWinners.find(w => w.dayNumber === i);
     let status: 'Completed' | 'Today' | 'Scheduled' | 'Upcoming' = 'Upcoming';
@@ -1257,6 +1261,58 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const createNewBatchGroup = (customName?: string) => {
+    const nextGroupIndex = allGroups.length + 1;
+    const groupId = `GROUP-${String(nextGroupIndex).padStart(3, '0')}`;
+    const letterCode = String.fromCharCode(65 + ((nextGroupIndex - 1) % 26));
+    const groupName = customName || `InfinityGram 50 Gold Club - Batch ${letterCode}`;
+
+    const slots: any[] = Array.from({ length: 50 }, (_, slotIdx) => {
+      const slotNumber = slotIdx + 1;
+      return {
+        slotNumber,
+        memberId: '—',
+        memberName: '—',
+        status: 'Available' as const,
+        joinedDate: '-',
+        wonDay: undefined,
+        wonDate: undefined,
+      };
+    });
+
+    const newGroup: GroupDetails = {
+      groupId,
+      groupName,
+      status: 'recruiting',
+      createdDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      totalMembers: 0,
+      currentCycleDay: 0,
+      totalGoldDistributedGrams: 0,
+      activePoolCount: 0,
+      scheduledTime: 'Awaiting Members',
+      startDate: 'Event Not Started',
+      slots,
+    };
+
+    setAllGroups(prev => [...prev, newGroup]);
+
+    const newAudit: AuditLogItem = {
+      id: `audit_creategroup_${Date.now()}`,
+      timestamp: new Date().toLocaleString('en-IN') + ' IST',
+      actor: 'admin.op@infinitygram.net',
+      role: 'Super Admin',
+      action: 'CREATE_NEW_GROUP_BATCH_SUCCESS',
+      module: 'Groups',
+      recordId: `${groupId} (${groupName})`,
+      previousStatus: `${allGroups.length} Batches`,
+      newStatus: `${allGroups.length + 1} Batches (Recruiting Active)`,
+      ipAddress: '103.45.12.89',
+    };
+    setAuditLogs(prev => [newAudit, ...prev]);
+
+    return { success: true, newGroup };
+  };
+
 
   // Submit deposit
   const submitDeposit = async (amount: number, refId: string, method: DepositRecord['paymentMethod']) => {
@@ -1664,6 +1720,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       manualAssignSlot,
       unassignSlot,
       autoFillGroupWithSystemUsers,
+      createNewBatchGroup,
       drawLockedUntil,
       isLiveDrawActive,
       currentLiveWinner,

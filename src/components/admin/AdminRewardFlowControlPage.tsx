@@ -47,7 +47,8 @@ export const AdminRewardFlowControlPage = () => {
     setCurrentView,
     drawLockedUntil,
     resetDrawLock,
-    programEvents
+    programEvents,
+    updateGroupSchedule,
   } = useApp();
   
   // Draw State
@@ -65,6 +66,21 @@ export const AdminRewardFlowControlPage = () => {
   const [startDate, setStartDate] = useState('2026-08-14');
   const [autoEmailEnabled, setAutoEmailEnabled] = useState(true);
   const [scheduleSaved, setScheduleSaved] = useState(false);
+
+  // Sync scheduledTime and startDate whenever target group switches or updates
+  useEffect(() => {
+    if (group) {
+      if (group.startDate && !group.startDate.includes('Not Started')) {
+        setStartDate(group.startDate);
+      }
+      const rawTime = group.scheduledTime || '07:00 AM IST';
+      const match = rawTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (match) {
+        setScheduledTime(`${match[1].padStart(2, '0')}:${match[2]}`);
+        setScheduledAmPm(match[3].toUpperCase() as 'AM' | 'PM');
+      }
+    }
+  }, [group?.groupId, group?.scheduledTime, group?.startDate]);
 
   // 24-Hour Lock Countdown Calculation
   const [lockCountdown, setLockCountdown] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
@@ -147,6 +163,8 @@ export const AdminRewardFlowControlPage = () => {
   };
 
   const handleSaveSchedule = () => {
+    const formattedScheduledTime = `${scheduledTime} ${scheduledAmPm} IST`;
+    updateGroupSchedule(group.groupId, startDate, formattedScheduledTime);
     setScheduleSaved(true);
     setTimeout(() => {
       setScheduleSaved(false);
@@ -244,10 +262,10 @@ export const AdminRewardFlowControlPage = () => {
         </div>
       </div>
 
-      {/* ACTIVE EVENT BATCH SELECTOR BAR (ONLY SHOW 50/50 FULL BATCHES) */}
+      {/* ACTIVE EVENT BATCH SELECTOR BAR */}
       <div className="bg-[#081E26] p-4 rounded-2xl border border-[#E1A238]/40 shadow-xs flex items-center space-x-2 overflow-x-auto">
         <span className="text-xs font-mono font-black text-[#F2C868] uppercase tracking-wider shrink-0 mr-2">Target Event Batch:</span>
-        {allGroups.filter(g => g.totalMembers === 50).map((g) => {
+        {(allGroups.filter(g => g.totalMembers > 0).length > 0 ? allGroups.filter(g => g.totalMembers > 0) : allGroups).map((g) => {
           const isSelected = group.groupId === g.groupId;
           return (
             <button
@@ -259,11 +277,11 @@ export const AdminRewardFlowControlPage = () => {
                   : 'bg-[#0D3B43] text-slate-300 hover:bg-[#0D3B43]/80 border border-[#E1A238]/20'
               }`}
             >
-              <span>{g.groupName.split(' - ')[1]}</span>
+              <span>{g.groupName.split(' - ')[1] || g.groupName}</span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono ${
                 isSelected ? 'bg-[#081E26] text-[#00C2B8]' : 'bg-[#081E26] text-[#F2C868]'
               }`}>
-                {g.groupId} (50/50)
+                {g.groupId} ({g.scheduledTime || '07:00 AM IST'})
               </span>
             </button>
           );

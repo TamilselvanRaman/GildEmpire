@@ -26,10 +26,35 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminGroupDetailPage = () => {
-  const { group, allGroups, setSelectedBatchId, setCurrentView } = useApp();
+  const { group, allGroups, setSelectedBatchId, setCurrentView, autoFillGroupWithSystemUsers, updateGroupSchedule } = useApp();
   const [filterTab, setFilterTab] = useState<'all' | 'winners' | 'active'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSlotMember, setSelectedSlotMember] = useState<any>(null);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+
+  const isFull = group.totalMembers === 50;
+  const isLive = isFull && (group.status === 'active' || group.status === 'live');
+
+  const handleAutoFill = async () => {
+    setIsAutoFilling(true);
+    try {
+      const res = await autoFillGroupWithSystemUsers(group.groupId);
+      if (res.success) {
+        alert(`Success! Auto-filled ${group.groupId} with system bot members. Group is now 50/50 Full & Ready to Start!`);
+      } else {
+        alert(res.error || 'Auto-fill failed.');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Error occurred.');
+    } finally {
+      setIsAutoFilling(false);
+    }
+  };
+
+  const handleStartEventNow = () => {
+    updateGroupSchedule(group.groupId, new Date().toISOString().split('T')[0], '07:00 AM IST');
+    alert(`🎉 50-Day Event officially started for ${group.groupId}! Day 1 is now active.`);
+  };
 
   const memberSlots = group.slots;
   const winnersCount = memberSlots.filter(s => s.status === 'Won 1g Gold').length;
@@ -75,18 +100,50 @@ export const AdminGroupDetailPage = () => {
               {group.groupName}
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 font-medium">
-              Batch Code: <span className="font-mono text-amber-700 font-bold">{group.groupId}</span> | Status: <span className="text-emerald-700 font-bold">{group.status === 'active' || group.status === 'live' ? `Active Day ${group.currentCycleDay} Cycle` : group.status === 'full' ? 'Full 50/50 Ready' : `Recruiting (${group.totalMembers}/50)`}</span> | Capacity: <span className="text-[#0B1E39] font-extrabold">{group.totalMembers} / 50 Slots</span>
+              Batch Code: <span className="font-mono text-amber-700 font-bold">{group.groupId}</span> | Status: <span className="text-emerald-700 font-bold">{isLive ? `Active Day ${group.currentCycleDay || 1} Cycle` : isFull ? 'Full 50/50 Ready to Start' : `Recruiting Active (${group.totalMembers}/50)`}</span> | Capacity: <span className="text-[#0B1E39] font-extrabold">{group.totalMembers} / 50 Slots</span>
             </p>
           </div>
 
           <div className="flex items-center space-x-3 shrink-0 relative z-10">
-            <button
-              onClick={() => setCurrentView('admin-reward-flow-control')}
-              className="bg-amber-500 hover:bg-amber-400 text-amber-950 font-black px-5 py-3.5 rounded-2xl text-xs shadow-md flex items-center space-x-2 cursor-pointer transition-all hover:scale-105"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Open Panai Gold Engine</span>
-            </button>
+            {!isFull && (
+              <button
+                onClick={handleAutoFill}
+                disabled={isAutoFilling}
+                className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-amber-950 font-black px-5 py-3.5 rounded-2xl text-xs shadow-md flex items-center space-x-2 cursor-pointer transition-all hover:scale-105"
+              >
+                {isAutoFilling ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-amber-950 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Auto-Filling...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>🤖 Auto-Fill 50 Members</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {isFull && !isLive && (
+              <button
+                onClick={handleStartEventNow}
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black px-5 py-3.5 rounded-2xl text-xs shadow-md flex items-center space-x-2 cursor-pointer transition-all hover:scale-105"
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                <span>🚀 Launch 50-Day Event Live</span>
+              </button>
+            )}
+
+            {isLive && (
+              <button
+                onClick={() => setCurrentView('admin-reward-flow-control')}
+                className="bg-amber-500 hover:bg-amber-400 text-amber-950 font-black px-5 py-3.5 rounded-2xl text-xs shadow-md flex items-center space-x-2 cursor-pointer transition-all hover:scale-105"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Open Panai Gold Engine</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
