@@ -117,6 +117,8 @@ export interface UserProfile {
   slotsOwned?: number; // Max 3 slots per member in 1 group
   assignedSlots?: number[]; // e.g. [1, 14, 28]
   allocatedSlots?: GroupSlotAllocation[];
+  isSimulated?: boolean; // Admin-only: true for auto-fill system users, false for real members
+  userType?: 'real' | 'simulated';
   rewardStatus: 'In Selection Pool' | 'Won 1g Gold' | 'Pending Group Formation' | 'Completed';
   wonDay?: number;
   wonDate?: string;

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../../../lib/firebase';
-import { collection, getDocs, doc, getDoc, updateDoc, query, where, arrayUnion, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, updateDoc, query, where, arrayUnion, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function GET() {
   try {
@@ -48,6 +48,8 @@ export async function GET() {
         assignedSlots: Array.isArray(u.assignedSlots) ? u.assignedSlots : (resolvedSlotNumber > 0 ? [resolvedSlotNumber] : []),
         status: u.accountStatus || 'Active',
         emailVerified: Boolean(u.emailVerified),
+        isSimulated: Boolean(u.isSimulated),
+        userType: u.isSimulated ? 'simulated' : 'real',
         role: u.role || 'Member',
         idDocumentUrl: u.idDocumentUrl || null,
         address: u.address || 'Flat 402, Royal Sovereign Heights, Bandra West, Mumbai, Maharashtra 400050',
@@ -88,6 +90,15 @@ export async function POST(request: Request) {
 
     const cleanEmail = email ? email.trim().toLowerCase() : null;
     const cleanMemberId = memberId ? memberId.trim() : null;
+    const isSimulatedUser = Boolean(body.isSimulated || body.userType === 'simulated');
+
+    const parsedSlot = typeof slotNumber === 'number'
+      ? slotNumber
+      : (parseInt(String(slotNumber || '').replace(/[^0-9]/g, ''), 10) || 0);
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) + ' IST';
 
     // Find doc ID in Firestore
     let docIdToUpdate: string | null = userId || null;
@@ -105,10 +116,56 @@ export async function POST(request: Request) {
     }
 
     if (!docIdToUpdate) {
-      return NextResponse.json(
-        { success: false, error: 'User document not found in Firestore.' },
-        { status: 404 }
-      );
+      const newDocRef = doc(collection(db, 'users'));
+      docIdToUpdate = newDocRef.id;
+      const resMemberId = cleanMemberId || `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
+      const userName = body.fullName || body.name || (cleanEmail ? cleanEmail.split('@')[0] : 'Member User');
+      const userMobile = body.mobile || `+91 ${Math.floor(60000 + Math.random() * 39999)} ${Math.floor(10000 + Math.random() * 89999)}`;
+
+      const newSlotAllocation = {
+        group: groupId || 'GROUP-001',
+        groupId: groupId || 'GROUP-001',
+        slotNumber: parsedSlot,
+        slot: `#${parsedSlot}`,
+        joinedDate: dateStr,
+        depositStatus: depositStatus || 'Verified',
+      };
+
+      await setDoc(newDocRef, {
+        uid: docIdToUpdate,
+        fullName: userName,
+        name: userName,
+        email: cleanEmail || `${resMemberId.toLowerCase()}@infinitygram.net`,
+        mobile: userMobile,
+        memberId: resMemberId,
+        referralCode: `REF-${resMemberId.replace('LOP-', '')}`,
+        referredBy: body.referredBy || 'Admin Direct Allocation',
+        accountStatus: 'Active',
+        depositStatus: depositStatus || 'Verified',
+        rewardStatus: 'In Selection Pool',
+        group: groupId || 'GROUP-001',
+        slotNumber: parsedSlot || 0,
+        allocatedSlots: parsedSlot > 0 ? [newSlotAllocation] : [],
+        assignedSlots: parsedSlot > 0 ? [parsedSlot] : [],
+        isSimulated: isSimulatedUser,
+        userType: isSimulatedUser ? 'simulated' : 'real',
+        joinedDate: dateStr,
+        emailVerified: true,
+        createdAt: serverTimestamp(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `New ${isSimulatedUser ? 'system simulated' : 'member'} user created and assigned to slot #${parsedSlot} in ${groupId}.`,
+        user: {
+          id: docIdToUpdate,
+          memberId: resMemberId,
+          name: userName,
+          slotNumber: parsedSlot,
+          group: groupId,
+          isSimulated: isSimulatedUser,
+        }
+      }, { status: 200 });
     }
 
     const userDocRef = doc(db, 'users', docIdToUpdate);
@@ -135,14 +192,7 @@ export async function POST(request: Request) {
       }, { status: 200 });
     }
 
-    const parsedSlot = typeof slotNumber === 'number'
-      ? slotNumber
-      : (parseInt(String(slotNumber || '').replace(/[^0-9]/g, ''), 10) || 0);
-
     const isVerifiedAction = (depositStatus === 'Verified');
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) + ' IST';
     const depRefId = `DEP-${cleanMemberId || docIdToUpdate || 'MB'}-${Date.now().toString().slice(-6)}`;
 
     const newDepositEntry = {

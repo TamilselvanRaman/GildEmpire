@@ -24,12 +24,14 @@ import {
   ShieldCheck,
   AlertCircle,
   ArrowRight,
-  Trash2
+  Trash2,
+  Bot,
+  Wand2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AdminSlotsControlPage = () => {
-  const { group, allGroups, deposits, setCurrentView, dbUsers = [], manualAssignSlot, unassignSlot } = useApp();
+  const { group, allGroups, deposits, setCurrentView, dbUsers = [], manualAssignSlot, unassignSlot, autoFillGroupWithSystemUsers } = useApp();
   const [selectedBatch, setSelectedBatch] = useState<'batchA' | 'batchB' | 'batchC' | 'batchD' | 'batchE'>('batchA');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'occupied' | 'available'>('all');
@@ -42,6 +44,7 @@ export const AdminSlotsControlPage = () => {
   const [selectedUserForSlot, setSelectedUserForSlot] = useState<string>('');
   const [userSearchTerm, setUserSearchTerm] = useState<string>('');
   const [isAssigning, setIsAssigning] = useState<boolean>(false);
+  const [isAutoFilling, setIsAutoFilling] = useState<boolean>(false);
 
   // Slot unassign / delete states
   const [slotToDelete, setSlotToDelete] = useState<{ slotNumber: number; memberName?: string; memberId?: string } | null>(null);
@@ -205,6 +208,18 @@ export const AdminSlotsControlPage = () => {
     setShowAssignModal(true);
   };
 
+  const handleAutoFillSystemUsers = async () => {
+    if (isAutoFilling) return;
+    setIsAutoFilling(true);
+    const res = await autoFillGroupWithSystemUsers(currentBatchInfo.groupId);
+    setIsAutoFilling(false);
+    if (res.success) {
+      alert(`🤖 ${res.message || 'Auto-fill complete!'}`);
+    } else {
+      alert(`❌ ${res.error || 'Failed to auto-fill system users.'}`);
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16 font-sans select-none">
       
@@ -330,15 +345,27 @@ export const AdminSlotsControlPage = () => {
             <p className="text-xs text-slate-500 font-medium">{currentBatchInfo.description}</p>
           </div>
 
-          <div className="flex items-center space-x-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             {currentBatchInfo.available > 0 && (
-              <button
-                onClick={() => setCurrentView('admin-deposits')}
-                className="bg-[#2F6FED] hover:bg-blue-700 text-white font-extrabold px-5 py-3 rounded-2xl text-xs shadow-md shadow-blue-500/20 flex items-center space-x-2 cursor-pointer transition-all hover:scale-105"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                <span>Verify Deposit in Queue (Auto-Fills Next Slot)</span>
-              </button>
+              <>
+                <button
+                  onClick={handleAutoFillSystemUsers}
+                  disabled={isAutoFilling}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-black px-5 py-3 rounded-2xl text-xs shadow-md shadow-purple-500/20 flex items-center space-x-2 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                  title="Automatically fill remaining open slots with realistic system simulated users"
+                >
+                  <Bot className="w-4 h-4 text-purple-200" />
+                  <span>{isAutoFilling ? 'Auto-Filling Bots...' : '🤖 Auto-Fill Group with System Users'}</span>
+                </button>
+
+                <button
+                  onClick={() => setCurrentView('admin-deposits')}
+                  className="bg-[#2F6FED] hover:bg-blue-700 text-white font-extrabold px-5 py-3 rounded-2xl text-xs shadow-md shadow-blue-500/20 flex items-center space-x-2 cursor-pointer transition-all hover:scale-105"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                  <span>Verify Deposit in Queue</span>
+                </button>
+              </>
             )}
 
             {currentBatchInfo.statusType === 'full' && (
@@ -567,9 +594,24 @@ export const AdminSlotsControlPage = () => {
                             {isOccupied && slot.memberName ? slot.memberName.charAt(0) : '+'}
                           </div>
                           <div>
-                            <p className="font-extrabold text-[#0B1E39] text-xs">
-                              {isOccupied ? slot.memberName : <span className="text-[#2F6FED] font-black">+ Available Open Slot</span>}
-                            </p>
+                            <div className="flex items-center space-x-2">
+                              <p className="font-extrabold text-[#0B1E39] text-xs">
+                                {isOccupied ? slot.memberName : <span className="text-[#2F6FED] font-black">+ Available Open Slot</span>}
+                              </p>
+                              {isOccupied && (
+                                occUser?.isSimulated ? (
+                                  <span className="bg-purple-100 text-purple-900 border border-purple-300 px-2 py-0.5 rounded-full text-[9px] font-black inline-flex items-center space-x-1 shrink-0" title="Admin Identification: System Bot / Simulated User">
+                                    <Bot className="w-3 h-3 text-purple-700" />
+                                    <span>SYSTEM BOT</span>
+                                  </span>
+                                ) : (
+                                  <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-full text-[9px] font-black inline-flex items-center space-x-1 shrink-0" title="Admin Identification: Real Registered User">
+                                    <ShieldCheck className="w-3 h-3 text-emerald-700" />
+                                    <span>REAL USER</span>
+                                  </span>
+                                )
+                              )}
+                            </div>
                             {isOccupied ? (
                               <p className="text-[11px] text-slate-500 font-mono">
                                 {occUser?.mobile || occUser?.email || 'Registered Member'}
@@ -847,13 +889,67 @@ export const AdminSlotsControlPage = () => {
                 </div>
               </div>
 
-              <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 space-y-1 text-xs">
-                <div className="flex justify-between text-emerald-900 font-bold">
-                  <span>Slot Assignment Result:</span>
-                  <span>Slot #{targetSlotNum} Occupied</span>
+              <div className="bg-[#00C2B8]/10 p-4 rounded-2xl border border-[#00C2B8]/40 space-y-1 text-xs">
+                <div className="flex justify-between text-[#081E26] font-bold">
+                  <span className="text-slate-800 font-extrabold">Slot Assignment Result:</span>
+                  <span className="text-[#2F6FED] font-black">Slot #{targetSlotNum} Seating</span>
                 </div>
-                <p className="text-[11px] text-emerald-700">
+                <p className="text-[11px] text-slate-600 font-medium">
                   Once confirmed, this member will be verified and seated in Slot #{targetSlotNum} of {currentBatchInfo.name}.
+                </p>
+              </div>
+
+              {/* Quick System Bot / Simulated User Auto-Fill Box */}
+              <div className="bg-purple-50 p-4 rounded-2xl border border-purple-200 text-xs space-y-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <span className="font-extrabold text-purple-900 flex items-center space-x-1.5">
+                    <Bot className="w-4 h-4 text-purple-700" />
+                    <span>Quick System User Auto-Fill</span>
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isAssigning}
+                    onClick={async () => {
+                      if (!targetSlotNum) return;
+                      setIsAssigning(true);
+                      const simulatedNames = ['Anitha Murugan', 'Venkatesh Raman', 'Meena Kumari', 'Pravin Kumar', 'Senthil Nathan', 'Deepa Lakshmi', 'Ganesh Kumar', 'Kavitha S'];
+                      const randomName = simulatedNames[Math.floor(Math.random() * simulatedNames.length)];
+                      const botMemberId = `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
+                      const botEmail = `${randomName.toLowerCase().replace(/[^a-z]/g, '')}${Math.floor(10 + Math.random() * 90)}@gmail.com`;
+                      
+                      const res = await fetch('/api/admin/users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          email: botEmail,
+                          memberId: botMemberId,
+                          fullName: randomName,
+                          name: randomName,
+                          slotNumber: targetSlotNum,
+                          groupId: currentBatchInfo.groupId,
+                          depositStatus: 'Verified',
+                          isSimulated: true,
+                          userType: 'simulated',
+                        }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      setIsAssigning(false);
+                      setShowAssignModal(false);
+                      if (data.success) {
+                        alert(`🤖 System Simulated User "${randomName}" (${botMemberId}) created & assigned to Slot #${targetSlotNum}!`);
+                        window.location.reload();
+                      } else {
+                        alert(`❌ Failed to add system user: ${data.error || 'Unknown error'}`);
+                      }
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-black px-3.5 py-1.5 rounded-xl text-[11px] shadow-sm transition-all cursor-pointer flex items-center space-x-1 shrink-0"
+                  >
+                    <Wand2 className="w-3.5 h-3.5 text-purple-200" />
+                    <span>Create System User for Slot #{targetSlotNum}</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-purple-800 font-medium">
+                  Populate this slot with an automated simulated profile for seamless 50-member group cycle execution.
                 </p>
               </div>
 

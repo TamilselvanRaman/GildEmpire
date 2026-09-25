@@ -62,6 +62,7 @@ interface AppContextType {
   fetchReferrals: (currentUser?: UserProfile, usersList?: any[]) => Promise<void>;
   manualAssignSlot: (identifier: string, slotNo: number, targetBatchId?: string) => Promise<{ success: boolean; error?: string }>;
   unassignSlot: (slotNo: number, targetBatchId?: string, identifier?: string) => Promise<{ success: boolean; error?: string }>;
+  autoFillGroupWithSystemUsers: (targetBatchId?: string) => Promise<{ success: boolean; count?: number; message?: string; error?: string }>;
   
   // Live 24-Hour Cooldown Lock & Broadcast State
   drawLockedUntil: number | null;
@@ -1179,6 +1180,83 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const autoFillGroupWithSystemUsers = async (targetBatchId = 'GROUP-001') => {
+    try {
+      const targetGrp = allGroups.find(g => g.groupId === targetBatchId) || allGroups[0];
+      if (!targetGrp) {
+        return { success: false, error: 'Target group batch not found.' };
+      }
+
+      const emptySlots = targetGrp.slots.filter(s => s.status === 'Available' || !s.memberName || s.memberName === '—');
+      if (emptySlots.length === 0) {
+        return { success: false, error: 'Group is already fully filled with 50 members!' };
+      }
+
+      const simulatedNames = [
+        'Anitha Murugan', 'Venkatesh Raman', 'Meena Kumari', 'Pravin Kumar', 
+        'Senthil Nathan', 'Deepa Lakshmi', 'Ganesh Kumar', 'Kavitha Sundaram',
+        'Ramesh Babu', 'Shalini Devi', 'Vijay Anand', 'Priya Dharshini',
+        'Karthik Raja', 'Revathi Sekar', 'Saravanan Perumal', 'Divya Bharathi',
+        'Manikandan K', 'Nandhini R', 'Arun Prakash', 'Gayathri M',
+        'Ashok Kumar', 'Sowmya N', 'Balaji Prasad', 'Malini S',
+        'Dinesh Karthik', 'Suganya P', 'Aravind Swamy', 'Bhavani K',
+        'Gopinath V', 'Hemalatha T', 'Ilango K', 'Jayashree N',
+        'Krishnan M', 'Latha R', 'Mohan Raj', 'Nirmala S',
+        'Pradeep V', 'Radhika K', 'Sathish Kumar', 'Uma Maheshwari',
+        'Vikram Seth', 'Yamuna K', 'Zahir Hussain', 'Chitra S',
+        'Elango M', 'Farooq Ahmed', 'Gita Raman', 'Hari Haran'
+      ];
+
+      let count = 0;
+      for (let i = 0; i < emptySlots.length; i++) {
+        const slot = emptySlots[i];
+        const rawName = simulatedNames[i % simulatedNames.length];
+        const botName = i >= simulatedNames.length ? `${rawName} ${Math.floor(i / simulatedNames.length) + 1}` : rawName;
+        const botMemberId = `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
+        const botEmail = `${botName.toLowerCase().replace(/[^a-z]/g, '')}${Math.floor(10 + Math.random() * 90)}@gmail.com`;
+        const botMobile = `+91 ${Math.floor(60000 + Math.random() * 39999)} ${Math.floor(10000 + Math.random() * 89999)}`;
+
+        await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: botEmail,
+            memberId: botMemberId,
+            fullName: botName,
+            name: botName,
+            mobile: botMobile,
+            slotNumber: slot.slotNumber,
+            groupId: targetBatchId,
+            depositStatus: 'Verified',
+            isSimulated: true,
+            userType: 'simulated',
+          }),
+        });
+        count++;
+      }
+
+      await fetchDbUsers();
+
+      const newAudit: AuditLogItem = {
+        id: `audit_autofill_${Date.now()}`,
+        timestamp: new Date().toLocaleString('en-IN') + ' IST',
+        actor: 'admin.op@infinitygram.net',
+        role: 'Super Admin',
+        action: 'AUTO_FILL_SYSTEM_USERS_SUCCESS',
+        module: 'Groups',
+        recordId: `${targetBatchId}-AUTOFILL-${count}`,
+        previousStatus: `${50 - count}/50 Members`,
+        newStatus: `50/50 Fully Filled (${count} System Bots Added)`,
+        ipAddress: '103.45.12.89',
+      };
+      setAuditLogs(prev => [newAudit, ...prev]);
+
+      return { success: true, count, message: `Successfully populated ${count} system simulated users into ${targetBatchId}!` };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to auto-fill system users.' };
+    }
+  };
+
 
   // Submit deposit
   const submitDeposit = async (amount: number, refId: string, method: DepositRecord['paymentMethod']) => {
@@ -1585,6 +1663,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       fetchReferrals,
       manualAssignSlot,
       unassignSlot,
+      autoFillGroupWithSystemUsers,
       drawLockedUntil,
       isLiveDrawActive,
       currentLiveWinner,

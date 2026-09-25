@@ -34,7 +34,8 @@ import {
   CreditCard,
   Network,
   BadgeCheck,
-  MapPin
+  MapPin,
+  Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -216,6 +217,8 @@ export const AdminUsersPage = () => {
   const filteredUsers = usersList.filter(u => {
     const matchesStatus = 
       statusFilter === 'All' ? true :
+      statusFilter === 'Real Members' ? !u.isSimulated :
+      statusFilter === 'System Bots' ? Boolean(u.isSimulated) :
       statusFilter === 'Admins' ? u.role !== 'Member' :
       statusFilter === 'Email Verified' ? u.emailVerified === true :
       statusFilter === 'Email Unverified' ? !u.emailVerified :
@@ -722,7 +725,7 @@ export const AdminUsersPage = () => {
       {/* Filter Tabs & Search Bar */}
       <div className="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex flex-wrap items-center space-x-1.5 bg-slate-100/90 p-1.5 rounded-2xl w-full md:w-auto text-xs font-extrabold">
-          {['All', 'Active', 'Admins', 'Email Verified', 'Email Unverified', 'Pending Verification', 'Deactivated'].map((tab) => (
+          {['All', 'Real Members', 'System Bots', 'Active', 'Admins', 'Email Verified', 'Email Unverified', 'Pending Verification', 'Deactivated'].map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilter(tab)}
@@ -796,9 +799,22 @@ export const AdminUsersPage = () => {
                           {userInitial}
                         </div>
                         <div>
-                          <p className="font-extrabold text-[#0B1E39] text-xs group-hover:text-[#2F6FED] transition-colors">
-                            {u.name}
-                          </p>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-extrabold text-[#0B1E39] text-xs group-hover:text-[#2F6FED] transition-colors">
+                              {u.name}
+                            </p>
+                            {u.isSimulated ? (
+                              <span className="bg-purple-100 text-purple-900 border border-purple-300 px-2 py-0.5 rounded-full text-[9px] font-black inline-flex items-center space-x-1 shrink-0" title="Admin Identification: System Bot / Simulated User">
+                                <Bot className="w-3 h-3 text-purple-700" />
+                                <span>BOT</span>
+                              </span>
+                            ) : (
+                              <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-full text-[9px] font-black inline-flex items-center space-x-1 shrink-0" title="Admin Identification: Real Registered Member">
+                                <ShieldCheck className="w-3 h-3 text-emerald-700" />
+                                <span>REAL</span>
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[10px] text-slate-400 font-medium">
                             Joined {u.regDate}
                           </p>
