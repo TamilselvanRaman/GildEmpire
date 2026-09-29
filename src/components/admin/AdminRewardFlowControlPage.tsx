@@ -26,7 +26,12 @@ import {
   Grid,
   List,
   CalendarDays,
-  Tv
+  Tv,
+  UserCheck,
+  Search,
+  Crown,
+  AlertCircle,
+  Fingerprint
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -60,6 +65,13 @@ export const AdminRewardFlowControlPage = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'list'>('month');
 
+  // Manual Winner of the Day Selection State
+  const [manualTargetSlot, setManualTargetSlot] = useState<number | null>(null);
+  const [inputTargetMemberId, setInputTargetMemberId] = useState('');
+  const [selectionMode, setSelectionMode] = useState<'select' | 'input'>('select');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   // Batch Draw Schedule Configurator State
   const [scheduledTime, setScheduledTime] = useState('07:00'); // 7:00 AM
   const [scheduledAmPm, setScheduledAmPm] = useState<'AM' | 'PM'>('AM');
@@ -81,6 +93,53 @@ export const AdminRewardFlowControlPage = () => {
       }
     }
   }, [group?.groupId, group?.scheduledTime, group?.startDate]);
+
+  const activePoolMembers = group.slots.filter(s => s.status !== 'Won 1g Gold');
+  const goldWinnerSlots = group.slots.filter(s => s.status === 'Won 1g Gold');
+
+  // Auto-initialize target slot to first eligible member if none selected
+  useEffect(() => {
+    if (activePoolMembers.length > 0) {
+      if (manualTargetSlot === null || !activePoolMembers.some(s => s.slotNumber === manualTargetSlot)) {
+        setManualTargetSlot(activePoolMembers[0].slotNumber);
+      }
+    } else {
+      setManualTargetSlot(null);
+    }
+  }, [group?.groupId, group?.slots, activePoolMembers.length]);
+
+  const targetWinnerSlotObj = activePoolMembers.find(s => s.slotNumber === manualTargetSlot) || null;
+
+  // Filtered members for dropdown search
+  const filteredActiveMembers = activePoolMembers.filter(s => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase();
+    return (
+      s.memberName?.toLowerCase().includes(q) ||
+      s.memberId?.toLowerCase().includes(q) ||
+      String(s.slotNumber).includes(q)
+    );
+  });
+
+  const handleManualMemberIdInput = (val: string) => {
+    setInputTargetMemberId(val);
+    setValidationError(null);
+    const clean = val.trim().toLowerCase();
+    if (!clean) return;
+
+    const matched = activePoolMembers.find(s => 
+      (s.memberId && s.memberId.toLowerCase() === clean) ||
+      String(s.slotNumber) === clean ||
+      (s.memberName && s.memberName.toLowerCase().includes(clean))
+    );
+
+    if (matched) {
+      setManualTargetSlot(matched.slotNumber);
+      setValidationError(null);
+    } else {
+      setValidationError(`No active eligible pool member matches "${val}".`);
+    }
+  };
 
   // 24-Hour Lock Countdown Calculation
   const [lockCountdown, setLockCountdown] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
@@ -110,9 +169,6 @@ export const AdminRewardFlowControlPage = () => {
 
   const isLocked24h = lockCountdown !== null;
 
-  const activePoolMembers = group.slots.filter(s => s.status !== 'Won 1g Gold');
-  const goldWinnerSlots = group.slots.filter(s => s.status === 'Won 1g Gold');
-
   // Calculate 10-Minute Pre-Event Email Time
   const calculatePreEmailTime = (timeStr: string, ampm: string) => {
     const [hStr, mStr] = timeStr.split(':');
@@ -137,6 +193,12 @@ export const AdminRewardFlowControlPage = () => {
   const handleTriggerGlassBottleDraw = () => {
     if (isLocked24h || drawState !== 'idle' || activePoolMembers.length === 0) return;
 
+    if (!targetWinnerSlotObj) {
+      setValidationError('Please select or enter an active eligible member as the winner before initiating the draw.');
+      return;
+    }
+
+    setValidationError(null);
     setDrawState('shaking');
     mysteryAudio.playSpin7Seconds();
 
@@ -144,7 +206,7 @@ export const AdminRewardFlowControlPage = () => {
       setDrawState('drawing');
       
       setTimeout(() => {
-        const winner = executeDailySpin();
+        const winner = executeDailySpin(targetWinnerSlotObj.slotNumber);
         setSelectedWinner(winner);
         setDrawState('revealed');
         setShowWinnerModal(true);
@@ -391,30 +453,173 @@ export const AdminRewardFlowControlPage = () => {
         </div>
 
         {/* Glass Bottle Visualizer Main Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10 pt-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10 pt-2">
           
           {/* Left Text & Controls */}
-          <div className="lg:col-span-7 space-y-4 text-center lg:text-left">
-            <div className="inline-flex items-center space-x-2 bg-[#00C2B8]/15 text-[#00C2B8] border border-[#00C2B8]/30 px-3.5 py-1 rounded-full text-xs font-mono font-black uppercase tracking-wider">
-              <Dices className="w-4 h-4 text-[#00C2B8]" />
-              <span>InfinityGram Glass Bottle Draw Pot</span>
+          <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
+              <div className="inline-flex items-center space-x-2 bg-[#00C2B8]/15 text-[#00C2B8] border border-[#00C2B8]/30 px-3.5 py-1 rounded-full text-xs font-mono font-black uppercase tracking-wider">
+                <Dices className="w-4 h-4 text-[#00C2B8]" />
+                <span>InfinityGram Glass Bottle Draw Pot</span>
+              </div>
+              <div className="inline-flex items-center space-x-1.5 bg-[#E1A238]/15 text-[#F2C868] border border-[#E1A238]/30 px-3 py-1 rounded-full text-xs font-mono font-bold">
+                <Crown className="w-3.5 h-3.5 text-[#F2C868]" />
+                <span>Admin Manual Override Active</span>
+              </div>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight">
-              Traditional Glass Bottle Lucky Pot
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
-              Inside this glass bottle are <strong className="text-[#F2C868] font-bold">{activePoolMembers.length} folded paper chits</strong> representing active members in sequence. Clicking the button below starts the bottle shake, draws one folded chit, and broadcasts live to all user dashboards.
-            </p>
+
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight">
+                Traditional Glass Bottle Lucky Pot
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed mt-1">
+                Inside this glass bottle are <strong className="text-[#F2C868] font-bold">{activePoolMembers.length} folded paper chits</strong> representing active members. Choose the target winner below, then trigger the 3D bottle shake to broadcast live to all dashboards.
+              </p>
+            </div>
+
+            {/* 👑 ADMIN MANUAL WINNER SELECTION CONSOLE */}
+            <div className="bg-[#05171E]/90 backdrop-blur-md rounded-2xl border-2 border-[#E1A238]/40 p-4 sm:p-5 text-left space-y-4 shadow-xl">
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E1A238]/20 pb-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#E1A238]/20 border border-[#E1A238]/50 flex items-center justify-center">
+                    <Crown className="w-4 h-4 text-[#F2C868]" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-serif font-black text-white uppercase tracking-wider">
+                      Target Winner Selection (Day {group.currentCycleDay})
+                    </h4>
+                    <p className="text-[11px] text-slate-400">Pre-select which member chit is drawn from the bottle</p>
+                  </div>
+                </div>
+
+                {/* Mode Selector Tabs */}
+                <div className="flex items-center bg-[#081E26] p-0.5 rounded-xl border border-slate-700/60 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectionMode('select'); setValidationError(null); }}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                      selectionMode === 'select'
+                        ? 'bg-[#00C2B8] text-[#081E26] shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Active Pool ({activePoolMembers.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectionMode('input'); setValidationError(null); }}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                      selectionMode === 'input'
+                        ? 'bg-[#00C2B8] text-[#081E26] shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Enter ID / Slot
+                  </button>
+                </div>
+              </div>
+
+              {/* Mode 1: Dropdown & Search Filter */}
+              {selectionMode === 'select' && (
+                <div className="space-y-2.5">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Filter by name, member ID, or chit number..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-[#081E26] border border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2B8]"
+                    />
+                  </div>
+
+                  <select
+                    value={manualTargetSlot ?? ''}
+                    onChange={(e) => {
+                      setManualTargetSlot(Number(e.target.value));
+                      setValidationError(null);
+                    }}
+                    className="w-full bg-[#081E26] border-2 border-[#E1A238]/40 hover:border-[#E1A238] rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-[#00C2B8] cursor-pointer"
+                  >
+                    {filteredActiveMembers.map((m) => (
+                      <option key={m.slotNumber} value={m.slotNumber} className="bg-[#081E26] text-white py-1">
+                        Chit #{String(m.slotNumber).padStart(2, '0')} — {m.memberName || `Member #${m.slotNumber}`} ({m.memberId || `LOP-${String(m.slotNumber).padStart(6, '0')}`})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Mode 2: Direct Input ID Box */}
+              {selectionMode === 'input' && (
+                <div className="space-y-2">
+                  <label className="text-[11px] text-slate-300 font-bold flex items-center space-x-1.5">
+                    <Fingerprint className="w-3.5 h-3.5 text-[#00C2B8]" />
+                    <span>Enter Member ID, Slot Number, or Name:</span>
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. LOP-000007 or 7 or Rajesh"
+                      value={inputTargetMemberId}
+                      onChange={(e) => handleManualMemberIdInput(e.target.value)}
+                      className="flex-1 bg-[#081E26] border-2 border-[#00C2B8]/50 focus:border-[#00C2B8] rounded-xl px-3 py-2 text-xs font-mono font-bold text-white placeholder-slate-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {validationError && (
+                <div className="bg-rose-500/15 border border-rose-500/40 text-rose-300 rounded-xl p-2.5 text-xs flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{validationError}</span>
+                </div>
+              )}
+
+              {/* Verified Winner Target Preview Card */}
+              {targetWinnerSlotObj && (
+                <div className="bg-gradient-to-r from-[#0D3B43]/80 via-[#081E26] to-[#0D3B43]/80 border border-[#00C2B8]/40 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F2C868] to-[#B3781A] text-[#081E26] flex flex-col items-center justify-center font-serif font-black shadow-md shrink-0">
+                      <span className="text-[9px] uppercase leading-none font-bold">Chit</span>
+                      <span className="text-sm font-black leading-none">#{targetWinnerSlotObj.slotNumber}</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-xs font-serif font-black text-white">
+                          {targetWinnerSlotObj.memberName || `Member #${targetWinnerSlotObj.slotNumber}`}
+                        </span>
+                        <span className="bg-[#00C2B8]/20 text-[#00C2B8] text-[9px] font-mono font-bold px-1.5 py-0.2 rounded">
+                          {targetWinnerSlotObj.memberId || `LOP-${String(targetWinnerSlotObj.slotNumber).padStart(6, '0')}`}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#F2C868] font-medium flex items-center space-x-1 mt-0.5">
+                        <Award className="w-3 h-3 text-[#F2C868]" />
+                        <span>Pre-set to win 1g Gold Coin on Day {group.currentCycleDay}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 flex items-center space-x-1.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-2.5 py-1 rounded-lg text-[11px] font-bold self-start sm:self-center">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Eligible & Verified</span>
+                  </div>
+                </div>
+              )}
+
+            </div>
 
             {/* Quick Action Trigger Button */}
             <div className="pt-2 flex justify-center lg:justify-start">
               <button
                 onClick={handleTriggerGlassBottleDraw}
-                disabled={isLocked24h || drawState !== 'idle' || activePoolMembers.length === 0}
+                disabled={isLocked24h || drawState !== 'idle' || activePoolMembers.length === 0 || !targetWinnerSlotObj}
                 className={`py-4 px-8 rounded-2xl shadow-xl text-xs uppercase tracking-wider flex items-center space-x-3 transition-all ${
-                  isLocked24h
+                  isLocked24h || !targetWinnerSlotObj
                     ? 'bg-[#081E26] text-slate-500 border border-slate-700 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-[#00C2B8] to-[#009890] hover:brightness-110 text-[#081E26] font-serif font-black shadow-[#00C2B8]/30 hover:scale-105 cursor-pointer'
+                    : 'bg-gradient-to-r from-[#00C2B8] via-[#00DFD3] to-[#009890] hover:brightness-110 text-[#081E26] font-serif font-black shadow-[#00C2B8]/40 hover:scale-105 cursor-pointer'
                 }`}
               >
                 {isLocked24h ? (
@@ -425,7 +630,11 @@ export const AdminRewardFlowControlPage = () => {
                 ) : (
                   <>
                     <Sparkles className="w-5 h-5 text-[#081E26] stroke-[2.5]" />
-                    <span>Click to Shake & Draw Lucky Chit</span>
+                    <span>
+                      {targetWinnerSlotObj 
+                        ? `Shake Bottle & Draw Chit #${targetWinnerSlotObj.slotNumber} (${targetWinnerSlotObj.memberName?.split(' ')[0] || 'Winner'})` 
+                        : 'Click to Shake & Draw Lucky Chit'}
+                    </span>
                   </>
                 )}
               </button>

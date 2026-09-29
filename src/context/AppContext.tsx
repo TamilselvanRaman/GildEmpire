@@ -94,12 +94,11 @@ interface AppContextType {
   logout: () => void;
   submitDeposit: (amount: number, refId: string, method: DepositRecord['paymentMethod']) => void;
   reviewDeposit: (depositId: string, status: 'Verified' | 'Rejected', notes: string) => void;
-  executeDailySpin: () => DailyGoldWinner | null;
+  executeDailySpin: (targetSlotOrMemberId?: number | string) => DailyGoldWinner | null;
   withdrawals: WithdrawalRecord[];
   claimReferralBonus: (referralId: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   requestWithdrawal: (amount: number, upiId?: string, bankAccount?: string, ifscCode?: string, payoutMethod?: 'UPI' | 'Bank Transfer (NEFT/IMPS)') => Promise<{ success: boolean; error?: string; withdrawal?: WithdrawalRecord }>;
   reviewWithdrawal: (withdrawalId: string, status: 'Approved' | 'Rejected', notes?: string) => Promise<{ success: boolean; error?: string }>;
-  
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   updateUserProfile: (name: string, email: string, mobile: string) => void;
@@ -1400,14 +1399,31 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setAuditLogs(prev => [newAudit, ...prev]);
   };
 
-  // Execute Daily 1 Gram Gold Spin (Admin-Only Trigger)
-  const executeDailySpin = (): DailyGoldWinner | null => {
+  // Execute Daily 1 Gram Gold Spin (Admin Trigger - Supports Manual Winner Selection)
+  const executeDailySpin = (targetSlotOrMemberId?: number | string): DailyGoldWinner | null => {
     // Eligible active pool are members in slots who haven't won yet
     const eligibleSlots = group.slots.filter(s => s.status !== 'Won 1g Gold');
     if (eligibleSlots.length === 0) return null;
 
-    // Pick random winner from active pool
-    const winnerSlot = eligibleSlots[Math.floor(Math.random() * eligibleSlots.length)];
+    // Pick targeted winner from active pool or fallback
+    let winnerSlot = eligibleSlots[0];
+    if (targetSlotOrMemberId !== undefined && targetSlotOrMemberId !== null && targetSlotOrMemberId !== '') {
+      if (typeof targetSlotOrMemberId === 'number') {
+        const found = eligibleSlots.find(s => s.slotNumber === targetSlotOrMemberId);
+        if (found) winnerSlot = found;
+      } else {
+        const query = String(targetSlotOrMemberId).trim().toLowerCase();
+        const found = eligibleSlots.find(s => 
+          (s.memberId && s.memberId.toLowerCase() === query) ||
+          String(s.slotNumber) === query ||
+          (s.memberName && s.memberName.toLowerCase().includes(query))
+        );
+        if (found) winnerSlot = found;
+      }
+    } else {
+      winnerSlot = eligibleSlots[Math.floor(Math.random() * eligibleSlots.length)];
+    }
+
     const currentDay = group.currentCycleDay;
 
     const newWinner: DailyGoldWinner = {
