@@ -92,10 +92,22 @@ export type PortalType = 'public' | 'auth' | 'user' | 'admin' | 'system';
 export interface GroupSlotAllocation {
   group: string;
   groupId: string;
+  groupName?: string;
   slotNumber: number;
   slot: string;
-  joinedDate: string;
+  joinedDate?: string;
+  assignedDate?: string;
   depositStatus: string;
+}
+
+export interface WalletTransactionItem {
+  id: string;
+  type: 'DEPOSIT' | 'WALLET_SLOT_PURCHASE' | 'REFERRAL_BONUS' | 'WITHDRAWAL';
+  amount: number;
+  timestamp: string;
+  description: string;
+  referenceId?: string;
+  status: 'Verified' | 'Approved' | 'Pending';
 }
 
 export interface UserProfile {
@@ -114,14 +126,16 @@ export interface UserProfile {
   depositStatus: 'Not Started' | 'Submitted' | 'Under Review' | 'Verified' | 'Rejected';
   groupId?: string;
   slotNumber?: number;
-  slotsOwned?: number; // Max 3 slots per member in 1 group
+  slotsOwned?: number; // Total slots owned across all batches
   assignedSlots?: number[]; // e.g. [1, 14, 28]
   allocatedSlots?: GroupSlotAllocation[];
+  walletHistory?: WalletTransactionItem[];
   isSimulated?: boolean; // Admin-only: true for auto-fill system users, false for real members
   userType?: 'real' | 'simulated';
   rewardStatus: 'In Selection Pool' | 'Won 1g Gold' | 'Pending Group Formation' | 'Completed';
   wonDay?: number;
   wonDate?: string;
+  wonBatch?: string;
   idDocumentUrl?: string | null;
 }
 
@@ -161,6 +175,9 @@ export interface GroupSlot {
   memberName?: string;
   status: 'Occupied' | 'Available' | 'Current Member' | 'Won 1g Gold';
   joinedDate?: string;
+  occupiedDate?: string;
+  assignedDate?: string;
+  depositStatus?: string;
   wonDay?: number;
   wonDate?: string;
 }
@@ -185,6 +202,7 @@ export interface GroupDetails {
   status: GroupStatus;
   createdDate: string;
   totalMembers: number; // Max 50
+  filledMembers?: number;
   currentCycleDay: number; // 1 to 50
   totalGoldDistributedGrams: number; // e.g. 14 grams for 14 days
   activePoolCount: number; // e.g. 36 active members remaining
@@ -208,10 +226,15 @@ export interface DailyGoldWinner {
   date: string;
   winnerMemberId: string;
   winnerName: string;
-  prizeDescription: '1 Gram 916 Gold Coin';
-  dispatchStatus: 'Verified & Shipped' | 'Processing' | 'Pending Verification';
+  prizeDescription?: string;
+  dispatchStatus?: 'Verified & Shipped' | 'Processing' | 'Pending Verification' | string;
   trackingNumber?: string;
-  auditHash: string;
+  auditHash?: string;
+  batchId?: string;
+  batchName?: string;
+  purity?: string;
+  certificateId?: string;
+  slotNumber?: number;
 }
 
 export interface ReferralItem {

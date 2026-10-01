@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DailyGoldWinner } from '../../types';
 import { mysteryAudio } from '../../utils/mysteryAudio';
@@ -31,7 +31,11 @@ import {
   Search,
   Crown,
   AlertCircle,
-  Fingerprint
+  Fingerprint,
+  ChevronRight,
+  ChevronDown,
+  User,
+  Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -45,6 +49,8 @@ export const AdminRewardFlowControlPage = () => {
   const { 
     group, 
     allGroups,
+    fetchDbGroups,
+    dbUsers,
     selectedBatchId,
     setSelectedBatchId,
     pastWinners, 
@@ -54,6 +60,9 @@ export const AdminRewardFlowControlPage = () => {
     resetDrawLock,
     programEvents,
     updateGroupSchedule,
+    triggerLiveDraw,
+    completeLiveDraw,
+    resetLiveDraw,
   } = useApp();
   
   // Draw State
@@ -63,6 +72,8 @@ export const AdminRewardFlowControlPage = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showWinnerModal, setShowWinnerModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showStartEventModal, setShowStartEventModal] = useState(false);
+  const [isStartingEvent, setIsStartingEvent] = useState(false);
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'list'>('month');
 
   // Manual Winner of the Day Selection State
@@ -70,32 +81,97 @@ export const AdminRewardFlowControlPage = () => {
   const [inputTargetMemberId, setInputTargetMemberId] = useState('');
   const [selectionMode, setSelectionMode] = useState<'select' | 'input'>('select');
   const [searchTerm, setSearchTerm] = useState('');
+  const [memberTypeFilter, setMemberTypeFilter] = useState<'all' | 'real' | 'bots'>('all');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Batch Draw Schedule Configurator State
-  const [scheduledTime, setScheduledTime] = useState('07:00'); // 7:00 AM
+  const [startDate, setStartDate] = useState(group?.startDate || '');
+  const [scheduledTime, setScheduledTime] = useState('07:00');
   const [scheduledAmPm, setScheduledAmPm] = useState<'AM' | 'PM'>('AM');
-  const [startDate, setStartDate] = useState('2026-08-14');
   const [autoEmailEnabled, setAutoEmailEnabled] = useState(true);
   const [scheduleSaved, setScheduleSaved] = useState(false);
+
+  const handleConfirmStartEvent = async () => {
+    if (!startDate) {
+      alert('Please choose an official start date for the 50-day event.');
+      return;
+    }
+    setIsStartingEvent(true);
+    try {
+      const formattedScheduledTime = `${scheduledTime} ${scheduledAmPm} IST`;
+      const res = await fetch('/api/admin/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'start_event',
+          groupId: group.groupId,
+          startDate: startDate,
+          scheduledTime: formattedScheduledTime,
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowStartEventModal(false);
+        alert(`🎉 ${data.message || `Event unlocked and started for ${group.groupId}!`}`);
+        if (typeof fetchDbGroups === 'function') await fetchDbGroups();
+      } else {
+        alert(`Error starting event: ${data.error}`);
+      }
+    } catch (e: any) {
+      alert(`Network error starting event: ${e.message}`);
+    } finally {
+      setIsStartingEvent(false);
+    }
+  };
+
+  const hasAdminConfiguredSchedule = Boolean(
+    group?.startDate &&
+    !group.startDate.includes('Not Started') &&
+    !group.startDate.includes('Pending') &&
+    !group.startDate.includes('2026-08-14') &&
+    group?.scheduledTime &&
+    !group.scheduledTime.includes('Awaiting') &&
+    !group.scheduledTime.includes('Pending') &&
+    group.scheduledTime.trim() !== ''
+  );
 
   // Sync scheduledTime and startDate whenever target group switches or updates
   useEffect(() => {
     if (group) {
-      if (group.startDate && !group.startDate.includes('Not Started')) {
+      if (group.startDate && !group.startDate.includes('Not Started') && !group.startDate.includes('Pending')) {
         setStartDate(group.startDate);
+      } else {
+        setStartDate(new Date().toISOString().split('T')[0]);
       }
-      const rawTime = group.scheduledTime || '07:00 AM IST';
+      const rawTime = group.scheduledTime || '';
       const match = rawTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
       if (match) {
         setScheduledTime(`${match[1].padStart(2, '0')}:${match[2]}`);
         setScheduledAmPm(match[3].toUpperCase() as 'AM' | 'PM');
+      } else {
+        setScheduledTime('07:00');
+        setScheduledAmPm('AM');
       }
     }
   }, [group?.groupId, group?.scheduledTime, group?.startDate]);
 
   const activePoolMembers = group.slots.filter(s => s.status !== 'Won 1g Gold');
   const goldWinnerSlots = group.slots.filter(s => s.status === 'Won 1g Gold');
+  const wonCount = goldWinnerSlots.length;
+  const currentActiveDay = (group.currentCycleDay && group.currentCycleDay > 0) ? group.currentCycleDay : Math.min(50, Math.max(1, wonCount + 1));
+  const batchShortName = group.groupName.split(' - ')[1] || group.groupName;
 
   // Auto-initialize target slot to first eligible member if none selected
   useEffect(() => {
@@ -110,8 +186,31 @@ export const AdminRewardFlowControlPage = () => {
 
   const targetWinnerSlotObj = activePoolMembers.find(s => s.slotNumber === manualTargetSlot) || null;
 
-  // Filtered members for dropdown search
+  // Identify bot vs real member from active group slots and dbUsers
+  const isBotMember = (m: any) => {
+    if (!m) return false;
+    const matchedUser = dbUsers?.find((u: any) => 
+      (m.memberId && m.memberId !== '—' && u.memberId === m.memberId) ||
+      (m.memberName && m.memberName !== '—' && (u.name === m.memberName || u.fullName === m.memberName)) ||
+      (u.slotNumber && Number(u.slotNumber) === Number(m.slotNumber) && (u.group || u.groupId || '').toUpperCase() === (group.groupId || '').toUpperCase())
+    );
+    return (
+      matchedUser?.isSimulated === true ||
+      matchedUser?.userType === 'simulated' ||
+      (matchedUser?.email && (matchedUser.email.endsWith('@infinitygram.net') || matchedUser.email.includes('bot'))) ||
+      (m.memberName && (m.memberName.toLowerCase().includes('bot') || m.memberName.includes('(BOT)')))
+    );
+  };
+
+  const realMembersCount = activePoolMembers.filter(m => !isBotMember(m)).length;
+  const botMembersCount = activePoolMembers.filter(m => isBotMember(m)).length;
+
+  // Filtered members for dropdown search and bot/real toggle
   const filteredActiveMembers = activePoolMembers.filter(s => {
+    const isBot = isBotMember(s);
+    if (memberTypeFilter === 'bots' && !isBot) return false;
+    if (memberTypeFilter === 'real' && isBot) return false;
+
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     return (
@@ -189,8 +288,11 @@ export const AdminRewardFlowControlPage = () => {
 
   const preEmailTime = calculatePreEmailTime(scheduledTime, scheduledAmPm);
 
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailBroadcastResult, setEmailBroadcastResult] = useState<any>(null);
+
   // Handle Interactive Glass Bottle Draw Trigger
-  const handleTriggerGlassBottleDraw = () => {
+  const handleTriggerGlassBottleDraw = async () => {
     if (isLocked24h || drawState !== 'idle' || activePoolMembers.length === 0) return;
 
     if (!targetWinnerSlotObj) {
@@ -202,47 +304,96 @@ export const AdminRewardFlowControlPage = () => {
     setDrawState('shaking');
     mysteryAudio.playSpin7Seconds();
 
+    const wonCount = goldWinnerSlots.length;
+    const currentDay = Math.min(50, Math.max(1, (group.currentCycleDay && group.currentCycleDay > 0) ? group.currentCycleDay : (wonCount + 1)));
+
+    const winnerDraft = {
+      slotNumber: targetWinnerSlotObj.slotNumber,
+      memberId: targetWinnerSlotObj.memberId,
+      memberName: targetWinnerSlotObj.memberName,
+      group: group.groupId,
+      batchName: group.groupName,
+      cycleDay: currentDay,
+      dayNumber: currentDay,
+      rewardGrams: 1,
+      purity: '24K / 916 BIS Hallmark Gold Chit',
+      certificateId: `CERT-IG-2026-${String(targetWinnerSlotObj.slotNumber).padStart(4, '0')}`,
+      timestamp: Date.now(),
+    };
+
+    // Broadcast live shake signal to database
+    await triggerLiveDraw(group.groupId, targetWinnerSlotObj.slotNumber, winnerDraft);
+
     setTimeout(() => {
       setDrawState('drawing');
       
-      setTimeout(() => {
+      setTimeout(async () => {
         const winner = executeDailySpin(targetWinnerSlotObj.slotNumber);
-        setSelectedWinner(winner);
+        const finalWinner = {
+          ...(winner || winnerDraft),
+          cycleDay: currentDay,
+          dayNumber: currentDay,
+          date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+        };
+        setSelectedWinner(finalWinner as any);
         setDrawState('revealed');
         setShowWinnerModal(true);
+
+        // Record completed winner in Firestore database
+        await completeLiveDraw(group.groupId, targetWinnerSlotObj.slotNumber, finalWinner);
       }, 1600);
-    }, 5400);
+    }, 4500);
   };
 
-  const resetDrawState = () => {
+  const isEventLiveOrActive = group.status === 'active' || group.status === 'live' || (group.currentCycleDay && group.currentCycleDay > 0);
+
+  const resetDrawState = async () => {
     setDrawState('idle');
     setShowWinnerModal(false);
+    await resetLiveDraw(group.groupId);
   };
 
-  const handleSendEmailNotification = () => {
-    setEmailSent(true);
-    setShowEmailModal(true);
+  const handleSendEmailNotification = async () => {
+    setIsSendingEmail(true);
+    try {
+      const res = await fetch('/api/admin/send-pre-draw-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          batchId: group.groupId,
+          batchName: group.groupName,
+          scheduledTime: `${scheduledTime} ${scheduledAmPm} IST`,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setEmailBroadcastResult(data);
+      setEmailSent(true);
+      setShowEmailModal(true);
+    } catch (e: any) {
+      alert(`Error sending pre-draw emails: ${e.message}`);
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
-  const handleSaveSchedule = () => {
+  const handleSaveSchedule = async () => {
     const formattedScheduledTime = `${scheduledTime} ${scheduledAmPm} IST`;
-    updateGroupSchedule(group.groupId, startDate, formattedScheduledTime);
+    await updateGroupSchedule(group.groupId, startDate, formattedScheduledTime);
     setScheduleSaved(true);
     setTimeout(() => {
       setScheduleSaved(false);
       setShowScheduleModal(false);
-    }, 1500);
+    }, 1200);
   };
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16 font-sans select-none">
-      
       {/* Executive Command Header */}
-      <div className="bg-gradient-to-r from-[#0D3B43] via-[#081E26] to-[#040D11] text-white p-6 sm:p-8 rounded-3xl border-2 border-[#E1A238]/60 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#0D3B43] via-[#081E26] to-[#040D11] text-white p-6 sm:p-8 rounded-3xl border-2 border-[#E1A238]/60 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#00C2B8] via-[#F2C868] to-[#E1A238]"></div>
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#00C2B8]/10 rounded-full blur-[90px] pointer-events-none"></div>
 
-        <div className="space-y-2 relative z-10">
+        <div className="space-y-2 relative z-10 max-w-2xl">
           <div className="inline-flex items-center space-x-2 bg-[#00C2B8]/15 text-[#00C2B8] border border-[#00C2B8]/40 px-3.5 py-1 rounded-full text-xs font-mono font-bold">
             <Sparkles className="w-4 h-4 text-[#00C2B8]" />
             <span>Admin Control Panel — InfinityGram Program Engine</span>
@@ -251,76 +402,73 @@ export const AdminRewardFlowControlPage = () => {
             50-Day Reward Program Control
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 font-medium">
-            Target Batch: <strong className="text-white font-bold">{group.groupName}</strong> ({group.groupId}) | Schedule: <span className="text-[#F2C868] font-mono font-black">{scheduledTime} {scheduledAmPm} IST Daily</span>
+            Target Batch: <strong className="text-white font-bold">{group.groupName}</strong> ({group.groupId}) | Schedule:{' '}
+            {hasAdminConfiguredSchedule ? (
+              <span className="text-[#F2C868] font-mono font-black">{group.scheduledTime} Daily (Starts: {group.startDate})</span>
+            ) : (
+              <span className="text-amber-300 bg-amber-400/20 border border-amber-400/40 px-2.5 py-0.5 rounded-full font-mono font-bold text-xs">
+                ⚠️ Schedule Not Set — Admin Setup Required
+              </span>
+            )}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 shrink-0 relative z-10">
-          {/* Configure Schedule Button */}
-          <button
-            onClick={() => setShowScheduleModal(true)}
-            className="bg-[#081E26] hover:bg-[#0D3B43] text-white font-extrabold px-4 py-3 rounded-2xl text-xs border border-[#E1A238]/40 shadow-md transition-all flex items-center space-x-2 cursor-pointer"
-          >
-            <Sliders className="w-4 h-4 text-[#F2C868]" />
-            <span>Configure Schedule</span>
-          </button>
-
-          {/* Send 10-Min Pre-Draw Email Button */}
-          <button
-            onClick={handleSendEmailNotification}
-            className={`px-4 py-3 rounded-2xl font-extrabold text-xs shadow-md transition-all flex items-center space-x-2 cursor-pointer ${
-              emailSent 
-                ? 'bg-emerald-600 text-white shadow-emerald-600/20' 
-                : 'bg-[#00C2B8] hover:bg-[#009890] text-[#081E26] font-black shadow-[#00C2B8]/20'
-            }`}
-          >
-            <Mail className="w-4 h-4" />
-            <span>{emailSent ? '📧 10-Min Email Sent' : '📧 Send 10-Min Email Alert'}</span>
-          </button>
-
-          {/* Demo Reset Lock Button */}
-          {isLocked24h && (
+        {/* Action Toolbar */}
+        <div className="flex flex-wrap items-center gap-2.5 relative z-10 w-full xl:w-auto justify-start xl:justify-end">
+          {/* Unlock & Start Event Button (High Priority when Pre-Event) */}
+          {!isEventLiveOrActive && (
             <button
-              onClick={resetDrawLock}
-              className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-400/40 px-3.5 py-3 rounded-2xl font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer"
-              title="Reset 24h cooldown timer for testing"
+              onClick={() => setShowStartEventModal(true)}
+              className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-400 text-amber-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-amber-500/20 transition-all hover:scale-105 cursor-pointer flex items-center space-x-2 border border-amber-200 animate-pulse"
             >
-              <Unlock className="w-3.5 h-3.5 text-rose-400" />
-              <span>Reset 24h Lock (Test Mode)</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-950 fill-amber-950" />
+              <span>🚀 UNLOCK & START 50-DAY EVENT</span>
             </button>
           )}
 
-          {/* Trigger Panai Glass Bottle Selection Button (Admin Only, 24h Cooldown) */}
+          {/* Configure Schedule Button */}
+          {isEventLiveOrActive ? (
+            <div className="bg-[#081E26] text-slate-400 font-bold px-3.5 py-2.5 rounded-xl text-xs border border-slate-700 shadow-sm flex items-center space-x-1.5 cursor-not-allowed">
+              <Lock className="w-3.5 h-3.5 text-[#F2C868]" />
+              <span>🔒 Schedule Locked</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowScheduleModal(true)}
+              className="bg-[#081E26] hover:bg-[#0D3B43] text-white font-bold px-3.5 py-2.5 rounded-xl text-xs border border-[#E1A238]/40 shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer"
+            >
+              <Sliders className="w-3.5 h-3.5 text-[#F2C868]" />
+              <span>Configure Schedule</span>
+            </button>
+          )}
+
+          {/* Send 10-Min Pre-Draw Email Button */}
           <button
-            onClick={handleTriggerGlassBottleDraw}
-            disabled={isLocked24h || drawState !== 'idle' || activePoolMembers.length === 0}
-            className={`px-6 py-3.5 rounded-2xl font-black text-xs shadow-xl transition-all flex items-center space-x-2 cursor-pointer ${
-              isLocked24h 
-                ? 'bg-[#081E26] text-slate-500 border border-slate-700 cursor-not-allowed'
-                : drawState !== 'idle' 
-                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-[#F2C868] via-[#E1A238] to-[#B87C10] hover:brightness-110 text-[#081E26] font-serif shadow-[#E1A238]/30 hover:scale-[1.02]'
+            disabled={isSendingEmail}
+            onClick={handleSendEmailNotification}
+            className={`px-3.5 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-60 ${
+              emailSent 
+                ? 'bg-emerald-600 text-white' 
+                : 'bg-[#00C2B8] hover:bg-[#009890] text-[#081E26] font-black'
             }`}
           >
-            {isLocked24h ? (
-              <>
-                <Lock className="w-4 h-4 text-[#E1A238]" />
-                <span>
-                  Draw Locked (Next in {String(lockCountdown?.hours).padStart(2, '0')}h {String(lockCountdown?.minutes).padStart(2, '0')}m {String(lockCountdown?.seconds).padStart(2, '0')}s)
-                </span>
-              </>
-            ) : (
-              <>
-                <RotateCw className={`w-4 h-4 ${drawState !== 'idle' ? 'animate-spin' : ''}`} />
-                <span>
-                  {drawState === 'shaking' ? '🏺 Shaking Glass Bottle...' :
-                   drawState === 'drawing' ? '📜 Drawing Folded Paper Chit...' :
-                   drawState === 'revealed' ? '✨ Winner Picked!' :
-                   `Click to Shake & Draw Lucky Chit (Day ${group.currentCycleDay})`}
-                </span>
-              </>
-            )}
+            <Mail className={`w-3.5 h-3.5 ${isSendingEmail ? 'animate-bounce' : ''}`} />
+            <span>
+              {isSendingEmail ? 'Sending...' : (emailSent ? '📧 Email Sent' : '📧 10-Min Alert')}
+            </span>
           </button>
+
+          {/* Reset Lock Button (Test Mode) */}
+          {isLocked24h && (
+            <button
+              onClick={resetDrawLock}
+              className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-400/40 px-3 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer"
+              title="Reset 24h cooldown timer for testing"
+            >
+              <Unlock className="w-3.5 h-3.5 text-rose-400" />
+              <span>Reset 24h Lock</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -368,7 +516,7 @@ export const AdminRewardFlowControlPage = () => {
                 Draw Button Locked for Next 24 Hours
               </h3>
               <p className="text-xs text-slate-300 font-medium">
-                Day {group.currentCycleDay - 1} chit selection completed. The draw button automatically disables for 24 hours to prevent duplicate draws and re-opens on schedule.
+                Day {Math.max(1, currentActiveDay - 1)} chit selection completed for {batchShortName}. The draw button automatically disables for 24 hours to prevent duplicate draws and re-opens on schedule.
               </p>
             </div>
           </div>
@@ -388,6 +536,38 @@ export const AdminRewardFlowControlPage = () => {
             </button>
           </div>
         </div>
+      ) : !hasAdminConfiguredSchedule ? (
+        <div className="bg-gradient-to-r from-amber-50 via-amber-100/40 to-orange-50 p-6 rounded-3xl border-2 border-dashed border-amber-300 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center shrink-0">
+              <Calendar className="w-6 h-6 text-amber-700 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-amber-200 text-amber-950 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                  ⚠️ Draw Schedule Not Set
+                </span>
+                <span className="text-xs font-mono text-slate-600 font-extrabold">
+                  {batchShortName}
+                </span>
+              </div>
+              <h3 className="text-base font-black text-[#0B1E39] mt-1">
+                Event Start Date & Daily Draw Time Pending Configuration
+              </h3>
+              <p className="text-xs text-slate-600 font-medium">
+                Admin must set the start date and daily selection time to start the 50-day consecutive draw cycle.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowScheduleModal(true)}
+            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black px-6 py-3.5 rounded-2xl text-xs transition-all shadow-md shrink-0 cursor-pointer flex items-center space-x-2"
+          >
+            <Calendar className="w-4 h-4 text-slate-950" />
+            <span>Set Start Date & Time Now</span>
+          </button>
+        </div>
       ) : (
         <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center space-x-4">
@@ -399,24 +579,33 @@ export const AdminRewardFlowControlPage = () => {
                 <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                   ⚡ Auto 10-Min Pre-Draw Email Schedule Active
                 </span>
-                <span className="text-xs font-mono text-slate-500 font-extrabold">Batch A Schedule</span>
+                <span className="text-xs font-mono text-slate-500 font-extrabold">
+                  {group.groupName.replace('InfinityGram 50 Gold Club - ', '') || group.groupId} Schedule
+                </span>
               </div>
               <h3 className="text-base font-black text-[#0B1E39] mt-1">
-                Daily Selection Scheduled for {scheduledTime} {scheduledAmPm} IST
+                Daily Selection Scheduled for {scheduledTime} {scheduledAmPm} IST (Starts: {group.startDate})
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                System automatically emails all 50 members at <strong className="text-amber-800 font-extrabold">{preEmailTime}</strong> (10 minutes prior to live draw event).
+                System automatically emails all real verified members at <strong className="text-amber-800 font-extrabold">{preEmailTime}</strong> (10 minutes prior to live draw event).
               </p>
             </div>
           </div>
 
-          <button
-            onClick={() => setShowScheduleModal(true)}
-            className="bg-[#0B1E39] hover:bg-[#152D50] text-white font-extrabold px-5 py-3 rounded-2xl text-xs transition-all shadow-sm shrink-0 cursor-pointer flex items-center space-x-2"
-          >
-            <Calendar className="w-4 h-4 text-amber-400" />
-            <span>Edit Start Time & Auto-Emails</span>
-          </button>
+          {isEventLiveOrActive ? (
+            <div className="bg-slate-100 text-slate-500 font-bold px-4 py-3 rounded-2xl text-xs border border-slate-200 shrink-0 cursor-not-allowed flex items-center space-x-2">
+              <Lock className="w-4 h-4 text-amber-600" />
+              <span>🔒 Schedule Locked (Event Live)</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowScheduleModal(true)}
+              className="bg-[#0B1E39] hover:bg-[#152D50] text-white font-extrabold px-5 py-3 rounded-2xl text-xs transition-all shadow-sm shrink-0 cursor-pointer flex items-center space-x-2"
+            >
+              <Calendar className="w-4 h-4 text-amber-400" />
+              <span>Edit Start Time & Auto-Emails</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -481,15 +670,22 @@ export const AdminRewardFlowControlPage = () => {
             <div className="bg-[#05171E]/90 backdrop-blur-md rounded-2xl border-2 border-[#E1A238]/40 p-4 sm:p-5 text-left space-y-4 shadow-xl">
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E1A238]/20 pb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-7 h-7 rounded-lg bg-[#E1A238]/20 border border-[#E1A238]/50 flex items-center justify-center">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#E1A238]/20 border border-[#E1A238]/50 flex items-center justify-center shrink-0">
                     <Crown className="w-4 h-4 text-[#F2C868]" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-serif font-black text-white uppercase tracking-wider">
-                      Target Winner Selection (Day {group.currentCycleDay})
-                    </h4>
-                    <p className="text-[11px] text-slate-400">Pre-select which member chit is drawn from the bottle</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-xs font-serif font-black text-white uppercase tracking-wider">
+                        Target Winner Selection (Day {currentActiveDay} of 50)
+                      </h4>
+                      <span className="bg-[#00C2B8]/20 border border-[#00C2B8]/40 text-[#00C2B8] text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full">
+                        {batchShortName}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Pre-select which member chit is drawn from the bottle for <strong className="text-[#F2C868]">{group.groupName}</strong>
+                    </p>
                   </div>
                 </div>
 
@@ -520,34 +716,226 @@ export const AdminRewardFlowControlPage = () => {
                 </div>
               </div>
 
-              {/* Mode 1: Dropdown & Search Filter */}
+              {/* Mode 1: Dropdown & Search Filter with Real vs Bot Tabs */}
               {selectionMode === 'select' && (
                 <div className="space-y-2.5">
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder="Filter by name, member ID, or chit number..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-[#081E26] border border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00C2B8]"
-                    />
+                  {/* REAL VS BOT FILTER TABS */}
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMemberTypeFilter('all');
+                          const match = activePoolMembers.find(m => m.slotNumber === manualTargetSlot);
+                          if (!match && activePoolMembers.length > 0) {
+                            setManualTargetSlot(activePoolMembers[0].slotNumber);
+                          }
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer border flex items-center space-x-1 ${
+                          memberTypeFilter === 'all'
+                            ? 'bg-[#00C2B8] text-[#081E26] border-[#00C2B8] font-black shadow-xs'
+                            : 'bg-[#081E26] text-slate-300 border-slate-700 hover:text-white'
+                        }`}
+                      >
+                        <span>All Pool</span>
+                        <span className="bg-black/20 px-1 py-0.2 rounded text-[9px]">{activePoolMembers.length}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMemberTypeFilter('real');
+                          const realOnes = activePoolMembers.filter(m => !isBotMember(m));
+                          if (!realOnes.some(m => m.slotNumber === manualTargetSlot) && realOnes.length > 0) {
+                            setManualTargetSlot(realOnes[0].slotNumber);
+                          }
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer border flex items-center space-x-1 ${
+                          memberTypeFilter === 'real'
+                            ? 'bg-emerald-500 text-[#081E26] border-emerald-400 font-black shadow-xs'
+                            : 'bg-[#081E26] text-emerald-300 border-emerald-500/30 hover:border-emerald-400'
+                        }`}
+                      >
+                        <span>👤 Real Members</span>
+                        <span className={`px-1 py-0.2 rounded text-[9px] ${memberTypeFilter === 'real' ? 'bg-[#081E26]/20 text-[#081E26]' : 'bg-emerald-500/20 text-emerald-300'}`}>
+                          {realMembersCount}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMemberTypeFilter('bots');
+                          const botOnes = activePoolMembers.filter(m => isBotMember(m));
+                          if (!botOnes.some(m => m.slotNumber === manualTargetSlot) && botOnes.length > 0) {
+                            setManualTargetSlot(botOnes[0].slotNumber);
+                          }
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer border flex items-center space-x-1 ${
+                          memberTypeFilter === 'bots'
+                            ? 'bg-purple-500 text-white border-purple-400 font-black shadow-xs'
+                            : 'bg-[#081E26] text-purple-300 border-purple-500/30 hover:border-purple-400'
+                        }`}
+                      >
+                        <span>🤖 Bot Users</span>
+                        <span className={`px-1 py-0.2 rounded text-[9px] ${memberTypeFilter === 'bots' ? 'bg-black/20 text-white' : 'bg-purple-500/20 text-purple-300'}`}>
+                          {botMembersCount}
+                        </span>
+                      </button>
+                    </div>
+
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {filteredActiveMembers.length} candidate{filteredActiveMembers.length !== 1 ? 's' : ''}
+                    </span>
                   </div>
 
-                  <select
-                    value={manualTargetSlot ?? ''}
-                    onChange={(e) => {
-                      setManualTargetSlot(Number(e.target.value));
-                      setValidationError(null);
-                    }}
-                    className="w-full bg-[#081E26] border-2 border-[#E1A238]/40 hover:border-[#E1A238] rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-[#00C2B8] cursor-pointer"
-                  >
-                    {filteredActiveMembers.map((m) => (
-                      <option key={m.slotNumber} value={m.slotNumber} className="bg-[#081E26] text-white py-1">
-                        Chit #{String(m.slotNumber).padStart(2, '0')} — {m.memberName || `Member #${m.slotNumber}`} ({m.memberId || `LOP-${String(m.slotNumber).padStart(6, '0')}`})
-                      </option>
-                    ))}
-                  </select>
+                  {/* CUSTOM LUXURY SEARCHABLE DROPDOWN */}
+                  <div className="relative" ref={dropdownRef}>
+                    {/* Trigger button showing current selection with Real/Bot badge */}
+                    <button
+                      type="button"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="w-full bg-[#081E26] hover:bg-[#0c2b36] border-2 border-[#E1A238]/60 hover:border-[#E1A238] rounded-xl px-3.5 py-2.5 text-xs text-white flex items-center justify-between transition-all cursor-pointer shadow-md focus:outline-none focus:border-[#00C2B8]"
+                    >
+                      {targetWinnerSlotObj ? (
+                        <div className="flex items-center space-x-2.5 overflow-hidden text-left">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#F2C868] to-[#B3781A] text-[#081E26] flex flex-col items-center justify-center font-serif font-black shadow-xs shrink-0">
+                            <span className="text-[7px] uppercase font-bold leading-none">Chit</span>
+                            <span className="text-xs font-black leading-none">#{String(targetWinnerSlotObj.slotNumber).padStart(2, '0')}</span>
+                          </div>
+                          <div className="truncate">
+                            <div className="flex items-center space-x-2 truncate">
+                              <span className="font-bold text-white text-xs truncate">
+                                {targetWinnerSlotObj.memberName || `Member #${targetWinnerSlotObj.slotNumber}`}
+                              </span>
+                              {isBotMember(targetWinnerSlotObj) ? (
+                                <span className="bg-purple-500/25 text-purple-300 border border-purple-400/50 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase flex items-center space-x-0.5 shrink-0">
+                                  <span>🤖 BOT</span>
+                                </span>
+                              ) : (
+                                <span className="bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase flex items-center space-x-0.5 shrink-0">
+                                  <span>👤 REAL</span>
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] font-mono text-[#00C2B8] block truncate">
+                              {targetWinnerSlotObj.memberId || `LOP-${String(targetWinnerSlotObj.slotNumber).padStart(6, '0')}`}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic">Select a member from pool...</span>
+                      )}
+
+                      <div className="flex items-center space-x-1.5 text-slate-400 pl-2 shrink-0">
+                        <span className="text-[10px] font-mono font-bold text-[#E1A238] hidden sm:inline">Change Winner</span>
+                        <ChevronDown className={`w-4 h-4 text-[#E1A238] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                      </div>
+                    </button>
+
+                    {/* Dropdown Popup Menu */}
+                    {isDropdownOpen && (
+                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-[#081E26] border-2 border-[#00C2B8]/60 rounded-xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
+                        {/* Internal Quick Search Bar */}
+                        <div className="p-2 border-b border-slate-700/80 bg-[#06181f]">
+                          <div className="relative">
+                            <Search className="w-3.5 h-3.5 text-[#00C2B8] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <input
+                              type="text"
+                              autoFocus
+                              placeholder="Search by name, member ID, or chit number..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="w-full bg-[#081E26] border border-slate-600 focus:border-[#00C2B8] rounded-lg pl-8 pr-7 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none"
+                            />
+                            {searchTerm && (
+                              <button
+                                type="button"
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Members Scrollable List */}
+                        <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/60 p-1 custom-scrollbar">
+                          {filteredActiveMembers.length === 0 ? (
+                            <div className="p-4 text-center text-slate-400 text-xs">
+                              <p className="font-medium">No matching pool members found.</p>
+                              <p className="text-[10px] text-slate-500 mt-0.5">Try clearing the search or switching the Real/Bot filter tab.</p>
+                            </div>
+                          ) : (
+                            filteredActiveMembers.map((m) => {
+                              const isBot = isBotMember(m);
+                              const isSelected = manualTargetSlot === m.slotNumber;
+                              return (
+                                <button
+                                  key={m.slotNumber}
+                                  type="button"
+                                  onClick={() => {
+                                    setManualTargetSlot(m.slotNumber);
+                                    setValidationError(null);
+                                    setIsDropdownOpen(false);
+                                  }}
+                                  className={`w-full px-3 py-2 text-left rounded-lg transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#00C2B8]/20 border border-[#00C2B8]/60 text-white'
+                                      : 'hover:bg-white/5 text-slate-200 border border-transparent'
+                                  }`}
+                                >
+                                  <div className="flex items-center space-x-2.5 min-w-0">
+                                    <div className={`w-7 h-7 rounded-md flex flex-col items-center justify-center font-serif font-black text-[10px] shrink-0 ${
+                                      isSelected 
+                                        ? 'bg-[#F2C868] text-[#081E26]' 
+                                        : 'bg-slate-800 text-[#F2C868] border border-[#E1A238]/30'
+                                    }`}>
+                                      <span className="leading-none font-black">#{String(m.slotNumber).padStart(2, '0')}</span>
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="flex items-center space-x-1.5">
+                                        <span className={`text-xs font-bold truncate ${isSelected ? 'text-[#F2C868]' : 'text-white'}`}>
+                                          {m.memberName || `Member #${m.slotNumber}`}
+                                        </span>
+                                      </div>
+                                      <span className="text-[10px] font-mono text-slate-400">
+                                        {m.memberId || `LOP-${String(m.slotNumber).padStart(6, '0')}`}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center space-x-2 shrink-0">
+                                    {isBot ? (
+                                      <span className="bg-purple-500/20 text-purple-300 border border-purple-400/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase flex items-center space-x-0.5">
+                                        <Bot className="w-2.5 h-2.5" />
+                                        <span>BOT</span>
+                                      </span>
+                                    ) : (
+                                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase flex items-center space-x-0.5">
+                                        <User className="w-2.5 h-2.5" />
+                                        <span>REAL</span>
+                                      </span>
+                                    )}
+                                    {isSelected && (
+                                      <Check className="w-4 h-4 text-[#00C2B8] shrink-0" />
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        {/* Quick Footer */}
+                        <div className="px-3 py-1.5 bg-[#06181f] border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                          <span>Filter: {memberTypeFilter === 'all' ? 'All Members' : memberTypeFilter === 'real' ? '👤 Real Only' : '🤖 Bots Only'}</span>
+                          <span className="text-[#00C2B8] font-bold">Total: {filteredActiveMembers.length}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -587,17 +975,29 @@ export const AdminRewardFlowControlPage = () => {
                       <span className="text-sm font-black leading-none">#{targetWinnerSlotObj.slotNumber}</span>
                     </div>
                     <div>
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-xs font-serif font-black text-white">
                           {targetWinnerSlotObj.memberName || `Member #${targetWinnerSlotObj.slotNumber}`}
                         </span>
+                        {isBotMember(targetWinnerSlotObj) ? (
+                          <span className="bg-purple-500/20 text-purple-300 border border-purple-400/40 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
+                            BOT
+                          </span>
+                        ) : (
+                          <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
+                            REAL MEMBER
+                          </span>
+                        )}
                         <span className="bg-[#00C2B8]/20 text-[#00C2B8] text-[9px] font-mono font-bold px-1.5 py-0.2 rounded">
                           {targetWinnerSlotObj.memberId || `LOP-${String(targetWinnerSlotObj.slotNumber).padStart(6, '0')}`}
+                        </span>
+                        <span className="bg-[#E1A238]/20 text-[#F2C868] text-[9px] font-mono font-bold px-1.5 py-0.2 rounded">
+                          {batchShortName}
                         </span>
                       </div>
                       <p className="text-[11px] text-[#F2C868] font-medium flex items-center space-x-1 mt-0.5">
                         <Award className="w-3 h-3 text-[#F2C868]" />
-                        <span>Pre-set to win 1g Gold Coin on Day {group.currentCycleDay}</span>
+                        <span>Pre-set to win 1g Gold Coin on Day {currentActiveDay} ({batchShortName})</span>
                       </p>
                     </div>
                   </div>
@@ -662,7 +1062,7 @@ export const AdminRewardFlowControlPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-xs font-sans">
         <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs space-y-1">
           <p className="text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">Current Cycle Day</p>
-          <p className="text-2xl font-black text-[#0B1E39]">Day {group.currentCycleDay} of 50</p>
+          <p className="text-2xl font-black text-[#0B1E39]">Day {(group.currentCycleDay && group.currentCycleDay > 0) ? group.currentCycleDay : Math.min(50, Math.max(1, goldWinnerSlots.length + 1))} of 50</p>
           <p className="text-amber-800 font-extrabold mt-0.5">{goldWinnerSlots.length} Grams Gold Awarded</p>
         </div>
 
@@ -693,7 +1093,7 @@ export const AdminRewardFlowControlPage = () => {
               <h3 className="text-lg font-black text-[#0B1E39]">50-Day Daily Program Event Calendar</h3>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Scheduled daily events for Batch A (Day 1 to Day 50 at 07:00 AM IST)
+              Scheduled daily events for {group.groupName.replace('InfinityGram 50 Gold Club - ', '') || group.groupId} (Day 1 to Day 50 at {scheduledTime} {scheduledAmPm} IST)
             </p>
           </div>
 
@@ -825,7 +1225,24 @@ export const AdminRewardFlowControlPage = () => {
                       </span>
                     </td>
                     <td className="p-3.5 font-mono font-black text-[#2F6FED]">{evt.winnerMemberId || '—'}</td>
-                    <td className="p-3.5 font-bold text-[#0B1E39]">{evt.winnerName || 'Pending Execution'}</td>
+                    <td className="p-3.5 font-bold text-[#0B1E39]">
+                      {evt.winnerName ? (
+                        <div className="flex items-center space-x-1.5">
+                          <span>{evt.winnerName}</span>
+                          {isBotMember({ memberId: evt.winnerMemberId, memberName: evt.winnerName }) ? (
+                            <span className="bg-purple-100 text-purple-700 border border-purple-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded">
+                              🤖 BOT
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-100 text-emerald-700 border border-emerald-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded">
+                              👤 REAL
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 font-normal">Pending Execution</span>
+                      )}
+                    </td>
                     <td className="p-3.5 font-mono text-[10px] text-slate-400 truncate max-w-[120px]">{evt.auditHash || '—'}</td>
                   </tr>
                 ))}
@@ -849,7 +1266,7 @@ export const AdminRewardFlowControlPage = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white max-w-lg w-full rounded-[2.5rem] p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-6 relative text-left"
+              className="bg-white max-w-lg w-full rounded-[2.5rem] p-5 sm:p-8 border border-slate-200 shadow-2xl space-y-6 relative text-left max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setShowScheduleModal(false)}
@@ -893,7 +1310,7 @@ export const AdminRewardFlowControlPage = () => {
                             <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${
                               isSelected ? 'bg-amber-400 text-amber-950 shadow-sm' : 'bg-slate-200 text-slate-700'
                             }`}>
-                              {g.groupName.includes('Batch A') ? 'A' : 'B'}
+                              {g.groupName.split(' - ')[1]?.replace('Batch ', '') || g.groupId.replace('GROUP-', '')}
                             </div>
                             <div>
                               <p className={`font-black text-xs ${isSelected ? 'text-white' : 'text-[#0B1E39]'}`}>
@@ -939,11 +1356,24 @@ export const AdminRewardFlowControlPage = () => {
                       onChange={(e) => setScheduledTime(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
                     >
+                      <option value="01:00">01:00</option>
+                      <option value="02:00">02:00</option>
+                      <option value="03:00">03:00</option>
+                      <option value="04:00">04:00</option>
+                      <option value="05:00">05:00</option>
                       <option value="06:00">06:00</option>
-                      <option value="06:30">06:30 (Morning 6:30)</option>
-                      <option value="07:00">07:00 (Morning 7:00)</option>
-                      <option value="08:00">08:00 (Morning 8:00)</option>
-                      <option value="18:00">18:00 (Evening 6:00)</option>
+                      <option value="06:30">06:30</option>
+                      <option value="07:00">07:00</option>
+                      <option value="07:30">07:30</option>
+                      <option value="08:00">08:00</option>
+                      <option value="08:30">08:30</option>
+                      <option value="09:00">09:00</option>
+                      <option value="09:30">09:30</option>
+                      <option value="10:00">10:00</option>
+                      <option value="10:30">10:30</option>
+                      <option value="11:00">11:00</option>
+                      <option value="11:30">11:30</option>
+                      <option value="12:00">12:00</option>
                     </select>
                   </div>
 
@@ -979,6 +1409,17 @@ export const AdminRewardFlowControlPage = () => {
                   </p>
                 </div>
 
+                {/* Locking Rule Policy Notice */}
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-slate-700 text-[11px] space-y-1">
+                  <p className="font-bold text-[#0B1E39] flex items-center space-x-1.5">
+                    <Lock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Database Schedule Sync & Locking Rule:</span>
+                  </p>
+                  <p>
+                    You can set/edit this date and time from here or the <strong>Slot Control Grid</strong>. Once saved, it stores in Firestore database. Once the 50-day draw cycle starts (Day 1), schedule editing will be permanently <strong>locked</strong> in both places.
+                  </p>
+                </div>
+
                 {/* Action Button */}
                 <button
                   onClick={handleSaveSchedule}
@@ -1002,9 +1443,9 @@ export const AdminRewardFlowControlPage = () => {
         )}
       </AnimatePresence>
 
-      {/* WINNER ANNOUNCEMENT MODAL */}
+      {/* 🚀 START / UNLOCK 50-DAY EVENT MODAL */}
       <AnimatePresence>
-        {showWinnerModal && selectedWinner && (
+        {showStartEventModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1012,66 +1453,236 @@ export const AdminRewardFlowControlPage = () => {
             className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.8, y: 30 }}
+              initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 30 }}
-              className="bg-white max-w-md w-full rounded-[2.5rem] p-8 border border-amber-300 shadow-2xl space-y-6 relative text-center overflow-hidden"
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white max-w-lg w-full rounded-[2.5rem] p-5 sm:p-8 border-2 border-amber-300 shadow-2xl space-y-6 relative text-left max-h-[90vh] overflow-y-auto"
             >
-              <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
-
               <button
-                onClick={resetDrawState}
-                className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-full cursor-pointer"
+                onClick={() => setShowStartEventModal(false)}
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 rounded-full cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
 
-              <div className="space-y-3">
-                <motion.div 
-                  animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-amber-500/30 text-3xl font-black"
-                >
-                  🏆
-                </motion.div>
+              <div className="space-y-2">
+                <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-amber-400/20 to-amber-500/10 text-amber-900 border border-amber-400/40 px-3.5 py-1 rounded-full text-xs font-black">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+                  <span>Admin Event Unlock & Launchpad</span>
+                </div>
+                <h2 className="text-2xl font-black text-[#0B1E39]">
+                  Unlock & Launch 50-Day Event
+                </h2>
+                <p className="text-xs text-slate-600 font-medium">
+                  Set the official launch date and daily draw time for <span className="font-mono text-amber-700 font-black">{group.groupName} ({group.groupId})</span>.
+                </p>
+              </div>
 
-                <div>
-                  <span className="text-[10px] font-black text-amber-900 bg-amber-100 border border-amber-300 px-3.5 py-1 rounded-full uppercase tracking-wider">
-                    Day {selectedWinner.dayNumber} Panai Winner Drawn
+              {/* READINESS CARD */}
+              <div className="bg-gradient-to-br from-[#0B1E39] to-[#0F294D] text-white p-4.5 rounded-2xl border border-white/10 space-y-2.5 text-xs shadow-inner">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300">Target Batch:</span>
+                  <span className="font-mono font-black text-amber-400 text-sm">{group.groupId}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300">Total Members:</span>
+                  <span className="font-mono font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-md">
+                    {group.totalMembers || 50} / 50 Verified Members
                   </span>
-                  <h3 className="text-2xl font-black text-[#0B1E39] mt-2 tracking-tight">
-                    {selectedWinner.winnerName}
-                  </h3>
-                  <p className="text-xs font-mono font-extrabold text-[#2F6FED] mt-0.5">
-                    Member ID: {selectedWinner.winnerMemberId}
-                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300">Prize Pool:</span>
+                  <span className="font-mono font-black text-amber-300">50 x 1 Gram 916 BIS Hallmark Gold Coins</span>
                 </div>
               </div>
 
-              <div className="bg-amber-50/80 p-5 rounded-2xl border border-amber-200 text-left space-y-2 text-xs font-medium">
-                <div className="flex justify-between items-center border-b border-amber-200/80 pb-2">
-                  <span className="text-slate-600 font-bold">Awarded Prize:</span>
-                  <span className="text-amber-900 font-black">1 Gram 916 Gold Coin</span>
+              {/* INPUTS FOR START DATE AND DRAW TIME */}
+              <div className="space-y-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="font-black text-[#0B1E39] uppercase text-[10px] tracking-wider block">
+                    Official Event Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 p-3.5 rounded-2xl font-semibold text-slate-900 focus:outline-none focus:border-amber-500 shadow-xs"
+                  />
                 </div>
-                <div className="flex justify-between items-center border-b border-amber-200/80 pb-2">
-                  <span className="text-slate-600 font-bold">Group Batch:</span>
-                  <span className="text-[#0B1E39] font-extrabold">{group.groupName}</span>
+
+                <div className="space-y-1.5">
+                  <label className="font-black text-[#0B1E39] uppercase text-[10px] tracking-wider block">
+                    Daily Draw Time
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="time"
+                      value={scheduledTime}
+                      onChange={(e) => setScheduledTime(e.target.value)}
+                      className="bg-slate-50 border border-slate-300 p-3.5 rounded-2xl font-semibold text-slate-900 focus:outline-none focus:border-amber-500"
+                    />
+                    <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => setScheduledAmPm('AM')}
+                        className={`w-1/2 py-2.5 rounded-xl font-bold transition-all cursor-pointer ${
+                          scheduledAmPm === 'AM' ? 'bg-[#0B1E39] text-white' : 'text-slate-600'
+                        }`}
+                      >
+                        AM
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setScheduledAmPm('PM')}
+                        className={`w-1/2 py-2.5 rounded-xl font-bold transition-all cursor-pointer ${
+                          scheduledAmPm === 'PM' ? 'bg-[#0B1E39] text-white' : 'text-slate-600'
+                        }`}
+                      >
+                        PM
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center pt-1">
-                  <span className="text-slate-500 font-bold">24H Cooldown Status:</span>
-                  <span className="font-mono text-xs font-black text-rose-600">Button Locked for 24 Hours</span>
+
+                <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-[11px] text-amber-900 flex items-start space-x-2">
+                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-black">Unlock Action:</span> This will transition <span className="font-mono font-bold">{group.groupId}</span> status to <span className="font-mono font-bold text-emerald-700">Active (Day 1/50)</span> and immediately unlock the 3D Lucky Bowl live stream for all members on their user dashboard!
+                  </div>
                 </div>
               </div>
 
-              <button
-                onClick={resetDrawState}
-                className="w-full bg-[#0B1E39] hover:bg-[#152D50] text-white font-extrabold py-4 rounded-2xl shadow-xl text-xs uppercase tracking-wider cursor-pointer transition-all border border-amber-400/40"
-              >
-                Confirm Winner & Lock Draw for 24 Hours
-              </button>
+              {/* ACTION BUTTONS */}
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  onClick={() => setShowStartEventModal(false)}
+                  className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-2xl text-xs transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={isStartingEvent || !startDate}
+                  onClick={handleConfirmStartEvent}
+                  className="w-2/3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-400 text-amber-950 font-black py-3.5 rounded-2xl text-xs transition-all shadow-xl shadow-amber-500/30 cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50 hover:scale-[1.02]"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-950 fill-amber-950" />
+                  <span>{isStartingEvent ? 'Unlocking Event...' : '🚀 Confirm & Unlock 50-Day Event'}</span>
+                </button>
+              </div>
+
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* WINNER ANNOUNCEMENT MODAL */}
+      <AnimatePresence>
+        {showWinnerModal && selectedWinner && (() => {
+          const isWinnerBot = isBotMember({
+            memberId: selectedWinner.winnerMemberId,
+            memberName: selectedWinner.winnerName,
+            slotNumber: selectedWinner.slotNumber,
+          });
+
+          return (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.8, y: 30 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.8, y: 30 }}
+                className="bg-white max-w-md w-full rounded-[2.5rem] p-5 sm:p-8 border border-amber-300 shadow-2xl space-y-6 relative text-center max-h-[90vh] overflow-y-auto"
+              >
+                <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
+
+                <button
+                  onClick={resetDrawState}
+                  className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-full cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="space-y-3">
+                  <motion.div 
+                    animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-amber-500/30 text-3xl font-black"
+                  >
+                    🏆
+                  </motion.div>
+
+                  <div>
+                    <span className="text-[10px] font-black text-amber-900 bg-amber-100 border border-amber-300 px-3.5 py-1 rounded-full uppercase tracking-wider">
+                      Day {selectedWinner.dayNumber} Panai Winner Drawn
+                    </span>
+                    <h3 className="text-2xl font-black text-[#0B1E39] mt-2 tracking-tight">
+                      {selectedWinner.winnerName}
+                    </h3>
+                    
+                    {/* Admin Only: Real vs Bot User Badge */}
+                    <div className="mt-1.5 flex items-center justify-center gap-2">
+                      {isWinnerBot ? (
+                        <span className="inline-flex items-center space-x-1.5 bg-purple-100 border border-purple-300 text-purple-800 text-[11px] font-mono font-black px-3 py-0.5 rounded-full uppercase shadow-xs">
+                          <Bot className="w-3.5 h-3.5 text-purple-700" />
+                          <span>🤖 BOT USER (SIMULATED)</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center space-x-1.5 bg-emerald-100 border border-emerald-300 text-emerald-800 text-[11px] font-mono font-black px-3 py-0.5 rounded-full uppercase shadow-xs">
+                          <User className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>👤 REAL MEMBER (VERIFIED)</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-xs font-mono font-extrabold text-[#2F6FED] mt-1">
+                      Member ID: {selectedWinner.winnerMemberId}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50/80 p-5 rounded-2xl border border-amber-200 text-left space-y-2 text-xs font-medium">
+                  <div className="flex justify-between items-center border-b border-amber-200/80 pb-2">
+                    <span className="text-slate-600 font-bold">User Type (Admin Audit):</span>
+                    {isWinnerBot ? (
+                      <span className="font-mono text-xs font-black text-purple-700 bg-purple-100/80 border border-purple-300 px-2 py-0.5 rounded flex items-center space-x-1">
+                        <Bot className="w-3 h-3 text-purple-700" />
+                        <span>🤖 Bot User</span>
+                      </span>
+                    ) : (
+                      <span className="font-mono text-xs font-black text-emerald-700 bg-emerald-100/80 border border-emerald-300 px-2 py-0.5 rounded flex items-center space-x-1">
+                        <User className="w-3 h-3 text-emerald-700" />
+                        <span>👤 Real Member</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center border-b border-amber-200/80 pb-2">
+                    <span className="text-slate-600 font-bold">Awarded Prize:</span>
+                    <span className="text-amber-900 font-black">1 Gram 916 Gold Coin</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-amber-200/80 pb-2">
+                    <span className="text-slate-600 font-bold">Group Batch:</span>
+                    <span className="text-[#0B1E39] font-extrabold">{group.groupName}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1">
+                    <span className="text-slate-500 font-bold">24H Cooldown Status:</span>
+                    <span className="font-mono text-xs font-black text-rose-600">Button Locked for 24 Hours</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={resetDrawState}
+                  className="w-full bg-[#0B1E39] hover:bg-[#152D50] text-white font-extrabold py-4 rounded-2xl shadow-xl text-xs uppercase tracking-wider cursor-pointer transition-all border border-amber-400/40"
+                >
+                  Confirm Winner & Lock Draw for 24 Hours
+                </button>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
 
       {/* Email Modal */}
@@ -1087,7 +1698,7 @@ export const AdminRewardFlowControlPage = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white max-w-lg w-full rounded-[2.5rem] p-8 border border-slate-200 shadow-2xl space-y-6 relative text-left"
+              className="bg-white max-w-lg w-full rounded-[2.5rem] p-5 sm:p-8 border border-slate-200 shadow-2xl space-y-6 relative text-left max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setShowEmailModal(false)}
@@ -1102,7 +1713,7 @@ export const AdminRewardFlowControlPage = () => {
                 </div>
                 <div>
                   <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-0.5 rounded-full uppercase">
-                    Broadcast Successfully Sent
+                    {emailBroadcastResult?.success ? `✅ Broadcast Delivered (${emailBroadcastResult.dispatchedCount || 0} Real Members)` : 'Broadcast Successfully Sent'}
                   </span>
                   <h3 className="text-lg font-black text-[#0B1E39] mt-1">10-Minute Pre-Selection Email Broadcast</h3>
                 </div>
@@ -1110,10 +1721,12 @@ export const AdminRewardFlowControlPage = () => {
 
               <div className="bg-[#F8FAFC] p-5 rounded-2xl border border-slate-200 space-y-3 text-xs">
                 <div className="border-b border-slate-200 pb-2 space-y-1 font-mono">
-                  <p className="text-slate-500"><strong>From:</strong> notifications@infinitygram.in</p>
-                  <p className="text-slate-500"><strong>Recipients:</strong> All 50 Enrolled Members in Batch A</p>
+                  <p className="text-slate-500"><strong>From:</strong> InfinityGram Live &lt;onboarding@resend.dev&gt;</p>
+                  <p className="text-slate-500">
+                    <strong>Recipients:</strong> {emailBroadcastResult?.totalRealMembers || 'All'} Verified Real Members in {group.groupName} (Bot Users Excluded)
+                  </p>
                   <p className="text-[#0B1E39] font-black font-sans text-sm pt-1">
-                    Subject: ⏰ Live 1 Gram Gold Panai Selection Starts at {scheduledTime} {scheduledAmPm}!
+                    Subject: ⏰ Live 1 Gram Gold Panai Selection Starts at {scheduledTime} {scheduledAmPm}! [{group.groupName}]
                   </p>
                 </div>
 
@@ -1121,19 +1734,31 @@ export const AdminRewardFlowControlPage = () => {
                   "Dear Member, your group's daily 1 Gram 916 Gold Panai lucky pot selection starts in 10 minutes ({scheduledTime} {scheduledAmPm} IST). Click the direct link below to open the portal and watch the live paper chit draw!"
                 </p>
 
-                <div className="pt-2">
-                  <div className="bg-[#0B1E39] text-white text-center py-3.5 rounded-xl font-black text-xs flex items-center justify-center space-x-2">
-                    <span>🏺 Open Live 1g Gold Rewards Selection Portal</span>
-                    <ExternalLink className="w-4 h-4 text-amber-400" />
+                {emailBroadcastResult?.directRewardUrl && (
+                  <div className="pt-2">
+                    <a
+                      href={emailBroadcastResult.directRewardUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-[#0B1E39] hover:bg-[#152D50] text-white text-center py-3.5 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2 transition-all shadow-md block"
+                    >
+                      <span>🏺 Open Live 1g Gold Rewards Selection Portal ({group.groupId})</span>
+                      <ExternalLink className="w-4 h-4 text-amber-400" />
+                    </a>
                   </div>
-                </div>
+                )}
               </div>
 
               <button
-                onClick={() => { setShowEmailModal(false); setCurrentView('user-reward-spin'); }}
-                className="w-full bg-[#2F6FED] hover:bg-blue-600 text-white font-black py-4 rounded-2xl text-xs transition-all shadow-lg cursor-pointer"
+                onClick={() => { 
+                  setSelectedBatchId(group.groupId);
+                  setShowEmailModal(false); 
+                  setCurrentView('user-reward-spin'); 
+                }}
+                className="w-full bg-[#2F6FED] hover:bg-blue-600 text-white font-black py-4 rounded-2xl text-xs transition-all shadow-lg cursor-pointer flex items-center justify-center space-x-2"
               >
-                View User Side Live Stream Dashboard
+                <span>Open User Rewards Stream for {group.groupId}</span>
+                <ChevronRight className="w-4 h-4" />
               </button>
             </motion.div>
           </motion.div>

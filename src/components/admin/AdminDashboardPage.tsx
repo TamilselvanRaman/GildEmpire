@@ -74,15 +74,22 @@ export const AdminDashboardPage = () => {
         
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all">
           <div className="flex justify-between items-start">
-            <p className="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Total Enrolled Members</p>
+            <p className="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Total Real Members</p>
             <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#2F6FED] flex items-center justify-center font-bold">
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <h3 className="text-3xl font-black text-[#0B1E39] mt-2 tracking-tight">{totalMembersCount} Members</h3>
-          <p className="text-[11px] text-emerald-600 font-bold mt-1 flex items-center space-x-1">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{emailVerifiedCount} Email Verified</span>
+          <h3 className="text-3xl font-black text-[#0B1E39] mt-2 tracking-tight">
+            {dbUsers.filter(u => u.role === 'Member' && !u.isSimulated).length} Real Users
+          </h3>
+          <p className="text-[11px] text-slate-500 font-medium mt-1 flex items-center justify-between">
+            <span className="text-emerald-600 font-bold flex items-center space-x-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{dbUsers.filter(u => u.emailVerified && !u.isSimulated).length} Email Verified</span>
+            </span>
+            <span className="text-purple-600 font-bold text-[10px]">
+              +{dbUsers.filter(u => Boolean(u.isSimulated)).length} Bots
+            </span>
           </p>
         </div>
 

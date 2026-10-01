@@ -5,11 +5,70 @@ import { useApp } from '../../context/AppContext';
 import Home from '../page';
 
 export default function CatchAllRoutePage() {
-  const { setCurrentView } = useApp();
+  const { setCurrentView, setSelectedBatchId, allGroups } = useApp();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
+      const searchParams = new URLSearchParams(window.location.search);
+      const queryBatch = searchParams.get('batch');
+      const queryView = searchParams.get('view') || searchParams.get('redirect');
+
+      // Helper to resolve batch identifier
+      const resolveBatchId = (raw: string | null) => {
+        if (!raw) return '';
+        const clean = raw.toLowerCase().trim();
+        if (clean === 'batch-a' || clean === 'a' || clean === 'group-001') return 'GROUP-001';
+        if (clean === 'batch-b' || clean === 'b' || clean === 'group-002') return 'GROUP-002';
+        if (clean === 'batch-c' || clean === 'c' || clean === 'group-003') return 'GROUP-003';
+        if (clean === 'batch-d' || clean === 'd' || clean === 'group-004') return 'GROUP-004';
+        const found = (allGroups || []).find(g => 
+          g.groupId.toLowerCase() === clean || 
+          g.groupName.toLowerCase().includes(clean)
+        );
+        return found ? found.groupId : '';
+      };
+
+      if (queryBatch) {
+        const resolved = resolveBatchId(queryBatch);
+        if (resolved) {
+          setSelectedBatchId(resolved);
+        }
+      }
+
+      // 1. Batch dynamic routes for /admin/slots, /admin/groups, /admin/rewards, /rewards
+      if (path.startsWith('/admin/rewards')) {
+        setCurrentView('admin-reward-flow-control');
+        const segments = path.split('/').filter(Boolean);
+        const batchSegment = segments[2] || queryBatch;
+        const targetBatchId = resolveBatchId(batchSegment);
+        if (targetBatchId) {
+          setSelectedBatchId(targetBatchId);
+        }
+        return;
+      }
+
+      if (path.startsWith('/rewards') || path.startsWith('/mystery-letter')) {
+        setCurrentView('user-reward-spin');
+        const segments = path.split('/').filter(Boolean);
+        const batchSegment = segments[1] || queryBatch;
+        const targetBatchId = resolveBatchId(batchSegment);
+        if (targetBatchId) {
+          setSelectedBatchId(targetBatchId);
+        }
+        return;
+      }
+
+      if (path.startsWith('/admin/slots')) {
+        setCurrentView('admin-slots');
+        const segments = path.split('/').filter(Boolean);
+        const batchSegment = segments[2] || queryBatch;
+        const targetBatchId = resolveBatchId(batchSegment);
+        if (targetBatchId) {
+          setSelectedBatchId(targetBatchId);
+        }
+        return;
+      }
       
       const pathToViewMap: Record<string, string> = {
         '/': 'public-landing',
@@ -49,7 +108,8 @@ export default function CatchAllRoutePage() {
         '/wallet': 'user-wallet',
         '/deposit': 'user-deposit-overview',
         '/group': 'user-my-group',
-        '/rewards': 'user-rewards-overview',
+        '/rewards': 'user-reward-spin',
+        '/mystery-letter': 'user-reward-spin',
         '/referral': 'user-referral-dashboard',
         '/settings': 'user-settings',
         '/help': 'support-home',
@@ -97,12 +157,19 @@ export default function CatchAllRoutePage() {
         return;
       }
 
+      if (queryView && (queryView === 'user-reward-spin' || queryView === 'rewards')) {
+        setCurrentView('user-reward-spin');
+        return;
+      }
+
       const matchedView = pathToViewMap[path];
       if (matchedView) {
         setCurrentView(matchedView as any);
       }
     }
-  }, [setCurrentView]);
+  }, [setCurrentView, setSelectedBatchId, allGroups]);
 
   return <Home />;
 }
+
+

@@ -27,7 +27,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const WalletPage = () => {
-  const { user, group, deposits, referrals, withdrawals, submitDeposit, requestWithdrawal, setCurrentView } = useApp();
+  const { user, group, deposits, referrals, withdrawals, submitDeposit, requestWithdrawal, setCurrentView, buySlotWithWallet, withdrawableBonusBalance } = useApp();
   const [activeTab, setActiveTab] = useState<'all' | 'deposit' | 'referral' | 'withdrawal'>('all');
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showAddFundsModal, setShowAddFundsModal] = useState(false);
@@ -45,16 +45,7 @@ export const WalletPage = () => {
   const isUserDepositVerified = user.depositStatus === 'Verified';
 
   // Calculate withdrawable balance (Only claimed 5% referral bonuses minus non-rejected withdrawals)
-  const claimedReferralBonuses = (referrals || [])
-    .filter(r => r.claimed || (r.depositStatus === 'Verified' && isUserDepositVerified))
-    .reduce((sum, r) => sum + (r.bonusEarnedAmount || 500), 0);
-
-  const userWithdrawals = (withdrawals || []).filter(w => w.memberId === user.memberId);
-  const totalSubtractedWithdrawals = userWithdrawals
-    .filter(w => w.status !== 'Rejected')
-    .reduce((sum, w) => sum + w.amount, 0);
-
-  const withdrawableBalance = Math.max(0, claimedReferralBonuses - totalSubtractedWithdrawals);
+  const withdrawableBalance = withdrawableBonusBalance;
   const totalWalletValue = depositTotal + withdrawableBalance;
 
   // Pending / Locked Bonuses (Referred members verified but referrer not verified or not claimed yet)
@@ -79,21 +70,19 @@ export const WalletPage = () => {
     setTimeout(() => setBuySlotSuccess(null), 4000);
   };
 
-  const handleBuySlotWithWallet = () => {
-    if (slotsOwnedCount >= maxSlots) {
-      alert('Maximum 3 slots per member limit reached for this group!');
+  const handleBuySlotWithWallet = async () => {
+    if (withdrawableBalance < 10000) {
+      setCurrentView('user-my-group');
       return;
     }
 
-    if (totalWalletValue < 10000) {
-      setShowAddFundsModal(true);
-      return;
+    const res = await buySlotWithWallet(group.groupId);
+    if (res.success) {
+      setBuySlotSuccess(`🎉 Group Slot #${res.slotNumber} Successfully Purchased in ${group.groupName} using Wallet Balance!`);
+      setTimeout(() => setBuySlotSuccess(null), 5000);
+    } else {
+      alert(res.error || 'Failed to purchase slot.');
     }
-
-    const generatedTxId = 'WLT-SLOT-' + Math.floor(100000 + Math.random() * 900000);
-    submitDeposit(10000, generatedTxId, 'UPI (Manual UTR)');
-    setBuySlotSuccess(`🎉 Group Slot Successfully Purchased using Wallet Balance! Assigned to Slot #${user.slotNumber || 1}.`);
-    setTimeout(() => setBuySlotSuccess(null), 5000);
   };
 
   // Compile Dynamic Ledger Transactions
@@ -123,6 +112,7 @@ export const WalletPage = () => {
       status: 'Verified',
     }));
 
+  const userWithdrawals = (withdrawals || []).filter(w => w.memberId === user.memberId);
   const withdrawalTxList = userWithdrawals.map(w => ({
     id: w.id,
     date: w.requestDate,

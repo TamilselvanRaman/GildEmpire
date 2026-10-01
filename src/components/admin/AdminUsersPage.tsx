@@ -42,7 +42,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const AdminUsersPage = () => {
   const { setCurrentView, dbUsers, fetchDbUsers } = useApp();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('Real Members');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedUserModal, setSelectedUserModal] = useState<any>(null);
   const [activeModalTab, setActiveModalTab] = useState<'info' | 'kyc' | 'logs' | 'scheme'>('info');
@@ -215,14 +215,18 @@ export const AdminUsersPage = () => {
   };
 
   const filteredUsers = usersList.filter(u => {
+    const isBot = Boolean(u.isSimulated);
     const matchesStatus = 
-      statusFilter === 'All' ? true :
-      statusFilter === 'Real Members' ? !u.isSimulated :
-      statusFilter === 'System Bots' ? Boolean(u.isSimulated) :
+      statusFilter === 'Real Members' ? !isBot :
+      statusFilter === 'All (incl. Bots)' ? true :
+      statusFilter === 'System Bots' ? isBot :
       statusFilter === 'Admins' ? u.role !== 'Member' :
-      statusFilter === 'Email Verified' ? u.emailVerified === true :
-      statusFilter === 'Email Unverified' ? !u.emailVerified :
-      u.status === statusFilter;
+      statusFilter === 'Active' ? (u.status === 'Active' && !isBot) :
+      statusFilter === 'Email Verified' ? (u.emailVerified === true && !isBot) :
+      statusFilter === 'Email Unverified' ? (!u.emailVerified && !isBot) :
+      statusFilter === 'Pending Verification' ? (u.status === 'Pending Verification' && !isBot) :
+      statusFilter === 'Deactivated' ? (u.status === 'Deactivated' && !isBot) :
+      (!isBot && u.status === statusFilter);
 
     const matchesSearch = 
       !search.trim() ||
@@ -697,54 +701,90 @@ export const AdminUsersPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
         
         <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs space-y-2">
-          <span className="text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">Total Enrolled Members</span>
-          <p className="text-3xl font-black text-[#0B1E39] font-mono">{usersList.filter(u => u.role === 'Member').length} Members</p>
-          <span className="text-slate-500 font-semibold">Across Active Group Batches</span>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">Total Real Members</span>
+            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Real Users</span>
+          </div>
+          <p className="text-3xl font-black text-[#0B1E39] font-mono">
+            {usersList.filter(u => u.role === 'Member' && !u.isSimulated).length} Real Members
+          </p>
+          <p className="text-slate-400 text-[11px] font-medium">
+            {usersList.filter(u => Boolean(u.isSimulated)).length} system bots filtered
+          </p>
         </div>
 
         <div className="bg-emerald-50/80 p-6 rounded-3xl border border-emerald-200/90 space-y-2">
-          <span className="text-emerald-900 font-extrabold uppercase tracking-wider text-[10px]">Verified Depositors</span>
-          <p className="text-3xl font-black text-emerald-700 font-mono">{usersList.filter(u => u.deposit === 'Verified' && u.role === 'Member').length} Members</p>
-          <span className="text-emerald-800 font-extrabold">₹10,000 Scheme Verified</span>
+          <div className="flex items-center justify-between">
+            <span className="text-emerald-900 font-extrabold uppercase tracking-wider text-[10px]">Verified Depositors</span>
+            <span className="bg-emerald-200/80 text-emerald-900 text-[9px] font-black px-2 py-0.5 rounded-full">₹10k Paid</span>
+          </div>
+          <p className="text-3xl font-black text-emerald-700 font-mono">
+            {usersList.filter(u => (u.deposit === 'Verified' || u.depositStatus === 'Verified') && u.role === 'Member' && !u.isSimulated).length} Members
+          </p>
+          <span className="text-emerald-800 font-extrabold">₹10,000 Scheme Verified (Real)</span>
         </div>
 
         <div className="bg-amber-50/80 p-6 rounded-3xl border border-amber-200/90 space-y-2">
-          <span className="text-amber-900 font-extrabold uppercase tracking-wider text-[10px]">Sub-Admins & Roles</span>
+          <div className="flex items-center justify-between">
+            <span className="text-amber-900 font-extrabold uppercase tracking-wider text-[10px]">Sub-Admins & Roles</span>
+            <span className="bg-amber-200/80 text-amber-950 text-[9px] font-black px-2 py-0.5 rounded-full">Admin Staff</span>
+          </div>
           <p className="text-3xl font-black text-amber-800 font-mono">{usersList.filter(u => u.role !== 'Member').length} Staff Users</p>
           <span className="text-amber-900 font-bold">Super Admin • Operations • Reviewer</span>
         </div>
 
         <div className="bg-blue-50/80 p-6 rounded-3xl border border-blue-200/90 space-y-2">
-          <span className="text-blue-900 font-extrabold uppercase tracking-wider text-[10px]">Pending Verification</span>
-          <p className="text-3xl font-black text-[#2F6FED] font-mono">{usersList.filter(u => u.status === 'Pending Verification').length} In Queue</p>
+          <div className="flex items-center justify-between">
+            <span className="text-blue-900 font-extrabold uppercase tracking-wider text-[10px]">Pending Verification</span>
+            <span className="bg-blue-200/80 text-blue-900 text-[9px] font-black px-2 py-0.5 rounded-full">Queue</span>
+          </div>
+          <p className="text-3xl font-black text-[#2F6FED] font-mono">
+            {usersList.filter(u => u.status === 'Pending Verification' && !u.isSimulated).length} In Queue
+          </p>
           <span className="text-blue-900 font-bold">Awaiting Bank UTR Review</span>
         </div>
 
       </div>
 
       {/* Filter Tabs & Search Bar */}
-      <div className="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center space-x-1.5 bg-slate-100/90 p-1.5 rounded-2xl w-full md:w-auto text-xs font-extrabold">
-          {['All', 'Real Members', 'System Bots', 'Active', 'Admins', 'Email Verified', 'Email Unverified', 'Pending Verification', 'Deactivated'].map((tab) => (
+      <div className="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col lg:flex-row items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100/90 p-1.5 rounded-2xl w-full lg:w-auto text-xs font-extrabold">
+          {[
+            { id: 'Real Members', label: 'Real Members', count: usersList.filter(u => u.role === 'Member' && !u.isSimulated).length, badgeClass: 'bg-emerald-500 text-white' },
+            { id: 'Active', label: 'Active', count: usersList.filter(u => u.status === 'Active' && !u.isSimulated).length },
+            { id: 'Email Verified', label: 'Email Verified', count: usersList.filter(u => u.emailVerified && !u.isSimulated).length },
+            { id: 'Pending Verification', label: 'Pending Queue', count: usersList.filter(u => u.status === 'Pending Verification' && !u.isSimulated).length },
+            { id: 'Admins', label: 'Admins', count: usersList.filter(u => u.role !== 'Member').length },
+            { id: 'Email Unverified', label: 'Email Unverified', count: usersList.filter(u => !u.emailVerified && !u.isSimulated).length },
+            { id: 'System Bots', label: '🤖 System Bots', count: usersList.filter(u => Boolean(u.isSimulated)).length, badgeClass: 'bg-purple-600 text-white' },
+            { id: 'All (incl. Bots)', label: 'All (incl. Bots)', count: usersList.length }
+          ].map((tab) => (
             <button
-              key={tab}
-              onClick={() => setStatusFilter(tab)}
-              className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
-                statusFilter === tab 
+              key={tab.id}
+              onClick={() => setStatusFilter(tab.id)}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
+                statusFilter === tab.id 
                   ? 'bg-[#0B1E39] text-white shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              {tab}
+              <span>{tab.label}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                statusFilter === tab.id 
+                  ? 'bg-white/20 text-white' 
+                  : (tab.badgeClass || 'bg-slate-200 text-slate-700')
+              }`}>
+                {tab.count}
+              </span>
             </button>
           ))}
         </div>
 
-        <div className="relative w-full md:w-80">
+        <div className="relative w-full lg:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search Member ID, name, email, or mobile..."
+            placeholder="Search Real Member ID, name, email, or mobile..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-2.5 rounded-2xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#2F6FED]"
@@ -770,8 +810,25 @@ export const AdminUsersPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
-              {filteredUsers.map((u) => {
-                const isAdmin = u.role !== 'Member';
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="p-12 text-center text-slate-500 font-medium">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-700">No users found under &quot;{statusFilter}&quot;</p>
+                      <p className="text-xs text-slate-400 max-w-sm">
+                        {statusFilter === 'Real Members' 
+                          ? 'No real users registered yet or matching search. System bots are filtered out.'
+                          : 'Try switching filters or clearing your search query.'}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((u) => {
+                  const isAdmin = u.role !== 'Member';
                 const userInitial = u.name ? u.name.charAt(0).toUpperCase() : 'U';
                 const tableRawSlot = String(u.slot || '').replace(/^#+/, '').trim();
                 const isNumericSlot = /^\d+$/.test(tableRawSlot);
@@ -919,7 +976,7 @@ export const AdminUsersPage = () => {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>

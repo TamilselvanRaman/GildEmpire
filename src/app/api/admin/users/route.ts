@@ -47,6 +47,10 @@ export async function GET() {
         allocatedSlots: rawAllocatedSlots,
         assignedSlots: Array.isArray(u.assignedSlots) ? u.assignedSlots : (resolvedSlotNumber > 0 ? [resolvedSlotNumber] : []),
         status: u.accountStatus || 'Active',
+        rewardStatus: u.rewardStatus || (u.wonDay ? 'Won 1g Gold' : 'In Selection Pool'),
+        wonDay: u.wonDay || null,
+        wonDate: u.wonDate || null,
+        wonBatch: u.wonBatch || null,
         emailVerified: Boolean(u.emailVerified),
         isSimulated: Boolean(u.isSimulated),
         userType: u.isSimulated ? 'simulated' : 'real',
@@ -316,6 +320,39 @@ export async function POST(request: Request) {
         });
       } catch (dErr) {
         console.warn('Error inserting into deposits collection:', dErr);
+      }
+    }
+
+    // Direct Sync to group document in 'groups' collection
+    if (parsedSlot > 0 && groupId) {
+      try {
+        const groupRef = doc(db, 'groups', groupId);
+        const grpSnap = await getDoc(groupRef);
+        if (grpSnap.exists()) {
+          const grpData = grpSnap.data();
+          const slots = Array.isArray(grpData.slots) ? [...grpData.slots] : [];
+          if (slots.length >= parsedSlot) {
+            const memberName = body.fullName || body.name || (cleanEmail ? cleanEmail.split('@')[0] : 'Member User');
+            slots[parsedSlot - 1] = {
+              ...slots[parsedSlot - 1],
+              slotNumber: parsedSlot,
+              memberId: cleanMemberId || 'LOP-MEMBER',
+              memberName: memberName,
+              status: depositStatus === 'Verified' ? 'Occupied' : 'Pending Deposit',
+              depositStatus: depositStatus || 'Verified',
+              joinedDate: dateStr,
+            };
+            const filled = slots.filter((s: any) => s.status === 'Occupied' || s.status === 'Won 1g Gold').length;
+            await updateDoc(groupRef, {
+              slots: slots,
+              totalMembers: filled,
+              filledMembers: filled,
+              status: filled >= 50 ? 'ready' : grpData.status,
+            });
+          }
+        }
+      } catch (gErr) {
+        console.warn('Error syncing group document slot in Firestore:', gErr);
       }
     }
 

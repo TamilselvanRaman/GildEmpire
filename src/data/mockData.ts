@@ -60,9 +60,9 @@ export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
       return Math.max(max, isNaN(num) ? 0 : num);
     }
     return max;
-  }, 5);
+  }, 1);
 
-  const requiredGroupsCount = Math.max(5, maxGroupNumFromUsers);
+  const requiredGroupsCount = Math.max(1, maxGroupNumFromUsers);
   const groups: GroupDetails[] = [];
 
   for (let gIndex = 0; gIndex < requiredGroupsCount; gIndex++) {
@@ -123,14 +123,15 @@ export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
     }
 
     if (targetSlotIndex >= 0 && targetSlotIndex < 50) {
+      const isWon = u.rewardStatus === 'Won 1g Gold' || u.status === 'Won 1g Gold' || Boolean(u.wonDay);
       targetGroup.slots[targetSlotIndex] = {
         slotNumber: targetSlotIndex + 1,
         memberId: u.memberId || u.id || `LOP-${String(targetSlotIndex + 1).padStart(6, '0')}`,
         memberName: u.name || u.email || `Member #${targetSlotIndex + 1}`,
-        status: 'Occupied' as const,
+        status: isWon ? ('Won 1g Gold' as const) : ('Occupied' as const),
         joinedDate: u.regDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-        wonDay: undefined,
-        wonDate: undefined,
+        wonDay: isWon ? (u.wonDay || 1) : undefined,
+        wonDate: isWon ? (u.wonDate || '14 Aug 2026') : undefined,
       };
     }
   });
@@ -140,32 +141,28 @@ export const buildDynamicGroupsFromUsers = (users: any[]): GroupDetails[] => {
     grp.totalMembers = filledSlots.length;
     grp.activePoolCount = grp.slots.filter(s => s.status === 'Occupied').length;
     const wonCount = grp.slots.filter(s => s.status === 'Won 1g Gold').length;
+    grp.totalGoldDistributedGrams = wonCount;
 
     if (grp.totalMembers === 50) {
       grp.status = wonCount > 0 ? 'active' : 'full';
-      grp.currentCycleDay = wonCount > 0 ? Math.min(50, wonCount + 1) : 0;
-      grp.scheduledTime = grp.scheduledTime || (
-        gIndex === 0 ? '07:00 AM IST' :
-        gIndex === 1 ? '09:00 AM IST' :
-        gIndex === 2 ? '08:00 PM IST' :
-        gIndex === 3 ? '02:00 PM IST' : '07:00 AM IST'
-      );
-      grp.startDate = grp.startDate || '2026-08-14';
+      grp.currentCycleDay = Math.min(50, Math.max(1, wonCount + 1));
+      grp.scheduledTime = grp.scheduledTime || '';
+      grp.startDate = grp.startDate || '';
     } else if (grp.totalMembers > 0) {
       grp.status = 'recruiting';
       grp.currentCycleDay = 0;
-      grp.scheduledTime = 'Awaiting 50 Members';
-      grp.startDate = 'Event Not Started (Awaiting 50 Members)';
+      grp.scheduledTime = grp.scheduledTime || '';
+      grp.startDate = grp.startDate || '';
     } else if (gIndex === 0 || (gIndex > 0 && groups[gIndex - 1]?.totalMembers > 0)) {
       grp.status = 'recruiting';
       grp.currentCycleDay = 0;
-      grp.scheduledTime = 'Awaiting Members';
-      grp.startDate = 'Event Not Started';
+      grp.scheduledTime = grp.scheduledTime || '';
+      grp.startDate = grp.startDate || '';
     } else {
       grp.status = 'empty';
       grp.currentCycleDay = 0;
-      grp.scheduledTime = 'Awaiting Members';
-      grp.startDate = 'Event Not Started';
+      grp.scheduledTime = grp.scheduledTime || '';
+      grp.startDate = grp.startDate || '';
     }
   });
 

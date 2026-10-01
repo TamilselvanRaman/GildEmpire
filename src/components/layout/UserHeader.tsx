@@ -21,12 +21,10 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const UserHeader = () => {
-  const { currentView, setCurrentView, user, deposits, logout, openDepositModal, closeDepositModal, isDepositModalOpen } = useApp();
+  const { currentView, setCurrentView, user, withdrawableBonusBalance, logout, openDepositModal, closeDepositModal, isDepositModalOpen } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const userBalance = deposits
-    .filter(d => d.status === 'Verified' && d.memberId === user.memberId)
-    .reduce((acc, curr) => acc + curr.amount, 0);
+  const userBalance = withdrawableBonusBalance;
 
   const getViewTitle = (view: string) => {
     switch (view) {

@@ -398,3 +398,254 @@ export async function sendPasswordResetEmail({ email, name, token }: SendVerific
     };
   }
 }
+
+/**
+ * Interface for 10-Minute Pre-Draw Notification Email
+ */
+export interface SendPreDrawParams {
+  email: string;
+  name: string;
+  batchName: string;
+  batchId: string;
+  scheduledTime: string;
+  directRewardUrl: string;
+}
+
+/**
+ * HTML template for 10-Minute Pre-Draw Email Notification
+ */
+export function getPreDrawEmailHtml(params: SendPreDrawParams): string {
+  const { name, batchName, batchId, scheduledTime, directRewardUrl } = params;
+  const recipientName = name ? name.split(' ')[0] : 'Valued Member';
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Live 1 Gram Gold Panai Selection Starts in 10 Minutes!</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+          background-color: #040D11;
+          color: #e2e8f0;
+          margin: 0;
+          padding: 0;
+        }
+        .wrapper {
+          width: 100%;
+          table-layout: fixed;
+          background-color: #040D11;
+          padding: 30px 0;
+        }
+        .container {
+          max-width: 580px;
+          margin: 0 auto;
+          background-color: #081E26;
+          border-radius: 24px;
+          overflow: hidden;
+          border: 2px solid #E1A238;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 40px rgba(225, 162, 56, 0.25);
+        }
+        .header {
+          background: linear-gradient(135deg, #0D3B43 0%, #081E26 50%, #040D11 100%);
+          padding: 36px 24px 24px;
+          text-align: center;
+          border-bottom: 2px solid #E1A238;
+        }
+        .badge {
+          display: inline-block;
+          background: #E1A238;
+          color: #081E26;
+          font-size: 11px;
+          font-weight: 900;
+          padding: 4px 14px;
+          border-radius: 999px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 12px;
+        }
+        .header h1 {
+          color: #ffffff;
+          margin: 0;
+          font-size: 26px;
+          font-weight: 900;
+          letter-spacing: -0.5px;
+        }
+        .header p {
+          color: #F2C868;
+          margin: 8px 0 0 0;
+          font-size: 14px;
+          font-weight: 700;
+        }
+        .content {
+          padding: 36px 28px;
+        }
+        .greeting {
+          font-size: 18px;
+          font-weight: 700;
+          color: #ffffff;
+          margin-bottom: 16px;
+        }
+        .text {
+          font-size: 15px;
+          line-height: 1.6;
+          color: #cbd5e1;
+          margin-bottom: 24px;
+        }
+        .highlight-box {
+          background: #0D3B43;
+          border: 1px solid rgba(225, 162, 56, 0.4);
+          border-radius: 16px;
+          padding: 20px;
+          margin: 24px 0;
+          text-align: center;
+        }
+        .time-text {
+          font-size: 28px;
+          font-weight: 900;
+          color: #F2C868;
+          font-family: monospace;
+          margin: 4px 0;
+        }
+        .button-wrapper {
+          text-align: center;
+          margin: 32px 0 20px;
+        }
+        .button {
+          background: linear-gradient(135deg, #F2C868 0%, #E1A238 50%, #B87C10 100%);
+          color: #081E26 !important;
+          text-decoration: none;
+          font-weight: 900;
+          font-size: 15px;
+          padding: 16px 36px;
+          border-radius: 14px;
+          display: inline-block;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          box-shadow: 0 10px 25px rgba(225, 162, 56, 0.4);
+        }
+        .footer {
+          background-color: #040D11;
+          padding: 24px;
+          text-align: center;
+          font-size: 12px;
+          color: #64748b;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="container">
+          <div class="header">
+            <div class="badge">🔴 10-Minute Pre-Selection Alert</div>
+            <h1>Live 1g Gold Selection Starting Soon!</h1>
+            <p>${batchName} (${batchId})</p>
+          </div>
+          <div class="content">
+            <div class="greeting">Vanakkam & Greetings, ${recipientName}!</div>
+            <p class="text">
+              This is an official automated notification that today's <strong>Daily 1 Gram 916 BIS Hallmark Gold Coin</strong> lucky draw for <strong>${batchName}</strong> will commence in <strong>10 minutes</strong>.
+            </p>
+            
+            <div class="highlight-box">
+              <div style="font-size: 12px; font-weight: 800; color: #00C2B8; text-transform: uppercase;">Live Selection Scheduled At:</div>
+              <div class="time-text">${scheduledTime}</div>
+              <div style="font-size: 12px; color: #94a3b8;">50 Folded Paper Chits Inside 3D Traditional Panai Glass Bottle</div>
+            </div>
+
+            <p class="text">
+              Click the direct button below to immediately access the live broadcast room, watch the crystal bottle shaking in real-time, and verify today's winning member chit:
+            </p>
+
+            <div class="button-wrapper">
+              <a href="${directRewardUrl}" class="button" target="_blank">
+                🏺 Open Live 1g Gold Selection Room →
+              </a>
+            </div>
+
+            <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 20px;">
+              Direct Link: <a href="${directRewardUrl}" style="color: #00C2B8;">${directRewardUrl}</a>
+            </p>
+          </div>
+          <div class="footer">
+            <p style="margin: 0;">InfinityGram Sovereign Wealth Platform • 50-Member Gold Club Program</p>
+            <p style="margin: 4px 0 0 0;">This email was sent exclusively to verified enrolled members in ${batchId}.</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Sends 10-Minute Pre-Draw Notification Email to real members
+ */
+export async function sendPreDrawNotificationEmail(params: SendPreDrawParams) {
+  const { email } = params;
+
+  if (!resend || !isApiKeyConfigured) {
+    console.log(`[Resend API] Graceful Notice: Pre-Draw email for ${email} (Direct URL: ${params.directRewardUrl})`);
+    return {
+      success: true,
+      mocked: true,
+      message: 'Pre-draw alert generated successfully in test mode.',
+    };
+  }
+
+  try {
+    const html = getPreDrawEmailHtml(params);
+
+    const fromAddress = DEFAULT_FROM_EMAIL.includes('infinitygram.net')
+      ? DEFAULT_FROM_EMAIL
+      : 'InfinityGram Live <onboarding@resend.dev>';
+
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: [email],
+      subject: `⏰ Live 1 Gram Gold Panai Selection Starts in 10 Minutes! [${params.batchName}]`,
+      html,
+    });
+
+    if (response.error) {
+      // Sandbox fallback if unverified domain or sandbox restriction
+      if (response.error.message?.toLowerCase().includes('testing emails') || response.error.message?.includes('verify a domain')) {
+        try {
+          const fallback = await resend.emails.send({
+            from: 'InfinityGram Live <onboarding@resend.dev>',
+            to: ['infinitygram916@gmail.com'],
+            subject: `[Sandbox Test for ${email}] Live 1g Gold Selection in 10 Min [${params.batchName}]`,
+            html,
+          });
+
+          if (!fallback.error) {
+            return {
+              success: true,
+              sandboxFallback: true,
+              message: `Delivered to admin test inbox (infinitygram916@gmail.com).`,
+            };
+          }
+        } catch (e) {}
+      }
+
+      return {
+        success: false,
+        error: response.error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || 'Failed to dispatch pre-draw email',
+    };
+  }
+}
+

@@ -38,7 +38,7 @@ import {
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
 
 interface AppContextType {
   currentView: ViewMode;
@@ -59,12 +59,27 @@ interface AppContextType {
   isAdminAuthenticated: boolean;
   dbUsers: any[];
   fetchDbUsers: () => Promise<void>;
+  fetchDbGroups: () => Promise<void>;
   fetchReferrals: (currentUser?: UserProfile, usersList?: any[]) => Promise<void>;
   manualAssignSlot: (identifier: string, slotNo: number, targetBatchId?: string) => Promise<{ success: boolean; error?: string }>;
   unassignSlot: (slotNo: number, targetBatchId?: string, identifier?: string) => Promise<{ success: boolean; error?: string }>;
+  resetSlotWinnerStatus: (slotNo: number, targetBatchId?: string, memberId?: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   autoFillGroupWithSystemUsers: (targetBatchId?: string) => Promise<{ success: boolean; count?: number; message?: string; error?: string }>;
-  createNewBatchGroup: (customName?: string) => { success: boolean; newGroup: GroupDetails };
+  createNewBatchGroup: (customName?: string) => Promise<{ success: boolean; newGroup?: GroupDetails; error?: string }>;
   
+  // Real-Time Live 3D Bottle Draw State
+  liveDrawState: {
+    status: 'idle' | 'shaking' | 'revealed';
+    batchId: string;
+    targetSlotNumber?: number;
+    winner?: any;
+    startedAt?: number;
+    completedAt?: number;
+  };
+  triggerLiveDraw: (batchId: string, targetSlotNumber: number, winnerDetails: any) => Promise<void>;
+  completeLiveDraw: (batchId: string, targetSlotNumber: number, winnerDetails: any) => Promise<void>;
+  resetLiveDraw: (batchId?: string) => Promise<void>;
+
   // Live 24-Hour Cooldown Lock & Broadcast State
   drawLockedUntil: number | null;
   isLiveDrawActive: boolean;
@@ -96,6 +111,8 @@ interface AppContextType {
   reviewDeposit: (depositId: string, status: 'Verified' | 'Rejected', notes: string) => void;
   executeDailySpin: (targetSlotOrMemberId?: number | string) => DailyGoldWinner | null;
   withdrawals: WithdrawalRecord[];
+  withdrawableBonusBalance: number;
+  buySlotWithWallet: (targetBatchId: string, slotNo?: number) => Promise<{ success: boolean; error?: string; slotNumber?: number }>;
   claimReferralBonus: (referralId: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   requestWithdrawal: (amount: number, upiId?: string, bankAccount?: string, ifscCode?: string, payoutMethod?: 'UPI' | 'Bank Transfer (NEFT/IMPS)') => Promise<{ success: boolean; error?: string; withdrawal?: WithdrawalRecord }>;
   reviewWithdrawal: (withdrawalId: string, status: 'Approved' | 'Rejected', notes?: string) => Promise<{ success: boolean; error?: string }>;
@@ -108,32 +125,52 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Helper function to generate 50 daily program events
-const generate50DayProgramEvents = (startDateStr: string, pastWinners: DailyGoldWinner[]): ProgramEvent[] => {
+const generate50DayProgramEvents = (startDateStr: string, pastWinners: DailyGoldWinner[], scheduledTime?: string): ProgramEvent[] => {
   const events: ProgramEvent[] = [];
-  let baseDate = new Date(startDateStr || '2026-08-14');
-  if (isNaN(baseDate.getTime())) {
-    baseDate = new Date('2026-08-14');
+  
+  // Find Day 1 winner date if available to anchor the calendar
+  const day1Winner = pastWinners?.find(w => w.dayNumber === 1);
+  const isDateConfigured = Boolean(
+    day1Winner?.date || 
+    (startDateStr && !startDateStr.includes('Not Started') && !startDateStr.includes('Pending') && !startDateStr.includes('2026-08-14') && startDateStr.trim() !== '')
+  );
+
+  let baseDate: Date;
+  if (day1Winner?.date) {
+    const parsed = new Date(day1Winner.date);
+    baseDate = isNaN(parsed.getTime()) ? new Date() : parsed;
+  } else if (isDateConfigured) {
+    const parsed = new Date(startDateStr);
+    baseDate = isNaN(parsed.getTime()) ? new Date() : parsed;
+  } else {
+    baseDate = new Date();
   }
+
+  const defaultTime = (scheduledTime && scheduledTime.trim() !== '' && !scheduledTime.includes('Pending') && !scheduledTime.includes('Awaiting')) 
+    ? scheduledTime 
+    : 'Schedule Not Set';
 
   for (let i = 1; i <= 50; i++) {
     const eventDate = new Date(baseDate);
     eventDate.setDate(baseDate.getDate() + (i - 1));
-    const dateStr = isNaN(eventDate.getTime()) ? '2026-08-14' : eventDate.toISOString().split('T')[0];
+    const formattedDate = isDateConfigured
+      ? eventDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      : 'Date TBD';
 
-    const winner = pastWinners.find(w => w.dayNumber === i);
+    const winner = (pastWinners || []).find(w => w.dayNumber === i);
     let status: 'Completed' | 'Today' | 'Scheduled' | 'Upcoming' = 'Upcoming';
     if (winner) {
       status = 'Completed';
-    } else if (i === pastWinners.length + 1) {
-      status = 'Today';
-    } else if (i <= pastWinners.length + 7) {
-      status = 'Scheduled';
+    } else if (i === (pastWinners?.length || 0) + 1) {
+      status = isDateConfigured ? 'Today' : 'Upcoming';
+    } else if (i <= (pastWinners?.length || 0) + 7) {
+      status = isDateConfigured ? 'Scheduled' : 'Upcoming';
     }
 
     events.push({
       dayNumber: i,
-      date: dateStr,
-      time: '07:00 AM IST',
+      date: winner?.date || formattedDate,
+      time: defaultTime,
       status: status,
       winnerMemberId: winner?.winnerMemberId,
       winnerName: winner?.winnerName,
@@ -248,13 +285,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [currentView, setCurrentViewRaw] = useState<ViewMode>('public-landing');
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
 
-  // Custom setCurrentView that updates currentView AND pushes window URL path
+  // Custom setCurrentView that updates currentView AND pushes window URL path with batch awareness
   const setCurrentView = (view: ViewMode) => {
     setCurrentViewRaw(view);
     if (typeof window !== 'undefined') {
-      const targetPath = viewToPathMap[view] || '/';
+      let targetPath = viewToPathMap[view] || '/';
+      const cleanBatch = (selectedBatchId || 'GROUP-001').toLowerCase();
+
+      if (view === 'user-reward-spin') {
+        targetPath = `/rewards/${cleanBatch}`;
+      } else if (view === 'admin-reward-flow-control') {
+        targetPath = `/admin/rewards/${cleanBatch}`;
+      } else if (view === 'admin-slots') {
+        targetPath = `/admin/slots/${cleanBatch}`;
+      }
+
       if (window.location.pathname !== targetPath) {
-        window.history.pushState({ view }, '', targetPath);
+        window.history.pushState({ view, batchId: selectedBatchId }, '', targetPath);
       }
     }
   };
@@ -410,10 +457,36 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [deposits, setDeposits] = useState<DepositRecord[]>(depositHistoryMock);
   const [allGroups, setAllGroups] = useState<GroupDetails[]>(allGroupsMock);
-  const [selectedBatchId, setSelectedBatchId] = useState<string>('GROUP-001');
+  const [selectedBatchId, setSelectedBatchIdState] = useState<string>('GROUP-001');
 
-  // Dynamic group object resolved from selectedBatchId
-  const group = allGroups.find(g => g.groupId === selectedBatchId) || allGroups[0];
+  const setSelectedBatchId = (batchId: string) => {
+    const cleanId = batchId.toUpperCase();
+    setSelectedBatchIdState(cleanId);
+    if (typeof window !== 'undefined') {
+      const cleanSlug = batchId.toLowerCase(); // e.g. 'group-002'
+      const currentPath = window.location.pathname.toLowerCase();
+
+      if (currentPath.startsWith('/rewards') || currentPath.startsWith('/mystery-letter') || currentView === 'user-reward-spin') {
+        const targetUrl = `/rewards/${cleanSlug}`;
+        if (window.location.pathname !== targetUrl) {
+          window.history.pushState({ view: 'user-reward-spin', batchId: cleanId }, '', targetUrl);
+        }
+      } else if (currentPath.startsWith('/admin/rewards') || currentView === 'admin-reward-flow-control') {
+        const targetUrl = `/admin/rewards/${cleanSlug}`;
+        if (window.location.pathname !== targetUrl) {
+          window.history.pushState({ view: 'admin-reward-flow-control', batchId: cleanId }, '', targetUrl);
+        }
+      } else if (currentPath.startsWith('/admin/slots') || currentView === 'admin-slots') {
+        const targetUrl = `/admin/slots/${cleanSlug}`;
+        if (window.location.pathname !== targetUrl) {
+          window.history.pushState({ view: 'admin-slots', batchId: cleanId }, '', targetUrl);
+        }
+      }
+    }
+  };
+
+  // Dynamic group object resolved from selectedBatchId (case-insensitive)
+  const group = allGroups.find(g => (g.groupId || '').toUpperCase() === selectedBatchId.toUpperCase()) || allGroups[0];
 
   const [pastWinners, setPastWinners] = useState<DailyGoldWinner[]>(pastGoldWinnersMock);
   const [referrals, setReferrals] = useState<ReferralItem[]>(referralsMock);
@@ -423,6 +496,208 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<SystemSettingsConfig>(systemSettingsMock);
   const [dbUsers, setDbUsers] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRecord[]>([]);
+
+  // Real-Time Live 3D Bottle Draw Synchronizer State
+  const [liveDrawState, setLiveDrawState] = useState<{
+    status: 'idle' | 'shaking' | 'revealed';
+    batchId: string;
+    targetSlotNumber?: number;
+    winner?: any;
+    startedAt?: number;
+    completedAt?: number;
+  }>({
+    status: 'idle',
+    batchId: 'GROUP-001',
+    winner: null,
+  });
+
+  // Listen to Firestore real-time live draw broadcast
+  React.useEffect(() => {
+    try {
+      const liveDocRef = doc(db, 'system_state', 'live_draw');
+      const unsubscribeLive = onSnapshot(liveDocRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          setLiveDrawState(data as any);
+        }
+      }, (err) => {
+        console.warn('Firestore live draw listener note:', err);
+      });
+
+      const winnersRef = collection(db, 'winners');
+      const unsubscribeWinners = onSnapshot(winnersRef, (snap) => {
+        const list: DailyGoldWinner[] = [];
+        snap.forEach(dSnap => {
+          const d = dSnap.data();
+          list.push({
+            dayNumber: d.cycleDay || d.dayNumber || 1,
+            date: d.date || d.wonDate || 'Today',
+            winnerMemberId: d.memberId || d.winnerMemberId || `LOP-${String(d.slotNumber || 1).padStart(6, '0')}`,
+            winnerName: d.memberName || d.winnerName || `Member #${d.slotNumber || 1}`,
+            prizeDescription: d.purity || d.prizeDescription || '1 Gram 916 BIS Hallmark Gold Chit',
+            dispatchStatus: (d.status as any) || 'Verified & Shipped',
+            auditHash: d.certificateId || d.auditHash || `0x${d.slotNumber || 1}a9b8c7d6e5`,
+            batchId: d.group || d.batchId || 'GROUP-001',
+            batchName: d.batchName || 'InfinityGram 50 Gold Club - Batch A',
+            purity: d.purity || '24K / 916 BIS Hallmark Gold Chit',
+            certificateId: d.certificateId || `CERT-IG-2026-${String(d.slotNumber || 1).padStart(4, '0')}`,
+            slotNumber: d.slotNumber,
+          });
+        });
+        if (list.length > 0) {
+          // Sort by day number descending
+          list.sort((a, b) => (b.dayNumber || 0) - (a.dayNumber || 0));
+          setPastWinners(list);
+        }
+      }, (err) => {
+        console.warn('Firestore winners collection listener note:', err);
+      });
+
+      // Real-time listener for all groups / batches in Firestore
+      const groupsRef = collection(db, 'groups');
+      const unsubscribeGroups = onSnapshot(groupsRef, (snap) => {
+        const groupsList: GroupDetails[] = [];
+        snap.forEach(dSnap => {
+          const d = dSnap.data();
+          groupsList.push({
+            groupId: dSnap.id,
+            groupName: d.groupName || `InfinityGram 50 Gold Club - ${dSnap.id}`,
+            status: d.status || 'recruiting',
+            createdDate: d.createdDate || '-',
+            totalMembers: d.totalMembers ?? d.filledMembers ?? 0,
+            filledMembers: d.filledMembers ?? d.totalMembers ?? 0,
+            currentCycleDay: d.currentCycleDay ?? 0,
+            totalGoldDistributedGrams: d.totalGoldDistributedGrams ?? 0,
+            activePoolCount: d.activePoolCount ?? 0,
+            scheduledTime: d.scheduledTime || '07:00 AM IST',
+            startDate: d.startDate || '',
+            slots: Array.isArray(d.slots) ? d.slots : [],
+          });
+        });
+        if (groupsList.length > 0) {
+          setAllGroups(groupsList);
+        }
+      }, (err) => {
+        console.warn('Firestore groups collection listener note:', err);
+      });
+
+      // Real-time listener for users in Firestore
+      const usersRef = collection(db, 'users');
+      const unsubscribeUsers = onSnapshot(usersRef, (snap) => {
+        const uList: any[] = [];
+        snap.forEach(dSnap => {
+          uList.push({ id: dSnap.id, ...dSnap.data() });
+        });
+        if (uList.length > 0) {
+          setDbUsers(uList);
+          setUser(currentUser => {
+            if (!currentUser || !currentUser.email) return currentUser;
+            const dbMatch = uList.find((u: any) => u.email?.toLowerCase() === currentUser.email?.toLowerCase());
+            if (!dbMatch) return currentUser;
+
+            const isEmailVerified = Boolean(dbMatch.emailVerified);
+            const isDepositVerified = dbMatch.deposit === 'Verified' || dbMatch.depositStatus === 'Verified' || Number(dbMatch.slotNumber || 0) > 0;
+
+            const rawSlot = String(dbMatch.slot || '').replace(/[^0-9]/g, '');
+            const assignedSlotNumber = parseInt(rawSlot, 10) || (isDepositVerified ? 1 : 0);
+            const assignedGroupId = (dbMatch.group && dbMatch.group !== 'Not Assigned Yet' && dbMatch.group !== 'Unassigned') ? dbMatch.group : 'GROUP-001';
+
+            const resolvedAllocatedSlots = Array.isArray(dbMatch.allocatedSlots) && dbMatch.allocatedSlots.length > 0
+              ? dbMatch.allocatedSlots
+              : (assignedSlotNumber > 0 ? [{
+                  group: assignedGroupId,
+                  groupId: assignedGroupId,
+                  slotNumber: assignedSlotNumber,
+                  slot: `#${assignedSlotNumber}`,
+                  joinedDate: currentUser.registrationDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+                  depositStatus: 'Verified',
+                }] : []);
+
+            return {
+              ...currentUser,
+              id: dbMatch.id || currentUser.id,
+              memberId: dbMatch.memberId || currentUser.memberId,
+              fullName: dbMatch.name || currentUser.fullName,
+              emailVerified: isEmailVerified,
+              depositStatus: isDepositVerified ? 'Verified' : (dbMatch.deposit || currentUser.depositStatus),
+              accountStatus: dbMatch.status || currentUser.accountStatus,
+              rewardStatus: dbMatch.rewardStatus || currentUser.rewardStatus,
+              wonBatch: dbMatch.wonBatch || currentUser.wonBatch,
+              wonDay: dbMatch.wonDay || currentUser.wonDay,
+              wonDate: dbMatch.wonDate || currentUser.wonDate,
+              groupId: assignedGroupId,
+              slotNumber: assignedSlotNumber > 0 ? assignedSlotNumber : currentUser.slotNumber,
+              assignedSlots: Array.isArray(dbMatch.assignedSlots) ? dbMatch.assignedSlots : (assignedSlotNumber > 0 ? [assignedSlotNumber] : currentUser.assignedSlots),
+              allocatedSlots: resolvedAllocatedSlots,
+              slotsOwned: resolvedAllocatedSlots.length > 0 ? resolvedAllocatedSlots.length : (assignedSlotNumber > 0 ? 1 : currentUser.slotsOwned),
+            };
+          });
+        }
+      }, (err) => {
+        console.warn('Firestore users collection listener note:', err);
+      });
+
+      return () => {
+        unsubscribeLive();
+        unsubscribeWinners();
+        unsubscribeGroups();
+        unsubscribeUsers();
+      };
+    } catch (err) {
+      console.warn('Live draw snapshot setup note:', err);
+    }
+  }, []);
+
+  const triggerLiveDraw = async (batchId = 'GROUP-001', targetSlotNumber: number, winnerDetails: any) => {
+    try {
+      await fetch('/api/admin/draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'start_draw',
+          batchId,
+          targetSlotNumber,
+          winnerDetails,
+        })
+      });
+    } catch (err) {
+      console.error('Error triggering live draw in database:', err);
+    }
+  };
+
+  const completeLiveDraw = async (batchId = 'GROUP-001', targetSlotNumber: number, winnerDetails: any) => {
+    try {
+      await fetch('/api/admin/draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'complete_draw',
+          batchId,
+          targetSlotNumber,
+          winnerDetails,
+        })
+      });
+      await fetchDbUsers();
+      await fetchDbGroups();
+    } catch (err) {
+      console.error('Error completing live draw in database:', err);
+    }
+  };
+
+  const resetLiveDraw = async (batchId = 'GROUP-001') => {
+    try {
+      await fetch('/api/admin/draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reset_draw',
+          batchId,
+        })
+      });
+    } catch (err) {
+      console.error('Error resetting live draw in database:', err);
+    }
+  };
 
   const [claimedReferralIds, setClaimedReferralIds] = useState<Set<string>>(() => {
     if (typeof window !== 'undefined') {
@@ -558,15 +833,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const fetchDbGroups = async () => {
+    try {
+      const res = await fetch('/api/admin/groups');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.groups) && data.groups.length > 0) {
+        setAllGroups(data.groups);
+      }
+    } catch (err) {
+      console.error('Error fetching DB groups in AppContext:', err);
+    }
+  };
+
   const fetchDbUsers = async () => {
     try {
       const res = await fetch('/api/admin/users');
       const data = await res.json();
       if (data.success && Array.isArray(data.users)) {
         setDbUsers(data.users);
-        // Dynamically build and allocate 50-member groups based on real database users
-        const dynamicGroups = buildDynamicGroupsFromUsers(data.users);
-        setAllGroups(dynamicGroups);
+        // Fetch real-time groups from Firestore database
+        await fetchDbGroups();
 
         // Dynamically resolve current user's group, slot, and email verification status from DB
         setUser(currentUser => {
@@ -618,6 +904,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   React.useEffect(() => {
     fetchDbUsers();
+    fetchDbGroups();
   }, []);
 
   const lastReferralKeyRef = React.useRef<string>('');
@@ -653,7 +940,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setCurrentLiveWinner(null);
   };
 
-  const updateGroupSchedule = (groupId: string, startDateStr: string, scheduledTimeStr: string) => {
+  const updateGroupSchedule = async (groupId: string, startDateStr: string, scheduledTimeStr: string) => {
+    // Optimistic local state update
     setAllGroups(prev => prev.map(g => {
       if (g.groupId === groupId) {
         return {
@@ -665,24 +953,72 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
       return g;
     }));
+
+    try {
+      const res = await fetch('/api/admin/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_schedule',
+          groupId,
+          startDate: startDateStr,
+          scheduledTime: scheduledTimeStr,
+        })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        console.warn('Schedule update notice:', data.error);
+        if (data.isLocked) {
+          alert('🔒 Schedule Locked: The event is active and draw cycle is underway. Date & time cannot be edited.');
+        }
+      }
+      await fetchDbGroups();
+    } catch (err) {
+      console.error('Error updating schedule in database:', err);
+    }
   };
 
-  // Dynamically compute past winners for the currently selected group from its slots
-  const currentGroupWinners: DailyGoldWinner[] = group.slots
+  // Dynamically compute past winners for the currently selected group from its slots & Firestore collection
+  const currentBatchId = group.groupId || selectedBatchId || 'GROUP-001';
+
+  const slotWinners: DailyGoldWinner[] = (group.slots || [])
     .filter(s => s.status === 'Won 1g Gold' && s.wonDay)
     .map(s => ({
       dayNumber: s.wonDay!,
-      date: s.wonDate || '14 Aug 2026',
+      date: s.wonDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
       winnerMemberId: s.memberId || `LOP-${String(s.slotNumber).padStart(6, '0')}`,
       winnerName: s.memberName || `Member #${s.slotNumber}`,
       prizeDescription: '1 Gram 916 Gold Coin',
       dispatchStatus: 'Verified & Shipped',
       auditHash: `0x${s.slotNumber}a9b8c7d6e5`,
+      batchId: currentBatchId,
+      batchName: group.groupName,
+      slotNumber: s.slotNumber,
+      certificateId: `CERT-IG-2026-${String(s.slotNumber).padStart(4, '0')}`,
     }));
 
+  const pastWinnersForThisGroup = (pastWinners || []).filter((w: any) => {
+    const wBatch = w.batchId || w.group || w.groupId || 'GROUP-001';
+    return wBatch === currentBatchId;
+  });
+
+  const mergedGroupWinnersMap = new Map<number, DailyGoldWinner>();
+  [...slotWinners, ...pastWinnersForThisGroup].forEach(w => {
+    if (w && w.dayNumber && !mergedGroupWinnersMap.has(w.dayNumber)) {
+      mergedGroupWinnersMap.set(w.dayNumber, {
+        ...w,
+        batchId: currentBatchId,
+        batchName: group.groupName,
+      });
+    }
+  });
+
+  const currentGroupWinners = Array.from(mergedGroupWinnersMap.values()).sort((a, b) => (b.dayNumber || 0) - (a.dayNumber || 0));
+
   const programEvents = generate50DayProgramEvents(
-    group.startDate || (group.groupId === 'GROUP-001' ? '2026-08-14' : new Date().toISOString().split('T')[0]),
-    currentGroupWinners
+    group.startDate || '',
+    currentGroupWinners,
+    group.scheduledTime || ''
   );
 
   const registerUser = async (
@@ -787,7 +1123,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           broadcastAuthEvent({ type: 'LOGIN', user: resData.user });
         }
         setIsAuthenticated(true);
-        setCurrentView('user-dashboard');
+        if (typeof window !== 'undefined') {
+          const searchParams = new URLSearchParams(window.location.search);
+          const redirectView = searchParams.get('redirect') || searchParams.get('view');
+          const redirectBatch = searchParams.get('batch');
+          if (redirectBatch) {
+            setSelectedBatchId(redirectBatch);
+          }
+          if (redirectView === 'user-reward-spin' || redirectView === 'rewards' || redirectView === 'event' || window.location.pathname === '/rewards' || window.location.pathname === '/mystery-letter') {
+            setCurrentView('user-reward-spin');
+          } else {
+            setCurrentView('user-dashboard');
+          }
+        } else {
+          setCurrentView('user-dashboard');
+        }
         return { success: true };
       }
 
@@ -984,6 +1334,136 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return assignedSlotNumber;
   };
 
+  const isUserDepositVerified = user.depositStatus === 'Verified' || Boolean(user.slotNumber);
+  const claimedReferralBonuses = (referrals || [])
+    .filter(r => r.claimed || (r.depositStatus === 'Verified' && isUserDepositVerified))
+    .reduce((sum, r) => sum + (r.bonusEarnedAmount || 500), 0);
+
+  const userWithdrawals = (withdrawals || []).filter(w => w.memberId === user.memberId);
+  const totalSubtractedWithdrawals = userWithdrawals
+    .filter(w => w.status !== 'Rejected')
+    .reduce((sum, w) => sum + w.amount, 0);
+
+  const withdrawableBonusBalance = Math.max(0, claimedReferralBonuses - totalSubtractedWithdrawals);
+
+  const buySlotWithWallet = async (targetBatchId: string, slotNo?: number): Promise<{ success: boolean; error?: string; slotNumber?: number }> => {
+    try {
+      const targetGrp = allGroups.find(g => (g.groupId || '').toUpperCase() === targetBatchId.toUpperCase()) || allGroups[0];
+      if (!targetGrp) {
+        return { success: false, error: 'Target batch not found.' };
+      }
+
+      // Check if batch is already full or event is actively running
+      const isTargetLiveOrActive = targetGrp.status === 'active' || targetGrp.status === 'live' || ((targetGrp.currentCycleDay ?? 0) > 0);
+      const targetOccupiedCount = (targetGrp.slots || []).filter(s => s.status === 'Occupied' || s.status === 'Won 1g Gold').length;
+      const isTargetFull = targetOccupiedCount >= 50;
+
+      if (isTargetLiveOrActive || isTargetFull) {
+        const nextOpenBatch = allGroups.find(g => {
+          const occ = (g.slots || []).filter(s => s.status === 'Occupied' || s.status === 'Won 1g Gold').length;
+          const live = g.status === 'active' || g.status === 'live' || ((g.currentCycleDay ?? 0) > 0);
+          return !live && occ < 50;
+        });
+
+        const recMsg = nextOpenBatch 
+          ? ` Please join the open recruiting batch ${nextOpenBatch.groupName.replace('InfinityGram 50 Gold Club - ', '')} (${nextOpenBatch.groupId}).` 
+          : ' A new recruiting batch is being initialized.';
+
+        return { 
+          success: false, 
+          error: `${targetGrp.groupName} is ${isTargetLiveOrActive ? 'actively running in the 50-day live draw cycle' : '100% full (50/50 slots filled)'}. New slot registrations are locked for this batch.${recMsg}` 
+        };
+      }
+
+      // Check user quota in this specific batch (max 3 slots per batch)
+      const userSlotsInBatch = targetGrp.slots.filter(s => 
+        s.status !== 'Available' && s.memberName !== '—' && (
+          (user.memberId && s.memberId === user.memberId) ||
+          (user.fullName && s.memberName?.toLowerCase() === user.fullName?.toLowerCase()) ||
+          (user.email && s.memberName?.toLowerCase() === user.email?.toLowerCase())
+        )
+      );
+
+      if (userSlotsInBatch.length >= 3) {
+        return { success: false, error: `You already hold 3 slots in ${targetGrp.groupName}. Max 3 slots per batch allowed.` };
+      }
+
+      // Determine target slot
+      let chosenSlotNo = slotNo;
+      if (!chosenSlotNo) {
+        const openSlot = targetGrp.slots.find(s => s.status === 'Available' || !s.memberName || s.memberName === '—');
+        if (!openSlot) {
+          return { success: false, error: `No available open slots in ${targetGrp.groupName}.` };
+        }
+        chosenSlotNo = openSlot.slotNumber;
+      }
+
+      // Check wallet balance
+      if (withdrawableBonusBalance < 10000) {
+        return { success: false, error: `Insufficient wallet balance (Current: ₹${withdrawableBonusBalance.toLocaleString('en-IN')}). Minimum ₹10,000 required to buy a slot from wallet.` };
+      }
+
+      // Deduct ₹10,000 from wallet by creating a WithdrawalRecord for Slot Purchase
+      const newWithdrawalRecord: WithdrawalRecord = {
+        id: `w_slot_${Date.now()}`,
+        userId: user.id,
+        memberId: user.memberId,
+        memberName: user.fullName,
+        amount: 10000,
+        payoutMethod: 'Bank Transfer (NEFT/IMPS)',
+        status: 'Approved',
+        requestDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+        processedDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+        adminNotes: `Automated Wallet Deduction for Slot #${chosenSlotNo} purchase in ${targetGrp.groupName}`,
+      };
+
+      setWithdrawals(prev => [newWithdrawalRecord, ...prev]);
+
+      // Assign slot in Firestore database
+      await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          memberId: user.memberId,
+          userId: user.id,
+          slotNumber: chosenSlotNo,
+          groupId: targetBatchId,
+          depositStatus: 'Verified',
+        })
+      });
+
+      // Update local user state
+      const newAllocatedSlot = {
+        group: targetBatchId,
+        groupId: targetBatchId,
+        slotNumber: chosenSlotNo,
+        slot: `#${chosenSlotNo}`,
+        joinedDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+        depositStatus: 'Verified',
+      };
+
+      setUser(prev => {
+        const existingAllocated = Array.isArray(prev.allocatedSlots) ? prev.allocatedSlots : [];
+        const updatedAllocated = [...existingAllocated, newAllocatedSlot];
+        return {
+          ...prev,
+          depositStatus: 'Verified',
+          accountStatus: 'Active',
+          allocatedSlots: updatedAllocated,
+          slotsOwned: updatedAllocated.length,
+        };
+      });
+
+      await fetchDbUsers();
+      await fetchDbGroups();
+
+      return { success: true, slotNumber: chosenSlotNo };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to complete wallet slot purchase' };
+    }
+  };
+
   const manualAssignSlot = async (identifier: string, slotNo: number, targetBatchId = 'GROUP-001') => {
     try {
       const targetUser = dbUsers.find(u => 
@@ -992,35 +1472,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         u.id === identifier
       );
 
-      const targetUserId = targetUser?.id;
       const targetEmail = targetUser?.email || identifier;
       const targetMemberId = targetUser?.memberId || identifier;
       const memberName = targetUser?.name || targetUser?.fullName || targetEmail;
 
-      const targetOwnedCount = (allGroups || []).reduce((acc, grp) => {
-        return acc + grp.slots.filter(s => 
-          s.status !== 'Available' && s.memberName !== '—' && (
-            (targetMemberId && s.memberId === targetMemberId) ||
-            (targetEmail && s.memberName?.toLowerCase() === targetEmail.toLowerCase()) ||
-            (memberName && s.memberName?.toLowerCase() === memberName.toLowerCase())
-          )
-        ).length;
-      }, 0);
-
-      if (targetOwnedCount >= 3) {
-        return { success: false, error: `Maximum slot limit reached! ${memberName} already owns ${targetOwnedCount} slots (Max 3 slots per user allowed).` };
-      }
-
-      const res = await fetch('/api/admin/users', {
+      const res = await fetch('/api/admin/slots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          email: targetEmail, 
-          memberId: targetMemberId, 
-          userId: targetUserId, 
-          slotNumber: slotNo, 
-          depositStatus: 'Verified', 
-          groupId: targetBatchId 
+          action: 'assign_slot',
+          groupId: targetBatchId,
+          slotNumber: slotNo,
+          email: targetEmail,
+          memberId: targetMemberId,
+          fullName: memberName,
+          name: memberName,
         }),
       });
 
@@ -1029,43 +1495,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return { success: false, error: resData?.error || 'Failed to update database slot assignment' };
       }
 
-      setAllGroups(prevGroups => {
-        return prevGroups.map(grp => {
-          if (grp.groupId !== targetBatchId) return grp;
-          const updatedSlots = grp.slots.map(s => {
-            if (s.slotNumber === slotNo) {
-              return {
-                ...s,
-                memberName: memberName,
-                memberId: targetMemberId,
-                status: 'Occupied' as const,
-                joinedDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-              };
-            }
-            return s;
-          });
-          const newTotalMembers = updatedSlots.filter(s => s.status === 'Occupied').length;
-          return {
-            ...grp,
-            totalMembers: newTotalMembers,
-            status: newTotalMembers >= 50 ? 'full' : grp.status,
-            slots: updatedSlots,
-          };
-        });
-      });
-
-      setDbUsers(prev => prev.map(u => {
-        if (u.email?.toLowerCase() === targetEmail.toLowerCase() || u.memberId === targetMemberId || u.id === targetUserId) {
-          return {
-            ...u,
-            deposit: 'Verified',
-            group: targetBatchId,
-            slot: `#${slotNo}`,
-          };
-        }
-        return u;
-      }));
-
+      await fetchDbGroups();
       await fetchDbUsers();
 
       const newAudit: AuditLogItem = {
@@ -1090,25 +1520,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const unassignSlot = async (slotNo: number, targetBatchId = 'GROUP-001', identifier?: string) => {
     try {
-      const targetUser = dbUsers.find(u => 
-        (identifier && (u.email?.toLowerCase() === identifier.toLowerCase() || u.memberId === identifier || u.id === identifier || u.name === identifier)) ||
-        (u.group === targetBatchId && (u.slot === `#${slotNo}` || u.slot === slotNo || u.slot === `Slot #${slotNo}`))
-      );
-
-      const targetUserId = targetUser?.id;
-      const targetEmail = targetUser?.email;
-      const targetMemberId = targetUser?.memberId;
-
-      const res = await fetch('/api/admin/users', {
+      const res = await fetch('/api/admin/slots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           action: 'unassign_slot',
-          email: targetEmail, 
-          memberId: targetMemberId, 
-          userId: targetUserId, 
-          slotNumber: slotNo, 
-          groupId: targetBatchId 
+          groupId: targetBatchId,
+          slotNumber: slotNo,
         }),
       });
 
@@ -1117,50 +1535,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return { success: false, error: resData?.error || 'Failed to unassign slot in database' };
       }
 
-      setAllGroups(prevGroups => {
-        return prevGroups.map(grp => {
-          if (grp.groupId !== targetBatchId) return grp;
-          const updatedSlots = grp.slots.map(s => {
-            if (s.slotNumber === slotNo) {
-              return {
-                ...s,
-                memberName: '—',
-                memberId: '—',
-                status: 'Available' as const,
-                joinedDate: '-',
-                wonDay: undefined,
-                wonDate: undefined,
-              };
-            }
-            return s;
-          });
-          const newTotalMembers = updatedSlots.filter(s => s.status === 'Occupied' || s.status === 'Won 1g Gold').length;
-          return {
-            ...grp,
-            totalMembers: newTotalMembers,
-            status: newTotalMembers >= 50 ? 'full' : (newTotalMembers > 0 ? 'active' : 'recruiting'),
-            slots: updatedSlots,
-          };
-        });
-      });
-
-      setDbUsers(prev => prev.map(u => {
-        if (
-          (targetEmail && u.email?.toLowerCase() === targetEmail.toLowerCase()) || 
-          (targetMemberId && u.memberId === targetMemberId) || 
-          (targetUserId && u.id === targetUserId) ||
-          (u.group === targetBatchId && (u.slot === `#${slotNo}` || u.slot === slotNo))
-        ) {
-          return {
-            ...u,
-            deposit: 'Not Started',
-            group: 'Not Assigned Yet',
-            slot: 'Not Assigned Yet',
-          };
-        }
-        return u;
-      }));
-
+      await fetchDbGroups();
       await fetchDbUsers();
 
       const newAudit: AuditLogItem = {
@@ -1183,61 +1558,64 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const resetSlotWinnerStatus = async (slotNo: number, targetBatchId = 'GROUP-001', memberId?: string) => {
+    try {
+      const res = await fetch('/api/admin/slots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'reset_winner_status',
+          groupId: targetBatchId,
+          slotNumber: slotNo,
+          memberId: memberId,
+        }),
+      });
+
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok || !resData.success) {
+        return { success: false, error: resData?.error || 'Failed to reset winner status in database' };
+      }
+
+      await fetchDbGroups();
+      await fetchDbUsers();
+
+      const newAudit: AuditLogItem = {
+        id: `audit_reset_winner_${Date.now()}`,
+        timestamp: new Date().toLocaleString('en-IN') + ' IST',
+        actor: 'admin.op@infinitygram.net',
+        role: 'Super Admin',
+        action: 'SLOT_WINNER_STATUS_RESET',
+        module: 'Groups',
+        recordId: `${targetBatchId}-SLOT${slotNo}`,
+        previousStatus: 'Won 1g Gold',
+        newStatus: 'In Selection Pool (Occupied)',
+        ipAddress: '103.45.12.89',
+      };
+      setAuditLogs(prev => [newAudit, ...prev]);
+
+      return { success: true, message: resData?.message };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to reset slot winner status' };
+    }
+  };
+
   const autoFillGroupWithSystemUsers = async (targetBatchId = 'GROUP-001') => {
     try {
-      const targetGrp = allGroups.find(g => g.groupId === targetBatchId) || allGroups[0];
-      if (!targetGrp) {
-        return { success: false, error: 'Target group batch not found.' };
+      const res = await fetch('/api/admin/slots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'autofill',
+          groupId: targetBatchId,
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        return { success: false, error: data?.error || 'Failed to auto-fill system users.' };
       }
 
-      const emptySlots = targetGrp.slots.filter(s => s.status === 'Available' || !s.memberName || s.memberName === '—');
-      if (emptySlots.length === 0) {
-        return { success: false, error: 'Group is already fully filled with 50 members!' };
-      }
-
-      const simulatedNames = [
-        'Anitha Murugan', 'Venkatesh Raman', 'Meena Kumari', 'Pravin Kumar', 
-        'Senthil Nathan', 'Deepa Lakshmi', 'Ganesh Kumar', 'Kavitha Sundaram',
-        'Ramesh Babu', 'Shalini Devi', 'Vijay Anand', 'Priya Dharshini',
-        'Karthik Raja', 'Revathi Sekar', 'Saravanan Perumal', 'Divya Bharathi',
-        'Manikandan K', 'Nandhini R', 'Arun Prakash', 'Gayathri M',
-        'Ashok Kumar', 'Sowmya N', 'Balaji Prasad', 'Malini S',
-        'Dinesh Karthik', 'Suganya P', 'Aravind Swamy', 'Bhavani K',
-        'Gopinath V', 'Hemalatha T', 'Ilango K', 'Jayashree N',
-        'Krishnan M', 'Latha R', 'Mohan Raj', 'Nirmala S',
-        'Pradeep V', 'Radhika K', 'Sathish Kumar', 'Uma Maheshwari',
-        'Vikram Seth', 'Yamuna K', 'Zahir Hussain', 'Chitra S',
-        'Elango M', 'Farooq Ahmed', 'Gita Raman', 'Hari Haran'
-      ];
-
-      let count = 0;
-      for (let i = 0; i < emptySlots.length; i++) {
-        const slot = emptySlots[i];
-        const rawName = simulatedNames[i % simulatedNames.length];
-        const botName = i >= simulatedNames.length ? `${rawName} ${Math.floor(i / simulatedNames.length) + 1}` : rawName;
-        const botMemberId = `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
-        const botEmail = `${botName.toLowerCase().replace(/[^a-z]/g, '')}${Math.floor(10 + Math.random() * 90)}@gmail.com`;
-        const botMobile = `+91 ${Math.floor(60000 + Math.random() * 39999)} ${Math.floor(10000 + Math.random() * 89999)}`;
-
-        await fetch('/api/admin/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: botEmail,
-            memberId: botMemberId,
-            fullName: botName,
-            name: botName,
-            mobile: botMobile,
-            slotNumber: slot.slotNumber,
-            groupId: targetBatchId,
-            depositStatus: 'Verified',
-            isSimulated: true,
-            userType: 'simulated',
-          }),
-        });
-        count++;
-      }
-
+      await fetchDbGroups();
       await fetchDbUsers();
 
       const newAudit: AuditLogItem = {
@@ -1247,69 +1625,63 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         role: 'Super Admin',
         action: 'AUTO_FILL_SYSTEM_USERS_SUCCESS',
         module: 'Groups',
-        recordId: `${targetBatchId}-AUTOFILL-${count}`,
-        previousStatus: `${50 - count}/50 Members`,
-        newStatus: `50/50 Fully Filled (${count} System Bots Added)`,
+        recordId: `${targetBatchId}-AUTOFILL-50`,
+        previousStatus: 'Incomplete Batch Slots',
+        newStatus: '50/50 Fully Filled & Ready',
         ipAddress: '103.45.12.89',
       };
       setAuditLogs(prev => [newAudit, ...prev]);
 
-      return { success: true, count, message: `Successfully populated ${count} system simulated users into ${targetBatchId}!` };
+      return { 
+        success: true, 
+        count: 50, 
+        message: data.message || `Successfully auto-filled ${targetBatchId} to 50/50 Full!` 
+      };
     } catch (err: any) {
       return { success: false, error: err?.message || 'Failed to auto-fill system users.' };
     }
   };
 
-  const createNewBatchGroup = (customName?: string) => {
-    const nextGroupIndex = allGroups.length + 1;
-    const groupId = `GROUP-${String(nextGroupIndex).padStart(3, '0')}`;
-    const letterCode = String.fromCharCode(65 + ((nextGroupIndex - 1) % 26));
-    const groupName = customName || `InfinityGram 50 Gold Club - Batch ${letterCode}`;
+  const createNewBatchGroup = async (customName?: string): Promise<{ success: boolean; newGroup?: GroupDetails; error?: string }> => {
+    try {
+      const res = await fetch('/api/admin/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_group',
+          groupName: customName,
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.group) {
+        setAllGroups(prev => {
+          const filtered = prev.filter(g => g.groupId !== data.group.groupId);
+          return [...filtered, data.group].sort((a, b) => a.groupId.localeCompare(b.groupId));
+        });
+        setSelectedBatchId(data.group.groupId);
+        await fetchDbGroups();
 
-    const slots: any[] = Array.from({ length: 50 }, (_, slotIdx) => {
-      const slotNumber = slotIdx + 1;
-      return {
-        slotNumber,
-        memberId: '—',
-        memberName: '—',
-        status: 'Available' as const,
-        joinedDate: '-',
-        wonDay: undefined,
-        wonDate: undefined,
-      };
-    });
+        const newAudit: AuditLogItem = {
+          id: `audit_creategroup_${Date.now()}`,
+          timestamp: new Date().toLocaleString('en-IN') + ' IST',
+          actor: 'admin.op@infinitygram.net',
+          role: 'Super Admin',
+          action: 'CREATE_NEW_GROUP_BATCH_SUCCESS',
+          module: 'Groups',
+          recordId: `${data.group.groupId} (${data.group.groupName})`,
+          previousStatus: `${allGroups.length} Batches`,
+          newStatus: `${allGroups.length + 1} Batches (Recruiting Active)`,
+          ipAddress: '103.45.12.89',
+        };
+        setAuditLogs(prev => [newAudit, ...prev]);
 
-    const newGroup: GroupDetails = {
-      groupId,
-      groupName,
-      status: 'recruiting',
-      createdDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-      totalMembers: 0,
-      currentCycleDay: 0,
-      totalGoldDistributedGrams: 0,
-      activePoolCount: 0,
-      scheduledTime: 'Awaiting Members',
-      startDate: 'Event Not Started',
-      slots,
-    };
-
-    setAllGroups(prev => [...prev, newGroup]);
-
-    const newAudit: AuditLogItem = {
-      id: `audit_creategroup_${Date.now()}`,
-      timestamp: new Date().toLocaleString('en-IN') + ' IST',
-      actor: 'admin.op@infinitygram.net',
-      role: 'Super Admin',
-      action: 'CREATE_NEW_GROUP_BATCH_SUCCESS',
-      module: 'Groups',
-      recordId: `${groupId} (${groupName})`,
-      previousStatus: `${allGroups.length} Batches`,
-      newStatus: `${allGroups.length + 1} Batches (Recruiting Active)`,
-      ipAddress: '103.45.12.89',
-    };
-    setAuditLogs(prev => [newAudit, ...prev]);
-
-    return { success: true, newGroup };
+        return { success: true, newGroup: data.group };
+      }
+      return { success: false, error: data?.error || 'Failed to create new batch in database.' };
+    } catch (err: any) {
+      console.error('Error creating batch in database:', err);
+      return { success: false, error: err?.message || 'Network error creating batch.' };
+    }
   };
 
 
@@ -1424,7 +1796,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       winnerSlot = eligibleSlots[Math.floor(Math.random() * eligibleSlots.length)];
     }
 
-    const currentDay = group.currentCycleDay;
+    const wonCount = group.slots.filter(s => s.status === 'Won 1g Gold').length;
+    const currentDay = Math.min(50, Math.max(1, (group.currentCycleDay && group.currentCycleDay > 0) ? group.currentCycleDay : (wonCount + 1)));
+
+    const targetBatchId = selectedBatchId || group.groupId || 'GROUP-001';
+    const targetBatchObj = allGroups.find(g => g.groupId === targetBatchId) || group;
 
     const newWinner: DailyGoldWinner = {
       dayNumber: currentDay,
@@ -1432,8 +1808,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       winnerMemberId: winnerSlot.memberId || `LOP-${String(winnerSlot.slotNumber).padStart(6, '0')}`,
       winnerName: winnerSlot.memberName || `Member #${winnerSlot.slotNumber}`,
       prizeDescription: '1 Gram 916 Gold Coin',
-      dispatchStatus: 'Processing',
+      dispatchStatus: 'Verified & Shipped',
       auditHash: `0x${Math.random().toString(16).substring(2, 12)}${currentDay}`,
+      batchId: targetBatchId,
+      batchName: targetBatchObj.groupName || 'InfinityGram 50 Gold Club',
+      slotNumber: winnerSlot.slotNumber,
+      purity: '24K / 916 BIS Hallmark Gold Chit',
+      certificateId: `CERT-IG-2026-${String(winnerSlot.slotNumber).padStart(4, '0')}`,
     };
 
     // Update group slots: mark winner slot as 'Won 1g Gold'
@@ -1450,12 +1831,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
 
     setAllGroups(prev => prev.map(g => {
-      if (g.groupId === selectedBatchId) {
+      if (g.groupId === targetBatchId) {
+        const newWonCount = updatedSlots.filter(s => s.status === 'Won 1g Gold').length;
         return {
           ...g,
-          currentCycleDay: g.currentCycleDay + 1,
-          totalGoldDistributedGrams: g.totalGoldDistributedGrams + 1,
-          activePoolCount: g.activePoolCount - 1,
+          currentCycleDay: Math.min(50, newWonCount + 1),
+          totalGoldDistributedGrams: newWonCount,
+          activePoolCount: Math.max(0, 50 - newWonCount),
+          status: 'active' as const,
           slots: updatedSlots,
         };
       }
@@ -1468,7 +1851,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     // LOCK DRAW BUTTON FOR NEXT 24 HOURS! (24h in ms = 86,400,000)
     const lockExpiry = Date.now() + 24 * 60 * 60 * 1000;
-    setDrawLocks(prev => ({ ...prev, [selectedBatchId]: lockExpiry }));
+    setDrawLocks(prev => ({ ...prev, [targetBatchId]: lockExpiry }));
 
     // Check if current logged in user was selected
     if (winnerSlot.slotNumber === user.slotNumber) {
@@ -1477,13 +1860,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         rewardStatus: 'Won 1g Gold',
         wonDay: currentDay,
         wonDate: newWinner.date,
+        wonBatch: targetBatchId,
       }));
     }
 
     // Add notification
     const newNotif: NotificationItem = {
       id: `notif_${Date.now()}`,
-      title: `Day ${currentDay} Gold Selection Completed`,
+      title: `Day ${currentDay} Gold Selection Completed (${targetBatchObj.groupName})`,
       description: `${newWinner.winnerName} (${newWinner.winnerMemberId}) was awarded 1 Gram 916 Gold Coin! Next draw opens in 24 hours.`,
       category: 'Reward',
       timestamp: 'Just now',
@@ -1499,7 +1883,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       role: 'Operations',
       action: 'ADMIN_EXECUTED_DAILY_GOLD_SELECTION_24H_LOCKED',
       module: 'Rewards',
-      recordId: `GROUP-001-DAY${currentDay}`,
+      recordId: `${targetBatchId}-DAY${currentDay}`,
       previousStatus: `Pool size: ${eligibleSlots.length}`,
       newStatus: `Winner: ${newWinner.winnerMemberId} | Button Locked for 24 Hours`,
       ipAddress: '103.21.124.89',
@@ -1721,6 +2105,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       pastWinners,
       referrals,
       withdrawals,
+      withdrawableBonusBalance,
+      buySlotWithWallet,
       claimReferralBonus,
       requestWithdrawal,
       reviewWithdrawal,
@@ -1732,11 +2118,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       isAdminAuthenticated,
       dbUsers,
       fetchDbUsers,
+      fetchDbGroups,
       fetchReferrals,
       manualAssignSlot,
       unassignSlot,
+      resetSlotWinnerStatus,
       autoFillGroupWithSystemUsers,
       createNewBatchGroup,
+      liveDrawState,
+      triggerLiveDraw,
+      completeLiveDraw,
+      resetLiveDraw,
       drawLockedUntil,
       isLiveDrawActive,
       currentLiveWinner,
