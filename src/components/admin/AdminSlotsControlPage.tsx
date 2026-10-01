@@ -508,22 +508,45 @@ export const AdminSlotsControlPage = () => {
         <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
           {/* Status info pills */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-xs w-full lg:w-auto">
-            <div className="bg-white/5 rounded-xl px-3.5 py-2.5 border border-white/10 flex items-center space-x-2.5">
+            {/* 1. START DATE PILL / BUTTON */}
+            <button
+              onClick={() => {
+                if (!isEventLiveOrActive) handleOpenScheduleModal();
+              }}
+              title={isEventLiveOrActive ? 'Schedule is locked (event active)' : 'Click to Set or Edit Start Date'}
+              className={`rounded-xl px-3.5 py-2.5 border flex items-center space-x-2.5 text-left transition-all ${
+                isEventLiveOrActive
+                  ? 'bg-white/5 border-white/10 cursor-default'
+                  : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-amber-400/50 cursor-pointer shadow-xs active:scale-[0.98]'
+              }`}
+            >
               <Calendar className="w-4 h-4 text-amber-400 shrink-0" />
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase font-mono tracking-wider font-semibold">Start Date</span>
                 <span className="font-bold text-white font-mono text-xs">{currentBatchInfo.startDate || 'Pending Schedule'}</span>
               </div>
-            </div>
+            </button>
 
-            <div className="bg-white/5 rounded-xl px-3.5 py-2.5 border border-white/10 flex items-center space-x-2.5">
+            {/* 2. DAILY DRAW TIME PILL / BUTTON */}
+            <button
+              onClick={() => {
+                if (!isEventLiveOrActive) handleOpenScheduleModal();
+              }}
+              title={isEventLiveOrActive ? 'Schedule is locked (event active)' : 'Click to Set or Edit Draw Time'}
+              className={`rounded-xl px-3.5 py-2.5 border flex items-center space-x-2.5 text-left transition-all ${
+                isEventLiveOrActive
+                  ? 'bg-white/5 border-white/10 cursor-default'
+                  : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-amber-400/50 cursor-pointer shadow-xs active:scale-[0.98]'
+              }`}
+            >
               <Clock className="w-4 h-4 text-amber-400 shrink-0" />
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase font-mono tracking-wider font-semibold">Daily Draw</span>
                 <span className="font-bold text-white font-mono text-xs">{currentBatchInfo.scheduledTime}</span>
               </div>
-            </div>
+            </button>
 
+            {/* 3. EVENT CYCLE PILL */}
             <div className="bg-white/5 rounded-xl px-3.5 py-2.5 border border-white/10 flex items-center space-x-2.5">
               <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isEventLiveOrActive ? 'bg-emerald-400 animate-pulse' : 'bg-blue-400'}`} />
               <div>
@@ -534,17 +557,37 @@ export const AdminSlotsControlPage = () => {
               </div>
             </div>
 
-            <div className="bg-amber-500/10 rounded-xl px-3.5 py-2.5 border border-amber-400/30 flex items-center space-x-2.5 shadow-xs">
+            {/* 4. LAUNCH COUNTDOWN CLICKABLE ACTION BUTTON */}
+            <button
+              onClick={() => {
+                if (!isEventLiveOrActive) {
+                  handleOpenScheduleModal();
+                }
+              }}
+              title={isEventLiveOrActive ? 'Event is actively live' : 'Click to Set or Edit Launch Date & Draw Time'}
+              className={`rounded-xl px-3.5 py-2.5 border flex items-center space-x-2.5 text-left transition-all ${
+                isEventLiveOrActive
+                  ? 'bg-amber-500/10 border-amber-400/30 cursor-default'
+                  : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-400/50 hover:border-amber-400 cursor-pointer shadow-md hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+            >
               <Hourglass className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
-              <div>
-                <span className="text-[10px] text-amber-300/80 block uppercase font-mono tracking-wider font-semibold">
-                  {isEventLiveOrActive ? 'Daily Draw Timer' : 'Launch Countdown'}
-                </span>
-                <span className="font-mono font-black text-amber-300 text-xs tracking-wider">
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-[10px] text-amber-300/90 block uppercase font-mono tracking-wider font-semibold">
+                    {isEventLiveOrActive ? 'Daily Draw Timer' : 'Launch Countdown'}
+                  </span>
+                  {!isEventLiveOrActive && (
+                    <span className="text-[9px] bg-amber-400/25 text-amber-300 border border-amber-400/50 px-1.5 py-0.2 rounded font-sans font-bold whitespace-nowrap">
+                      Click to Set ✏️
+                    </span>
+                  )}
+                </div>
+                <span className="font-mono font-black text-amber-300 text-xs tracking-wider block whitespace-nowrap">
                   {String(eventCountdown.days).padStart(2, '0')}d : {String(eventCountdown.hours).padStart(2, '0')}h : {String(eventCountdown.minutes).padStart(2, '0')}m : {String(eventCountdown.seconds).padStart(2, '0')}s
                 </span>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Action Buttons Hub (Side-by-side) */}
