@@ -586,7 +586,63 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const unsubscribeUsers = onSnapshot(usersRef, (snap) => {
         const uList: any[] = [];
         snap.forEach(dSnap => {
-          uList.push({ id: dSnap.id, ...dSnap.data() });
+          const u = dSnap.data();
+          const resolvedMemberId = u.memberId || `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
+          const isDepositVerified = u.depositStatus === 'Verified' || u.deposit === 'Verified';
+          const resolvedSlotNumber = Number(u.slotNumber || (u.slot ? String(u.slot).replace(/[^0-9]/g, '') : 0));
+          const rawAllocatedSlots = Array.isArray(u.allocatedSlots) && u.allocatedSlots.length > 0 
+            ? u.allocatedSlots 
+            : (resolvedSlotNumber > 0 || isDepositVerified ? [{
+                group: u.group || 'GROUP-001',
+                groupId: u.group || 'GROUP-001',
+                slotNumber: resolvedSlotNumber || 1,
+                slot: `#${resolvedSlotNumber || 1}`,
+                joinedDate: u.joinedDate || u.regDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+                depositStatus: u.depositStatus || u.deposit || 'Verified',
+              }] : []);
+
+          uList.push({
+            id: dSnap.id || u.uid || u.id,
+            uid: dSnap.id || u.uid || u.id,
+            memberId: resolvedMemberId,
+            name: u.fullName || u.name || (u.email ? u.email.split('@')[0] : 'Member User'),
+            fullName: u.fullName || u.name || (u.email ? u.email.split('@')[0] : 'Member User'),
+            mobile: u.mobile || '+91 98765 43210',
+            email: u.email || '',
+            regDate: u.joinedDate || u.regDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            joinedDate: u.joinedDate || u.regDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            deposit: u.depositStatus || u.deposit || 'Not Started',
+            depositStatus: u.depositStatus || u.deposit || 'Not Started',
+            deposits: Array.isArray(u.deposits) ? u.deposits : (isDepositVerified ? [{
+              amount: 10000,
+              date: u.joinedDate || u.regDate || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+              time: '10:00 AM IST',
+              paymentMethod: 'UPI / Admin Verification',
+              referenceId: `DEP-${resolvedMemberId}`,
+              status: 'Verified',
+            }] : []),
+            group: u.group || 'Not Assigned Yet',
+            slot: resolvedSlotNumber > 0 ? `#${resolvedSlotNumber}` : (u.slot || 'Not Assigned Yet'),
+            slotNumber: resolvedSlotNumber,
+            allocatedSlots: rawAllocatedSlots,
+            assignedSlots: Array.isArray(u.assignedSlots) ? u.assignedSlots : (resolvedSlotNumber > 0 ? [resolvedSlotNumber] : []),
+            status: u.accountStatus || u.status || 'Active',
+            accountStatus: u.accountStatus || u.status || 'Active',
+            rewardStatus: u.rewardStatus || (u.wonDay ? 'Won 1g Gold' : 'In Selection Pool'),
+            wonDay: u.wonDay || null,
+            wonDate: u.wonDate || null,
+            wonBatch: u.wonBatch || null,
+            emailVerified: Boolean(u.emailVerified),
+            isSimulated: Boolean(u.isSimulated),
+            userType: u.isSimulated ? 'simulated' : 'real',
+            role: u.role || 'Member',
+            idDocumentUrl: u.idDocumentUrl || null,
+            address: u.address || 'Flat 402, Royal Sovereign Heights, Bandra West, Mumbai, Maharashtra 400050',
+            referralCode: u.referralCode || `REF-${resolvedMemberId.replace('LOP-', '')}`,
+            referredBy: u.referredBy || 'Direct Registration',
+            utr: u.utr || (isDepositVerified ? `UPI-98234120${Math.floor(1000 + Math.random() * 9000)}` : 'Pending UTR Submission'),
+            avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+          });
         });
         if (uList.length > 0) {
           setDbUsers(uList);

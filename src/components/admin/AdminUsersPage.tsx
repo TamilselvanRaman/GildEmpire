@@ -168,8 +168,7 @@ export const AdminUsersPage = () => {
 
   React.useEffect(() => {
     if (dbUsers && dbUsers.length > 0) {
-      const members = dbUsers.filter(u => u.role === 'Member');
-      setUsersList(members);
+      setUsersList(dbUsers);
 
       // Auto-select user ONLY if URL path matches a specific user ID (/user/:id or /admin/users/:id)
       if (typeof window !== 'undefined') {
@@ -180,7 +179,7 @@ export const AdminUsersPage = () => {
           const pathSegments = path.split('/').filter(Boolean);
           const lastSeg = pathSegments[pathSegments.length - 1];
           if (lastSeg && lastSeg !== 'users' && lastSeg !== 'user') {
-            const found = members.find(u => 
+            const found = dbUsers.find(u => 
               u.memberId === lastSeg || 
               u.id === lastSeg || 
               u.email === lastSeg
@@ -214,26 +213,33 @@ export const AdminUsersPage = () => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
-  const filteredUsers = usersList.filter(u => {
+  const filteredUsers = (usersList || []).filter(u => {
     const isBot = Boolean(u.isSimulated);
+    const userRole = u.role || 'Member';
+    const userStatus = u.status || u.accountStatus || 'Active';
+    const userName = (u.name || u.fullName || u.email || '').toLowerCase();
+    const userMemberId = (u.memberId || '').toLowerCase();
+    const userEmail = (u.email || '').toLowerCase();
+    const userMobile = String(u.mobile || '');
+
     const matchesStatus = 
-      statusFilter === 'Real Members' ? !isBot :
+      statusFilter === 'Real Members' ? (!isBot && userRole === 'Member') :
       statusFilter === 'All (incl. Bots)' ? true :
       statusFilter === 'System Bots' ? isBot :
-      statusFilter === 'Admins' ? u.role !== 'Member' :
-      statusFilter === 'Active' ? (u.status === 'Active' && !isBot) :
-      statusFilter === 'Email Verified' ? (u.emailVerified === true && !isBot) :
-      statusFilter === 'Email Unverified' ? (!u.emailVerified && !isBot) :
-      statusFilter === 'Pending Verification' ? (u.status === 'Pending Verification' && !isBot) :
-      statusFilter === 'Deactivated' ? (u.status === 'Deactivated' && !isBot) :
-      (!isBot && u.status === statusFilter);
+      statusFilter === 'Admins' ? userRole !== 'Member' :
+      statusFilter === 'Active' ? (userStatus === 'Active' && !isBot && userRole === 'Member') :
+      statusFilter === 'Email Verified' ? (Boolean(u.emailVerified) && !isBot && userRole === 'Member') :
+      statusFilter === 'Email Unverified' ? (!u.emailVerified && !isBot && userRole === 'Member') :
+      statusFilter === 'Pending Verification' ? (userStatus === 'Pending Verification' && !isBot && userRole === 'Member') :
+      statusFilter === 'Deactivated' ? (userStatus === 'Deactivated' && !isBot && userRole === 'Member') :
+      (!isBot && userStatus === statusFilter);
 
     const matchesSearch = 
       !search.trim() ||
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.memberId.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase()) ||
-      u.mobile.includes(search);
+      userName.includes(search.toLowerCase()) ||
+      userMemberId.includes(search.toLowerCase()) ||
+      userEmail.includes(search.toLowerCase()) ||
+      userMobile.includes(search);
 
     return matchesStatus && matchesSearch;
   });
@@ -706,10 +712,10 @@ export const AdminUsersPage = () => {
             <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Real Users</span>
           </div>
           <p className="text-3xl font-black text-[#0B1E39] font-mono">
-            {usersList.filter(u => u.role === 'Member' && !u.isSimulated).length} Real Members
+            {(usersList || []).filter(u => (u.role || 'Member') === 'Member' && !u.isSimulated).length} Real Members
           </p>
           <p className="text-slate-400 text-[11px] font-medium">
-            {usersList.filter(u => Boolean(u.isSimulated)).length} system bots filtered
+            {(usersList || []).filter(u => Boolean(u.isSimulated)).length} system bots filtered
           </p>
         </div>
 
@@ -719,7 +725,7 @@ export const AdminUsersPage = () => {
             <span className="bg-emerald-200/80 text-emerald-900 text-[9px] font-black px-2 py-0.5 rounded-full">₹10k Paid</span>
           </div>
           <p className="text-3xl font-black text-emerald-700 font-mono">
-            {usersList.filter(u => (u.deposit === 'Verified' || u.depositStatus === 'Verified') && u.role === 'Member' && !u.isSimulated).length} Members
+            {(usersList || []).filter(u => (u.deposit === 'Verified' || u.depositStatus === 'Verified') && (u.role || 'Member') === 'Member' && !u.isSimulated).length} Members
           </p>
           <span className="text-emerald-800 font-extrabold">₹10,000 Scheme Verified (Real)</span>
         </div>
@@ -729,7 +735,7 @@ export const AdminUsersPage = () => {
             <span className="text-amber-900 font-extrabold uppercase tracking-wider text-[10px]">Sub-Admins & Roles</span>
             <span className="bg-amber-200/80 text-amber-950 text-[9px] font-black px-2 py-0.5 rounded-full">Admin Staff</span>
           </div>
-          <p className="text-3xl font-black text-amber-800 font-mono">{usersList.filter(u => u.role !== 'Member').length} Staff Users</p>
+          <p className="text-3xl font-black text-amber-800 font-mono">{(usersList || []).filter(u => u.role && u.role !== 'Member').length} Staff Users</p>
           <span className="text-amber-900 font-bold">Super Admin • Operations • Reviewer</span>
         </div>
 
@@ -739,7 +745,7 @@ export const AdminUsersPage = () => {
             <span className="bg-blue-200/80 text-blue-900 text-[9px] font-black px-2 py-0.5 rounded-full">Queue</span>
           </div>
           <p className="text-3xl font-black text-[#2F6FED] font-mono">
-            {usersList.filter(u => u.status === 'Pending Verification' && !u.isSimulated).length} In Queue
+            {(usersList || []).filter(u => (u.status === 'Pending Verification' || u.accountStatus === 'Pending Verification') && !u.isSimulated).length} In Queue
           </p>
           <span className="text-blue-900 font-bold">Awaiting Bank UTR Review</span>
         </div>
@@ -750,14 +756,14 @@ export const AdminUsersPage = () => {
       <div className="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col lg:flex-row items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-1.5 bg-slate-100/90 p-1.5 rounded-2xl w-full lg:w-auto text-xs font-extrabold">
           {[
-            { id: 'Real Members', label: 'Real Members', count: usersList.filter(u => u.role === 'Member' && !u.isSimulated).length, badgeClass: 'bg-emerald-500 text-white' },
-            { id: 'Active', label: 'Active', count: usersList.filter(u => u.status === 'Active' && !u.isSimulated).length },
-            { id: 'Email Verified', label: 'Email Verified', count: usersList.filter(u => u.emailVerified && !u.isSimulated).length },
-            { id: 'Pending Verification', label: 'Pending Queue', count: usersList.filter(u => u.status === 'Pending Verification' && !u.isSimulated).length },
-            { id: 'Admins', label: 'Admins', count: usersList.filter(u => u.role !== 'Member').length },
-            { id: 'Email Unverified', label: 'Email Unverified', count: usersList.filter(u => !u.emailVerified && !u.isSimulated).length },
-            { id: 'System Bots', label: '🤖 System Bots', count: usersList.filter(u => Boolean(u.isSimulated)).length, badgeClass: 'bg-purple-600 text-white' },
-            { id: 'All (incl. Bots)', label: 'All (incl. Bots)', count: usersList.length }
+            { id: 'Real Members', label: 'Real Members', count: (usersList || []).filter(u => (u.role || 'Member') === 'Member' && !u.isSimulated).length, badgeClass: 'bg-emerald-500 text-white' },
+            { id: 'Active', label: 'Active', count: (usersList || []).filter(u => (u.status === 'Active' || u.accountStatus === 'Active') && !u.isSimulated && (u.role || 'Member') === 'Member').length },
+            { id: 'Email Verified', label: 'Email Verified', count: (usersList || []).filter(u => Boolean(u.emailVerified) && !u.isSimulated && (u.role || 'Member') === 'Member').length },
+            { id: 'Pending Verification', label: 'Pending Queue', count: (usersList || []).filter(u => (u.status === 'Pending Verification' || u.accountStatus === 'Pending Verification') && !u.isSimulated).length },
+            { id: 'Admins', label: 'Admins', count: (usersList || []).filter(u => u.role && u.role !== 'Member').length },
+            { id: 'Email Unverified', label: 'Email Unverified', count: (usersList || []).filter(u => !u.emailVerified && !u.isSimulated && (u.role || 'Member') === 'Member').length },
+            { id: 'System Bots', label: '🤖 System Bots', count: (usersList || []).filter(u => Boolean(u.isSimulated)).length, badgeClass: 'bg-purple-600 text-white' },
+            { id: 'All (incl. Bots)', label: 'All (incl. Bots)', count: (usersList || []).length }
           ].map((tab) => (
             <button
               key={tab.id}
