@@ -809,15 +809,6 @@ export const AdminRewardFlowControlPage = () => {
                               <span className="font-bold text-white text-xs truncate">
                                 {targetWinnerSlotObj.memberName || `Member #${targetWinnerSlotObj.slotNumber}`}
                               </span>
-                              {isBotMember(targetWinnerSlotObj) ? (
-                                <span className="bg-purple-500/25 text-purple-300 border border-purple-400/50 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase flex items-center space-x-0.5 shrink-0">
-                                  <span>🤖 BOT</span>
-                                </span>
-                              ) : (
-                                <span className="bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase flex items-center space-x-0.5 shrink-0">
-                                  <span>👤 REAL</span>
-                                </span>
-                              )}
                             </div>
                             <span className="text-[10px] font-mono text-[#00C2B8] block truncate">
                               {targetWinnerSlotObj.memberId || `LOP-${String(targetWinnerSlotObj.slotNumber).padStart(6, '0')}`}
@@ -908,17 +899,6 @@ export const AdminRewardFlowControlPage = () => {
                                   </div>
 
                                   <div className="flex items-center space-x-2 shrink-0">
-                                    {isBot ? (
-                                      <span className="bg-purple-500/20 text-purple-300 border border-purple-400/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase flex items-center space-x-0.5">
-                                        <Bot className="w-2.5 h-2.5" />
-                                        <span>BOT</span>
-                                      </span>
-                                    ) : (
-                                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase flex items-center space-x-0.5">
-                                        <User className="w-2.5 h-2.5" />
-                                        <span>REAL</span>
-                                      </span>
-                                    )}
                                     {isSelected && (
                                       <Check className="w-4 h-4 text-[#00C2B8] shrink-0" />
                                     )}
@@ -1228,18 +1208,7 @@ export const AdminRewardFlowControlPage = () => {
                     <td className="p-3.5 font-mono font-black text-[#2F6FED]">{evt.winnerMemberId || '—'}</td>
                     <td className="p-3.5 font-bold text-[#0B1E39]">
                       {evt.winnerName ? (
-                        <div className="flex items-center space-x-1.5">
-                          <span>{evt.winnerName}</span>
-                          {isBotMember({ memberId: evt.winnerMemberId, memberName: evt.winnerName }) ? (
-                            <span className="bg-purple-100 text-purple-700 border border-purple-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded">
-                              🤖 BOT
-                            </span>
-                          ) : (
-                            <span className="bg-emerald-100 text-emerald-700 border border-emerald-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded">
-                              👤 REAL
-                            </span>
-                          )}
-                        </div>
+                        <span>{evt.winnerName}</span>
                       ) : (
                         <span className="text-slate-400 font-normal">Pending Execution</span>
                       )}
@@ -1565,20 +1534,7 @@ export const AdminRewardFlowControlPage = () => {
                       {selectedWinner.winnerName}
                     </h3>
                     
-                    {/* Admin Only: Real vs Bot User Badge */}
-                    <div className="mt-1.5 flex items-center justify-center gap-2">
-                      {isWinnerBot ? (
-                        <span className="inline-flex items-center space-x-1.5 bg-purple-100 border border-purple-300 text-purple-800 text-[11px] font-mono font-black px-3 py-0.5 rounded-full uppercase shadow-xs">
-                          <Bot className="w-3.5 h-3.5 text-purple-700" />
-                          <span>🤖 BOT USER (SIMULATED)</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center space-x-1.5 bg-emerald-100 border border-emerald-300 text-emerald-800 text-[11px] font-mono font-black px-3 py-0.5 rounded-full uppercase shadow-xs">
-                          <User className="w-3.5 h-3.5 text-emerald-700" />
-                          <span>👤 REAL MEMBER (VERIFIED)</span>
-                        </span>
-                      )}
-                    </div>
+
 
                     <p className="text-xs font-mono font-extrabold text-[#2F6FED] mt-1">
                       Member ID: {selectedWinner.winnerMemberId}
@@ -1587,20 +1543,7 @@ export const AdminRewardFlowControlPage = () => {
                 </div>
 
                 <div className="bg-amber-50/80 p-5 rounded-2xl border border-amber-200 text-left space-y-2 text-xs font-medium">
-                  <div className="flex justify-between items-center border-b border-amber-200/80 pb-2">
-                    <span className="text-slate-600 font-bold">User Type (Admin Audit):</span>
-                    {isWinnerBot ? (
-                      <span className="font-mono text-xs font-black text-purple-700 bg-purple-100/80 border border-purple-300 px-2 py-0.5 rounded flex items-center space-x-1">
-                        <Bot className="w-3 h-3 text-purple-700" />
-                        <span>🤖 Bot User</span>
-                      </span>
-                    ) : (
-                      <span className="font-mono text-xs font-black text-emerald-700 bg-emerald-100/80 border border-emerald-300 px-2 py-0.5 rounded flex items-center space-x-1">
-                        <User className="w-3 h-3 text-emerald-700" />
-                        <span>👤 Real Member</span>
-                      </span>
-                    )}
-                  </div>
+
                   <div className="flex justify-between items-center border-b border-amber-200/80 pb-2">
                     <span className="text-slate-600 font-bold">Awarded Prize:</span>
                     <span className="text-amber-900 font-black">1 Gram 916 Gold Coin</span>

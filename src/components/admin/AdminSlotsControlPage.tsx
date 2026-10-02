@@ -27,7 +27,8 @@ import {
   Lock,
   Edit3,
   RotateCcw,
-  Save
+  Save,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -282,6 +283,48 @@ export const AdminSlotsControlPage = () => {
     } finally {
       setIsAutoFilling(false);
     }
+  };
+
+  const handleDownloadUserRoster = () => {
+    // Collect occupied slots from active group
+    const occupiedSlotsList = (memberSlots || []).filter(s => isSlotOccupied(s));
+
+    if (occupiedSlotsList.length === 0) {
+      alert('No occupied members found in this group to download.');
+      return;
+    }
+
+    const rows = occupiedSlotsList.map((slot) => {
+      const matchedUser = (dbUsers || []).find((u: any) => 
+        (slot.memberId && slot.memberId !== '—' && u.memberId === slot.memberId) ||
+        (slot.memberName && slot.memberName !== '—' && (u.name === slot.memberName || u.fullName === slot.memberName))
+      );
+
+      const name = slot.memberName || matchedUser?.name || matchedUser?.fullName || 'Member';
+      const memberId = (slot.memberId && slot.memberId !== '—')
+        ? slot.memberId 
+        : (matchedUser?.memberId || `LOP-${String(slot.slotNumber).padStart(6, '0')}`);
+      
+      const rawMobile = String(matchedUser?.mobile || (slot as any).mobile || '7639130497').trim();
+      const maskedContact = rawMobile.length > 3 
+        ? rawMobile.slice(0, -3) + '***' 
+        : rawMobile + '***';
+
+      return { name, memberId, maskedContact };
+    });
+
+    const csvHeader = 'Name,Member ID,Contact Info\n';
+    const csvLines = rows.map(r => `"${r.name.replace(/"/g, '""')}","${r.memberId}","${r.maskedContact}"`).join('\n');
+    const csvBlob = new Blob([csvHeader + csvLines], { type: 'text/csv;charset=utf-8;' });
+    const blobUrl = URL.createObjectURL(csvBlob);
+    
+    const downloadLink = document.createElement('a');
+    downloadLink.href = blobUrl;
+    downloadLink.download = `${currentBatchInfo.groupId}_Users_Roster.csv`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(blobUrl);
   };
 
   const handleDirectAssignUser = async (targetUser: any) => {
@@ -752,8 +795,8 @@ export const AdminSlotsControlPage = () => {
           </button>
         </div>
 
-        {/* SEARCH & VIEW SWITCHER */}
-        <div className="flex items-center space-x-3 w-full sm:w-auto">
+        {/* SEARCH, DOWNLOAD & VIEW SWITCHER */}
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -764,6 +807,16 @@ export const AdminSlotsControlPage = () => {
               className="w-full bg-slate-50 border border-slate-200 pl-9 pr-4 py-2 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#2F6FED] transition-all"
             />
           </div>
+
+          {/* DOWNLOAD ALL USERS CSV BUTTON */}
+          <button
+            onClick={handleDownloadUserRoster}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition-all cursor-pointer shrink-0 border border-emerald-500/30 active:scale-95"
+            title="Download User Roster (Format: Name, Member ID, Contact Info ***)"
+          >
+            <Download className="w-4 h-4 text-white" />
+            <span>Download Users</span>
+          </button>
 
           {/* VIEW TOGGLE PILLS */}
           <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
@@ -853,16 +906,9 @@ export const AdminSlotsControlPage = () => {
                               {slot.memberName ? slot.memberName.charAt(0).toUpperCase() : 'M'}
                             </div>
                             <div className="min-w-0">
-                              <div className="flex items-center space-x-2">
-                                <span className="font-extrabold text-slate-900 truncate">
-                                  {slot.memberName}
-                                </span>
-                                {isBot && (
-                                  <span className="text-[9px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-md uppercase font-mono">
-                                    BOT
-                                  </span>
-                                )}
-                              </div>
+                              <span className="font-extrabold text-slate-900 truncate">
+                                {slot.memberName}
+                              </span>
                               <span className="text-[10px] text-slate-500 block font-mono font-medium">
                                 Occupied: {slot.occupiedDate || slot.joinedDate || slot.assignedDate || '01 Oct 2026'}
                               </span>
@@ -1672,14 +1718,7 @@ export const AdminSlotsControlPage = () => {
                                 {u.name ? u.name.charAt(0).toUpperCase() : 'M'}
                               </div>
                               <div className="min-w-0">
-                                <div className="flex items-center space-x-2">
                                   <p className="font-black text-slate-900 truncate text-xs">{u.name || u.fullName}</p>
-                                  {isBot && (
-                                    <span className="text-[9px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-md font-mono shrink-0">
-                                      BOT
-                                    </span>
-                                  )}
-                                </div>
                                 <p className="text-[10px] text-slate-500 font-mono truncate">
                                   {u.memberId || 'LOP-ID'} • {u.email || u.mobile || 'No email'}
                                 </p>

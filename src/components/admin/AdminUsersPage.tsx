@@ -34,8 +34,7 @@ import {
   CreditCard,
   Network,
   BadgeCheck,
-  MapPin,
-  Bot
+  MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -275,6 +274,38 @@ export const AdminUsersPage = () => {
       setNewEmail('');
       setNewMobile('');
     }, 1200);
+  };
+
+  const handleDownloadAllUsersCSV = () => {
+    const listToExport = filteredUsers.length > 0 ? filteredUsers : (usersList || []);
+    if (listToExport.length === 0) {
+      alert('No user records available to download.');
+      return;
+    }
+
+    const rows = listToExport.map((u) => {
+      const name = u.name || u.fullName || 'Member';
+      const memberId = u.memberId || u.id || 'MB-0000';
+      const rawMobile = String(u.mobile || u.phone || '7639130497').trim();
+      const maskedContact = rawMobile.length > 3 
+        ? rawMobile.slice(0, -3) + '***' 
+        : rawMobile + '***';
+
+      return { name, memberId, maskedContact };
+    });
+
+    const csvHeader = 'Name,Member ID,Contact Info\n';
+    const csvLines = rows.map(r => `"${r.name.replace(/"/g, '""')}","${r.memberId}","${r.maskedContact}"`).join('\n');
+    const csvBlob = new Blob([csvHeader + csvLines], { type: 'text/csv;charset=utf-8;' });
+    const blobUrl = URL.createObjectURL(csvBlob);
+    
+    const downloadLink = document.createElement('a');
+    downloadLink.href = blobUrl;
+    downloadLink.download = `Master_Users_Roster.csv`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(blobUrl);
   };
 
   // If a specific user is selected (e.g. /user/:id view), render ONLY the Dedicated Full-Page View
@@ -692,6 +723,15 @@ export const AdminUsersPage = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0 relative z-10">
+          <button
+            onClick={handleDownloadAllUsersCSV}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-5 rounded-2xl shadow-xl text-xs uppercase tracking-wider flex items-center space-x-2 cursor-pointer transition-all hover:scale-105 border border-emerald-400/40"
+            title="Download Users List (Format: Name, Member ID, Contact Info ***)"
+          >
+            <Download className="w-4 h-4 text-white" />
+            <span>Download Users CSV</span>
+          </button>
+
           {/* Create New User / Sub-Admin Button */}
           <button
             onClick={() => setShowCreateModal(true)}
@@ -862,22 +902,9 @@ export const AdminUsersPage = () => {
                           {userInitial}
                         </div>
                         <div>
-                          <div className="flex items-center space-x-2">
-                            <p className="font-extrabold text-[#0B1E39] text-xs group-hover:text-[#2F6FED] transition-colors">
-                              {u.name}
-                            </p>
-                            {u.isSimulated ? (
-                              <span className="bg-purple-100 text-purple-900 border border-purple-300 px-2 py-0.5 rounded-full text-[9px] font-black inline-flex items-center space-x-1 shrink-0" title="Admin Identification: System Bot / Simulated User">
-                                <Bot className="w-3 h-3 text-purple-700" />
-                                <span>BOT</span>
-                              </span>
-                            ) : (
-                              <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-full text-[9px] font-black inline-flex items-center space-x-1 shrink-0" title="Admin Identification: Real Registered Member">
-                                <ShieldCheck className="w-3 h-3 text-emerald-700" />
-                                <span>REAL</span>
-                              </span>
-                            )}
-                          </div>
+                          <p className="font-extrabold text-[#0B1E39] text-xs group-hover:text-[#2F6FED] transition-colors">
+                            {u.name}
+                          </p>
                           <p className="text-[10px] text-slate-400 font-medium">
                             Joined {u.regDate}
                           </p>
