@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
+import { ClockTimePicker } from '../common/ClockTimePicker';
 import { DailyGoldWinner } from '../../types';
 import { mysteryAudio } from '../../utils/mysteryAudio';
 import { 
@@ -1347,48 +1348,14 @@ export const AdminRewardFlowControlPage = () => {
                   />
                 </div>
 
-                {/* Time Picker */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[#0B1E39] font-extrabold mb-1">Daily Selection Time</label>
-                    <select
-                      value={scheduledTime}
-                      onChange={(e) => setScheduledTime(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
-                    >
-                      <option value="01:00">01:00</option>
-                      <option value="02:00">02:00</option>
-                      <option value="03:00">03:00</option>
-                      <option value="04:00">04:00</option>
-                      <option value="05:00">05:00</option>
-                      <option value="06:00">06:00</option>
-                      <option value="06:30">06:30</option>
-                      <option value="07:00">07:00</option>
-                      <option value="07:30">07:30</option>
-                      <option value="08:00">08:00</option>
-                      <option value="08:30">08:30</option>
-                      <option value="09:00">09:00</option>
-                      <option value="09:30">09:30</option>
-                      <option value="10:00">10:00</option>
-                      <option value="10:30">10:30</option>
-                      <option value="11:00">11:00</option>
-                      <option value="11:30">11:30</option>
-                      <option value="12:00">12:00</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[#0B1E39] font-extrabold mb-1">AM / PM</label>
-                    <select
-                      value={scheduledAmPm}
-                      onChange={(e) => setScheduledAmPm(e.target.value as 'AM' | 'PM')}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
-                    >
-                      <option value="AM">AM (Morning)</option>
-                      <option value="PM">PM (Evening)</option>
-                    </select>
-                  </div>
-                </div>
+                <ClockTimePicker
+                  label="Daily Selection Scheduled Time"
+                  value={`${scheduledTime} ${scheduledAmPm} IST`}
+                  onChange={(formatted, timeOnly, ap) => {
+                    setScheduledTime(timeOnly);
+                    setScheduledAmPm(ap);
+                  }}
+                />
 
                 {/* Automated Email Toggle Switch */}
                 <div className="bg-amber-50/80 p-4 rounded-2xl border border-amber-200 space-y-2">
@@ -1510,39 +1477,14 @@ export const AdminRewardFlowControlPage = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-black text-[#0B1E39] uppercase text-[10px] tracking-wider block">
-                    Daily Draw Time
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="time"
-                      value={scheduledTime}
-                      onChange={(e) => setScheduledTime(e.target.value)}
-                      className="bg-slate-50 border border-slate-300 p-3.5 rounded-2xl font-semibold text-slate-900 focus:outline-none focus:border-amber-500"
-                    />
-                    <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
-                      <button
-                        type="button"
-                        onClick={() => setScheduledAmPm('AM')}
-                        className={`w-1/2 py-2.5 rounded-xl font-bold transition-all cursor-pointer ${
-                          scheduledAmPm === 'AM' ? 'bg-[#0B1E39] text-white' : 'text-slate-600'
-                        }`}
-                      >
-                        AM
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setScheduledAmPm('PM')}
-                        className={`w-1/2 py-2.5 rounded-xl font-bold transition-all cursor-pointer ${
-                          scheduledAmPm === 'PM' ? 'bg-[#0B1E39] text-white' : 'text-slate-600'
-                        }`}
-                      >
-                        PM
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <ClockTimePicker
+                  label="Daily Draw Scheduled Time"
+                  value={`${scheduledTime} ${scheduledAmPm} IST`}
+                  onChange={(formatted, timeOnly, ap) => {
+                    setScheduledTime(timeOnly);
+                    setScheduledAmPm(ap);
+                  }}
+                />
 
                 <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-[11px] text-amber-900 flex items-start space-x-2">
                   <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />

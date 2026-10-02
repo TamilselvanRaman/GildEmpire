@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { ClockTimePicker } from '../common/ClockTimePicker';
 import { 
   Users, 
   Search, 
@@ -505,25 +506,25 @@ export const AdminSlotsControlPage = () => {
         </div>
 
         {/* MIDDLE SECTION: SCHEDULE STATUS BAR & ACTION BUTTONS */}
-        <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
-          {/* Status info pills */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-xs w-full lg:w-auto">
+        <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/10 space-y-4 relative z-10 w-full overflow-hidden">
+          {/* Status info pills - Responsive 4 Column Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs w-full">
             {/* 1. START DATE PILL / BUTTON */}
             <button
               onClick={() => {
                 if (!isEventLiveOrActive) handleOpenScheduleModal();
               }}
               title={isEventLiveOrActive ? 'Schedule is locked (event active)' : 'Click to Set or Edit Start Date'}
-              className={`rounded-xl px-3.5 py-2.5 border flex items-center space-x-2.5 text-left transition-all ${
+              className={`rounded-xl px-3.5 py-2.5 border flex items-center space-x-3 text-left transition-all min-w-0 w-full ${
                 isEventLiveOrActive
                   ? 'bg-white/5 border-white/10 cursor-default'
                   : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-amber-400/50 cursor-pointer shadow-xs active:scale-[0.98]'
               }`}
             >
               <Calendar className="w-4 h-4 text-amber-400 shrink-0" />
-              <div>
-                <span className="text-[10px] text-slate-400 block uppercase font-mono tracking-wider font-semibold">Start Date</span>
-                <span className="font-bold text-white font-mono text-xs">{currentBatchInfo.startDate || 'Pending Schedule'}</span>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-mono tracking-wider font-semibold truncate">Start Date</span>
+                <span className="font-bold text-white font-mono text-xs truncate block">{currentBatchInfo.startDate || 'Pending Schedule'}</span>
               </div>
             </button>
 
@@ -533,25 +534,25 @@ export const AdminSlotsControlPage = () => {
                 if (!isEventLiveOrActive) handleOpenScheduleModal();
               }}
               title={isEventLiveOrActive ? 'Schedule is locked (event active)' : 'Click to Set or Edit Draw Time'}
-              className={`rounded-xl px-3.5 py-2.5 border flex items-center space-x-2.5 text-left transition-all ${
+              className={`rounded-xl px-3.5 py-2.5 border flex items-center space-x-3 text-left transition-all min-w-0 w-full ${
                 isEventLiveOrActive
                   ? 'bg-white/5 border-white/10 cursor-default'
                   : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-amber-400/50 cursor-pointer shadow-xs active:scale-[0.98]'
               }`}
             >
               <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-              <div>
-                <span className="text-[10px] text-slate-400 block uppercase font-mono tracking-wider font-semibold">Daily Draw</span>
-                <span className="font-bold text-white font-mono text-xs">{currentBatchInfo.scheduledTime}</span>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-mono tracking-wider font-semibold truncate">Daily Draw</span>
+                <span className="font-bold text-white font-mono text-xs truncate block">{currentBatchInfo.scheduledTime}</span>
               </div>
             </button>
 
             {/* 3. EVENT CYCLE PILL */}
-            <div className="bg-white/5 rounded-xl px-3.5 py-2.5 border border-white/10 flex items-center space-x-2.5">
+            <div className="bg-white/5 rounded-xl px-3.5 py-2.5 border border-white/10 flex items-center space-x-3 min-w-0 w-full">
               <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isEventLiveOrActive ? 'bg-emerald-400 animate-pulse' : 'bg-blue-400'}`} />
-              <div>
-                <span className="text-[10px] text-slate-400 block uppercase font-mono tracking-wider font-semibold">Event Cycle</span>
-                <span className={`font-black text-xs ${isEventLiveOrActive ? 'text-emerald-300' : 'text-blue-300'}`}>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-mono tracking-wider font-semibold truncate">Event Cycle</span>
+                <span className={`font-black text-xs truncate block ${isEventLiveOrActive ? 'text-emerald-300' : 'text-blue-300'}`}>
                   {isEventLiveOrActive ? `Live (Day ${currentBatchInfo.currentCycleDay || 1}/50)` : 'Pre-Event (Recruiting)'}
                 </span>
               </div>
@@ -565,97 +566,104 @@ export const AdminSlotsControlPage = () => {
                 }
               }}
               title={isEventLiveOrActive ? 'Event is actively live' : 'Click to Set or Edit Launch Date & Draw Time'}
-              className={`rounded-xl px-3.5 py-2.5 border flex items-center space-x-2.5 text-left transition-all ${
+              className={`rounded-xl px-3.5 py-2.5 border flex items-center space-x-3 text-left transition-all min-w-0 w-full ${
                 isEventLiveOrActive
                   ? 'bg-amber-500/10 border-amber-400/30 cursor-default'
-                  : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-400/50 hover:border-amber-400 cursor-pointer shadow-md hover:scale-[1.02] active:scale-[0.98]'
+                  : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-400/50 hover:border-amber-400 cursor-pointer shadow-md hover:scale-[1.01] active:scale-[0.98]'
               }`}
             >
               <Hourglass className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
-              <div className="min-w-0">
-                <div className="flex items-center space-x-1.5">
-                  <span className="text-[10px] text-amber-300/90 block uppercase font-mono tracking-wider font-semibold">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[10px] text-amber-300/90 uppercase font-mono tracking-wider font-semibold truncate">
                     {isEventLiveOrActive ? 'Daily Draw Timer' : 'Launch Countdown'}
                   </span>
                   {!isEventLiveOrActive && (
-                    <span className="text-[9px] bg-amber-400/25 text-amber-300 border border-amber-400/50 px-1.5 py-0.2 rounded font-sans font-bold whitespace-nowrap">
+                    <span className="text-[9px] bg-amber-400/25 text-amber-300 border border-amber-400/50 px-1.5 py-0.5 rounded font-sans font-bold whitespace-nowrap shrink-0">
                       Click to Set ✏️
                     </span>
                   )}
                 </div>
-                <span className="font-mono font-black text-amber-300 text-xs tracking-wider block whitespace-nowrap">
+                <span className="font-mono font-black text-amber-300 text-xs tracking-wider block truncate mt-0.5">
                   {String(eventCountdown.days).padStart(2, '0')}d : {String(eventCountdown.hours).padStart(2, '0')}h : {String(eventCountdown.minutes).padStart(2, '0')}m : {String(eventCountdown.seconds).padStart(2, '0')}s
                 </span>
               </div>
             </button>
           </div>
 
-          {/* Action Buttons Hub (Side-by-side) */}
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            {/* If not 50/50, show Auto-Fill Button */}
-            {availableCount > 0 && !isEventLiveOrActive && (
-              <button
-                onClick={handleAutoFillBots}
-                disabled={isAutoFilling}
-                className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center space-x-2 border border-blue-400/30"
-              >
-                {isAutoFilling ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Auto-Filling {availableCount} Slots...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                    <span>⚡ Auto-Fill Bot Users</span>
-                    <span className="bg-white/20 text-white font-mono text-[10px] px-1.5 py-0.5 rounded-md font-bold">
-                      {availableCount} Open
-                    </span>
-                  </>
-                )}
-              </button>
-            )}
+          {/* Dedicated Action Buttons Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-white/10 w-full">
+            <div className="flex items-center space-x-2 text-xs font-semibold text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span>Real-time Slot Control Hub</span>
+            </div>
 
-            {/* If 50/50 Full and not yet live, show ONLY "🚀 SET DATE & TIME TO START EVENT (50/50 FULL)" button */}
-            {availableCount === 0 && !isEventLiveOrActive && (
-              <button
-                onClick={handleOpenStartEventModal}
-                className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-400 text-amber-950 font-black px-6 py-2.5 rounded-xl text-xs shadow-xl shadow-amber-500/30 transition-all hover:scale-105 cursor-pointer flex items-center space-x-2 border border-amber-200 animate-pulse"
-              >
-                <Sparkles className="w-4 h-4 text-amber-950 fill-amber-950" />
-                <span>🚀 SET DATE & TIME TO START EVENT (50/50 FULL)</span>
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2.5 sm:justify-end">
+              {/* If not 50/50, show Auto-Fill Button */}
+              {availableCount > 0 && !isEventLiveOrActive && (
+                <button
+                  onClick={handleAutoFillBots}
+                  disabled={isAutoFilling}
+                  className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center space-x-2 border border-blue-400/30"
+                >
+                  {isAutoFilling ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Auto-Filling {availableCount} Slots...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <span>⚡ Auto-Fill Bot Users</span>
+                      <span className="bg-white/20 text-white font-mono text-[10px] px-1.5 py-0.5 rounded-md font-bold">
+                        {availableCount} Open
+                      </span>
+                    </>
+                  )}
+                </button>
+              )}
 
-            {/* If event is already live, show locked schedule status and shortcut to live draw */}
-            {isEventLiveOrActive ? (
-              <div className="flex items-center gap-2">
-                <div className="inline-flex items-center space-x-2 bg-slate-800/90 text-slate-300 border border-slate-700 px-4 py-2.5 rounded-xl text-xs font-bold shadow-inner cursor-not-allowed">
-                  <Lock className="w-3.5 h-3.5 text-amber-400" />
-                  <span>🔒 Schedule Locked (Live)</span>
+              {/* If 50/50 Full and not yet live, show ONLY "🚀 SET DATE & TIME TO START EVENT (50/50 FULL)" button */}
+              {availableCount === 0 && !isEventLiveOrActive && (
+                <button
+                  onClick={handleOpenStartEventModal}
+                  className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-400 text-amber-950 font-black px-6 py-2.5 rounded-xl text-xs shadow-xl shadow-amber-500/30 transition-all hover:scale-105 cursor-pointer flex items-center space-x-2 border border-amber-200 animate-pulse"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-950 fill-amber-950" />
+                  <span>🚀 SET DATE & TIME TO START EVENT (50/50 FULL)</span>
+                </button>
+              )}
+
+              {/* If event is already live, show locked schedule status and shortcut to live draw */}
+              {isEventLiveOrActive ? (
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex items-center space-x-2 bg-slate-800/90 text-slate-300 border border-slate-700 px-4 py-2.5 rounded-xl text-xs font-bold shadow-inner cursor-not-allowed">
+                    <Lock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>🔒 Schedule Locked (Live)</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedBatchId(currentBatchInfo.groupId);
+                      setCurrentView('admin-reward-flow-control');
+                    }}
+                    className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 text-amber-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer flex items-center space-x-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Live Draw Stream</span>
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    setSelectedBatchId(currentBatchInfo.groupId);
-                    setCurrentView('admin-reward-flow-control');
-                  }}
-                  className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 text-amber-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer flex items-center space-x-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Live Draw Stream</span>
-                </button>
-              </div>
-            ) : (
-              availableCount > 0 && (
-                <button
-                  onClick={handleOpenScheduleModal}
-                  className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-amber-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer flex items-center space-x-2 border border-amber-300/40"
-                >
-                  <Edit3 className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Edit Date & Time</span>
-                </button>
-              )
-            )}
+              ) : (
+                availableCount > 0 && (
+                  <button
+                    onClick={handleOpenScheduleModal}
+                    className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-amber-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer flex items-center space-x-2 border border-amber-300/40"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Edit Date & Time</span>
+                  </button>
+                )
+              )}
+            </div>
           </div>
         </div>
 
@@ -1160,18 +1168,11 @@ export const AdminSlotsControlPage = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-black text-[#0B1E39] uppercase text-[10px] tracking-wider block">
-                    Daily Selection Scheduled Time
-                  </label>
-                  <input
-                    type="text"
-                    value={scheduledTimeInput}
-                    onChange={(e) => setScheduledTimeInput(e.target.value)}
-                    placeholder="e.g. 07:00 AM IST"
-                    className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                <ClockTimePicker
+                  label="Daily Selection Scheduled Time"
+                  value={scheduledTimeInput || '07:00 AM IST'}
+                  onChange={(formatted) => setScheduledTimeInput(formatted)}
+                />
               </div>
 
               <div className="flex items-center space-x-3 pt-2">
@@ -1263,18 +1264,11 @@ export const AdminSlotsControlPage = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-black text-[#0B1E39] uppercase text-[10px] tracking-wider block">
-                    Daily Gold Winner Draw Time
-                  </label>
-                  <input
-                    type="text"
-                    value={eventDrawTime}
-                    onChange={(e) => setEventDrawTime(e.target.value)}
-                    placeholder="e.g. 07:00 AM IST"
-                    className="w-full bg-slate-50 border border-slate-300 p-3.5 rounded-2xl font-semibold text-slate-900 focus:outline-none focus:border-amber-500 shadow-xs"
-                  />
-                </div>
+                <ClockTimePicker
+                  label="Daily Gold Winner Draw Time"
+                  value={eventDrawTime || '07:00 AM IST'}
+                  onChange={(formatted) => setEventDrawTime(formatted)}
+                />
 
                 <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-[11px] text-amber-900 flex items-start space-x-2">
                   <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />

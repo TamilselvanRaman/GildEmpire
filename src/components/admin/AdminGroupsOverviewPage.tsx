@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { ClockTimePicker } from '../common/ClockTimePicker';
 import { 
   Users, 
   Award, 
@@ -620,18 +621,11 @@ export const AdminGroupsOverviewPage = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-black text-[#0B1E39] uppercase text-[10px] tracking-wider block">
-                    Daily Draw Scheduled Time
-                  </label>
-                  <input
-                    type="text"
-                    value={scheduledTimeInput}
-                    onChange={(e) => setScheduledTimeInput(e.target.value)}
-                    placeholder="e.g. 07:00 AM IST"
-                    className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                <ClockTimePicker
+                  label="Daily Draw Scheduled Time"
+                  value={scheduledTimeInput || '07:00 AM IST'}
+                  onChange={(formatted) => setScheduledTimeInput(formatted)}
+                />
               </div>
 
               <div className="flex items-center space-x-3 pt-2">
