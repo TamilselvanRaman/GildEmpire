@@ -82,7 +82,7 @@ export const AdminRewardFlowControlPage = () => {
   const [inputTargetMemberId, setInputTargetMemberId] = useState('');
   const [selectionMode, setSelectionMode] = useState<'select' | 'input'>('select');
   const [searchTerm, setSearchTerm] = useState('');
-  const [memberTypeFilter, setMemberTypeFilter] = useState<'all' | 'real' | 'bots'>('real');
+  const [memberTypeFilter, setMemberTypeFilter] = useState<'all' | 'real' | 'bots' | 'available'>('all');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -168,17 +168,60 @@ export const AdminRewardFlowControlPage = () => {
     }
   }, [group?.groupId, group?.scheduledTime, group?.startDate]);
 
-  const activePoolMembers = group.slots.filter(s => s.status !== 'Won 1g Gold');
-  const goldWinnerSlots = group.slots.filter(s => s.status === 'Won 1g Gold');
+  // Construct full 50-slot array for 50-member gold club batch
+  const full50BatchSlots = Array.from({ length: 50 }, (_, idx) => {
+    const slotNumber = idx + 1;
+    const existingSlot = (group.slots || []).find(s => Number(s.slotNumber) === slotNumber);
+    if (existingSlot) return existingSlot;
+    return {
+      slotNumber,
+      memberId: `LOP-${String(slotNumber).padStart(6, '0')}`,
+      memberName: `Available Slot #${slotNumber}`,
+      status: 'Available' as const,
+      joinedDate: '-',
+    };
+  });
+
+  // Enrich group slots with dbUsers to get resolved member names & IDs for assigned slots
+  const enrichedSlots = full50BatchSlots.map(s => {
+    const matchedUser = dbUsers?.find((u: any) => 
+      (s.memberId && s.memberId !== '—' && s.memberId !== 'Unassigned' && u.memberId === s.memberId) ||
+      (s.memberName && s.memberName !== '—' && !s.memberName.startsWith('Available Slot') && (u.name === s.memberName || u.fullName === s.memberName)) ||
+      (u.slotNumber && Number(u.slotNumber) === Number(s.slotNumber) && (u.group || u.groupId || '').toUpperCase() === (group.groupId || '').toUpperCase())
+    );
+
+    const isAssigned = s.status === 'Occupied' || s.status === 'Won 1g Gold' || Boolean(matchedUser) || (Boolean(s.memberName) && s.memberName !== '—' && !s.memberName?.startsWith('Available Slot'));
+
+    const resolvedName = (s.memberName && s.memberName !== '—' && !s.memberName.startsWith('Available Slot'))
+      ? s.memberName
+      : (matchedUser?.fullName || matchedUser?.name || (isAssigned ? `Member #${s.slotNumber}` : `Available Slot #${s.slotNumber}`));
+
+    const resolvedMemberId = (s.memberId && s.memberId !== '—' && s.memberId !== 'Unassigned')
+      ? s.memberId
+      : (matchedUser?.memberId || `LOP-${String(s.slotNumber).padStart(6, '0')}`);
+
+    return {
+      ...s,
+      memberName: resolvedName,
+      memberId: resolvedMemberId,
+      isAssigned,
+      matchedUser,
+    };
+  });
+
+  // Active pool contains all 50 slots that have not won 1g gold yet
+  const activePoolMembers = enrichedSlots.filter(s => s.status !== 'Won 1g Gold');
+  const goldWinnerSlots = enrichedSlots.filter(s => s.status === 'Won 1g Gold');
   const wonCount = goldWinnerSlots.length;
   const currentActiveDay = (group.currentCycleDay && group.currentCycleDay > 0) ? group.currentCycleDay : Math.min(50, Math.max(1, wonCount + 1));
   const batchShortName = group.groupName.split(' - ')[1] || group.groupName;
 
-  // Auto-initialize target slot to first eligible member if none selected
+  // Auto-initialize target slot to first eligible assigned member if none selected
   useEffect(() => {
     if (activePoolMembers.length > 0) {
       if (manualTargetSlot === null || !activePoolMembers.some(s => s.slotNumber === manualTargetSlot)) {
-        setManualTargetSlot(activePoolMembers[0].slotNumber);
+        const firstAssigned = activePoolMembers.find(s => s.isAssigned) || activePoolMembers[0];
+        setManualTargetSlot(firstAssigned.slotNumber);
       }
     } else {
       setManualTargetSlot(null);
@@ -203,14 +246,16 @@ export const AdminRewardFlowControlPage = () => {
     );
   };
 
-  const realMembersCount = activePoolMembers.filter(m => !isBotMember(m)).length;
-  const botMembersCount = activePoolMembers.filter(m => isBotMember(m)).length;
+  const realMembersCount = enrichedSlots.filter(m => m.isAssigned && !isBotMember(m)).length;
+  const botMembersCount = enrichedSlots.filter(m => m.isAssigned && isBotMember(m)).length;
+  const availableSlotsCount = enrichedSlots.filter(m => !m.isAssigned && m.status !== 'Won 1g Gold').length;
 
-  // Filtered members for dropdown search and bot/real toggle
+  // Filtered members for candidate dropdown search and bot/real/available tabs
   const filteredActiveMembers = activePoolMembers.filter(s => {
     const isBot = isBotMember(s);
-    if (memberTypeFilter === 'bots' && !isBot) return false;
-    if (memberTypeFilter === 'real' && isBot) return false;
+    if (memberTypeFilter === 'bots' && (!s.isAssigned || !isBot)) return false;
+    if (memberTypeFilter === 'real' && (!s.isAssigned || isBot)) return false;
+    if (memberTypeFilter === 'available' && s.isAssigned) return false;
 
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
@@ -611,7 +656,7 @@ export const AdminRewardFlowControlPage = () => {
       )}
 
       {/* 🔮 INTERACTIVE GLASS BOTTLE PANAI DRAW VISUALIZER WIDGET */}
-      <div className="bg-gradient-to-br from-[#0D3B43] via-[#081E26] to-[#040D11] p-6 sm:p-10 rounded-3xl border-2 border-[#E1A238]/60 shadow-2xl text-white relative overflow-hidden space-y-6">
+      <div className="bg-gradient-to-br from-[#0D3B43] via-[#081E26] to-[#040D11] p-6 sm:p-10 rounded-3xl border-2 border-[#E1A238]/60 shadow-2xl text-white relative space-y-6">
         
         {/* Top Status Bar */}
         <div className="bg-[#081E26]/80 backdrop-blur-md p-4 rounded-2xl border border-[#E1A238]/30 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -646,7 +691,7 @@ export const AdminRewardFlowControlPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10 pt-2">
           
           {/* Left Text & Controls */}
-          <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
+          <div className={`lg:col-span-7 space-y-5 text-center lg:text-left relative ${isDropdownOpen ? 'z-50' : 'z-20'}`}>
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
               <div className="inline-flex items-center space-x-2 bg-[#00C2B8]/15 text-[#00C2B8] border border-[#00C2B8]/30 px-3.5 py-1 rounded-full text-xs font-mono font-black uppercase tracking-wider">
                 <Dices className="w-4 h-4 text-[#00C2B8]" />
@@ -668,7 +713,7 @@ export const AdminRewardFlowControlPage = () => {
             </div>
 
             {/* 👑 ADMIN MANUAL WINNER SELECTION CONSOLE */}
-            <div className="bg-[#05171E]/90 backdrop-blur-md rounded-2xl border-2 border-[#E1A238]/40 p-4 sm:p-5 text-left space-y-4 shadow-xl">
+            <div className={`bg-[#05171E]/90 backdrop-blur-md rounded-2xl border-2 border-[#E1A238]/40 p-4 sm:p-5 text-left space-y-4 shadow-xl relative ${isDropdownOpen ? 'z-50' : 'z-30'}`}>
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E1A238]/20 pb-3">
                 <div className="flex items-center space-x-2.5">
@@ -720,13 +765,62 @@ export const AdminRewardFlowControlPage = () => {
               {/* Mode 1: Dropdown & Search Filter with Real vs Bot Tabs */}
               {selectionMode === 'select' && (
                 <div className="space-y-2.5">
-                  {/* ALL POOL CANDIDATES HEADER */}
+                  {/* ALL POOL CANDIDATES HEADER WITH FILTER TABS */}
                   <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <div className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-[#00C2B8] text-[#081E26] border border-[#00C2B8] font-black shadow-xs flex items-center space-x-1">
-                        <span>Active Pool</span>
+                      <button
+                        type="button"
+                        onClick={() => setMemberTypeFilter('all')}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                          memberTypeFilter === 'all'
+                            ? 'bg-[#00C2B8] text-[#081E26] font-black shadow-xs'
+                            : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                        }`}
+                      >
+                        <span>All 50 Batch Slots</span>
                         <span className="bg-black/20 px-1 py-0.2 rounded text-[9px]">{activePoolMembers.length}</span>
-                      </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setMemberTypeFilter('real')}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                          memberTypeFilter === 'real'
+                            ? 'bg-amber-400 text-amber-950 font-black shadow-xs'
+                            : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                        }`}
+                      >
+                        <span>Real Users</span>
+                        <span className="bg-black/20 px-1 py-0.2 rounded text-[9px]">{realMembersCount}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setMemberTypeFilter('bots')}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                          memberTypeFilter === 'bots'
+                            ? 'bg-purple-400 text-purple-950 font-black shadow-xs'
+                            : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                        }`}
+                      >
+                        <span>System Users</span>
+                        <span className="bg-black/20 px-1 py-0.2 rounded text-[9px]">{botMembersCount}</span>
+                      </button>
+
+                      {availableSlotsCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setMemberTypeFilter('available')}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                            memberTypeFilter === 'available'
+                              ? 'bg-teal-400 text-teal-950 font-black shadow-xs'
+                              : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                          }`}
+                        >
+                          <span>Open Slots</span>
+                          <span className="bg-black/20 px-1 py-0.2 rounded text-[9px]">{availableSlotsCount}</span>
+                        </button>
+                      )}
                     </div>
 
                     <span className="text-[10px] text-slate-400 font-mono">
@@ -735,7 +829,7 @@ export const AdminRewardFlowControlPage = () => {
                   </div>
 
                   {/* CUSTOM LUXURY SEARCHABLE DROPDOWN */}
-                  <div className="relative" ref={dropdownRef}>
+                  <div className="relative z-50" ref={dropdownRef}>
                     {/* Trigger button showing current selection with Real/Bot badge */}
                     <button
                       type="button"
@@ -771,7 +865,7 @@ export const AdminRewardFlowControlPage = () => {
 
                     {/* Dropdown Popup Menu */}
                     {isDropdownOpen && (
-                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-[#081E26] border-2 border-[#00C2B8]/60 rounded-xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-[#081E26] border-2 border-[#00C2B8]/60 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-[9999] overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
                         {/* Internal Quick Search Bar */}
                         <div className="p-2 border-b border-slate-700/80 bg-[#06181f]">
                           <div className="relative">
@@ -843,6 +937,21 @@ export const AdminRewardFlowControlPage = () => {
                                   </div>
 
                                   <div className="flex items-center space-x-2 shrink-0">
+                                    {!m.isAssigned && (
+                                      <span className="bg-slate-800 text-slate-400 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-slate-700">
+                                        Open Slot
+                                      </span>
+                                    )}
+                                    {m.isAssigned && isBotMember(m) && (
+                                      <span className="bg-purple-950/60 text-purple-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-purple-800/40">
+                                        System
+                                      </span>
+                                    )}
+                                    {m.isAssigned && !isBotMember(m) && (
+                                      <span className="bg-amber-950/60 text-amber-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-amber-800/40">
+                                        Real
+                                      </span>
+                                    )}
                                     {isSelected && (
                                       <Check className="w-4 h-4 text-[#00C2B8] shrink-0" />
                                     )}
@@ -958,7 +1067,7 @@ export const AdminRewardFlowControlPage = () => {
           </div>
 
           {/* Right: Interactive 3D Glass Bottle Container */}
-          <div className="lg:col-span-5 flex items-center justify-center lg:justify-end w-full">
+          <div className="lg:col-span-5 flex items-center justify-center lg:justify-end w-full relative z-10">
             <Interactive3DBottleCard
               drawState={drawState}
               winner={selectedWinner}
@@ -984,8 +1093,8 @@ export const AdminRewardFlowControlPage = () => {
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs space-y-1">
           <p className="text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">Active Panai Draw Pool</p>
-          <p className="text-2xl font-black text-[#2F6FED]">{activePoolMembers.length} Members</p>
-          <p className="text-slate-500 font-medium mt-0.5">{activePoolMembers.length} folded paper chits inside pot</p>
+          <p className="text-2xl font-black text-[#2F6FED]">{activePoolMembers.length} Members / Slots</p>
+          <p className="text-slate-500 font-medium mt-0.5">{activePoolMembers.length} folded paper chits inside pot (50/50 Full Batch)</p>
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs space-y-1">
