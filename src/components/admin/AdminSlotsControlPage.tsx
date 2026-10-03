@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { useApp } from '../../context/AppContext';
 import { ClockTimePicker } from '../common/ClockTimePicker';
 import { 
@@ -300,31 +301,30 @@ export const AdminSlotsControlPage = () => {
         (slot.memberName && slot.memberName !== '—' && (u.name === slot.memberName || u.fullName === slot.memberName))
       );
 
-      const name = slot.memberName || matchedUser?.name || matchedUser?.fullName || 'Member';
+      const rawName = slot.memberName || matchedUser?.name || matchedUser?.fullName || 'Member';
+      const cleanName = rawName.replace(/\s*\(BOT\)/gi, '');
       const memberId = (slot.memberId && slot.memberId !== '—')
         ? slot.memberId 
         : (matchedUser?.memberId || `LOP-${String(slot.slotNumber).padStart(6, '0')}`);
       
-      const rawMobile = String(matchedUser?.mobile || (slot as any).mobile || '7639130497').trim();
-      const maskedContact = rawMobile.length > 3 
-        ? rawMobile.slice(0, -3) + '***' 
-        : rawMobile + '***';
+      const rawMobile = String(matchedUser?.mobile || (slot as any).mobile || '').trim();
+      const maskedContact = rawMobile ? (rawMobile.length > 3 ? rawMobile.slice(0, -3) + '***' : rawMobile) : '—';
+      const email = matchedUser?.email || '—';
 
-      return { name, memberId, maskedContact };
+      return {
+        'Slot Number': `#${slot.slotNumber}`,
+        'Member Name': cleanName,
+        'Member ID': memberId,
+        'Contact Info': maskedContact,
+        'Email Address': email,
+        'Deposit Status': '₹10,000 Verified'
+      };
     });
 
-    const csvHeader = 'Name,Member ID,Contact Info\n';
-    const csvLines = rows.map(r => `"${r.name.replace(/"/g, '""')}","${r.memberId}","${r.maskedContact}"`).join('\n');
-    const csvBlob = new Blob([csvHeader + csvLines], { type: 'text/csv;charset=utf-8;' });
-    const blobUrl = URL.createObjectURL(csvBlob);
-    
-    const downloadLink = document.createElement('a');
-    downloadLink.href = blobUrl;
-    downloadLink.download = `${currentBatchInfo.groupId}_Users_Roster.csv`;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    URL.revokeObjectURL(blobUrl);
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${currentBatchInfo.groupId} Roster`);
+    XLSX.writeFile(workbook, `${currentBatchInfo.groupId}_Users_Roster.xlsx`);
   };
 
   const handleDirectAssignUser = async (targetUser: any) => {
@@ -808,14 +808,14 @@ export const AdminSlotsControlPage = () => {
             />
           </div>
 
-          {/* DOWNLOAD ALL USERS CSV BUTTON */}
+          {/* DOWNLOAD ALL USERS EXCEL BUTTON */}
           <button
             onClick={handleDownloadUserRoster}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition-all cursor-pointer shrink-0 border border-emerald-500/30 active:scale-95"
-            title="Download User Roster (Format: Name, Member ID, Contact Info ***)"
+            title="Download User Roster as Excel (.xlsx) Spreadsheet"
           >
             <Download className="w-4 h-4 text-white" />
-            <span>Download Users</span>
+            <span>Export Roster (Excel)</span>
           </button>
 
           {/* VIEW TOGGLE PILLS */}

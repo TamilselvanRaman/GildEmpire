@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
 import { useApp } from '../../context/AppContext';
 import { 
   Users, 
@@ -34,7 +35,9 @@ import {
   CreditCard,
   Network,
   BadgeCheck,
-  MapPin
+  MapPin,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -47,6 +50,106 @@ export const AdminUsersPage = () => {
   const [activeModalTab, setActiveModalTab] = useState<'info' | 'kyc' | 'logs' | 'scheme'>('info');
   const [kycVerifiedStatus, setKycVerifiedStatus] = useState<Record<string, boolean>>({});
   const [uploadingKyc, setUploadingKyc] = useState(false);
+
+  // Edit & Delete User State
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    email: '',
+    mobile: '',
+    role: 'Member',
+    group: 'GROUP-001',
+    status: 'Active',
+    deposit: 'Verified',
+  });
+
+  const [deletingUser, setDeletingUser] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const openEditModal = (u: any) => {
+    setEditingUser(u);
+    setEditFormData({
+      name: (u.name || '').replace(/\s*\(BOT\)/gi, ''),
+      email: u.email || '',
+      mobile: u.mobile || '',
+      role: u.role || 'Member',
+      group: u.group || 'GROUP-001',
+      status: u.status || 'Active',
+      deposit: u.deposit === 'Verified' || u.depositStatus === 'Verified' ? 'Verified' : 'Pending',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: editingUser.id,
+          email: editFormData.email,
+          memberId: editingUser.memberId,
+          name: editFormData.name,
+          mobile: editFormData.mobile,
+          role: editFormData.role,
+          group: editFormData.group,
+          status: editFormData.status,
+          depositStatus: editFormData.deposit,
+          action: 'update_user',
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        alert(`✅ User profile for ${editFormData.name} updated successfully!`);
+        setShowEditModal(false);
+        setEditingUser(null);
+        await fetchDbUsers();
+      } else {
+        alert(`❌ Failed to update user: ${data?.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      alert(`❌ Network error while updating user: ${err?.message || err}`);
+    }
+  };
+
+  const handleConfirmDeleteUser = (u: any) => {
+    setDeletingUser(u);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return;
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: deletingUser.id,
+          email: deletingUser.email,
+          memberId: deletingUser.memberId,
+          action: 'delete_user',
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        alert(`🗑️ User ${deletingUser.name || deletingUser.memberId} deleted successfully!`);
+        setUsersList(prev => prev.filter(item => item.id !== deletingUser.id && item.memberId !== deletingUser.memberId));
+        setShowDeleteConfirm(false);
+        setDeletingUser(null);
+        if (selectedUserModal && (selectedUserModal.id === deletingUser.id || selectedUserModal.memberId === deletingUser.memberId)) {
+          setSelectedUserModal(null);
+        }
+        await fetchDbUsers();
+      } else {
+        alert(`❌ Failed to delete user: ${data?.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      alert(`❌ Network error while deleting user: ${err?.message || err}`);
+    }
+  };
 
   const handleManualVerifyEmail = async (u: any) => {
     if (!u) return;
@@ -212,8 +315,16 @@ export const AdminUsersPage = () => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
+  const isBotUser = (u: any) => Boolean(
+    u.isSimulated === true ||
+    u.userType === 'simulated' ||
+    (typeof u.role === 'string' && u.role.toLowerCase() === 'bot') ||
+    (typeof u.name === 'string' && u.name.toUpperCase().includes('BOT')) ||
+    (typeof u.email === 'string' && (u.email.endsWith('@infinitygram.net') || u.email.includes('bot')))
+  );
+
   const filteredUsers = (usersList || []).filter(u => {
-    const isBot = Boolean(u.isSimulated);
+    const isBot = isBotUser(u);
     const userRole = u.role || 'Member';
     const userStatus = u.status || u.accountStatus || 'Active';
     const userName = (u.name || u.fullName || u.email || '').toLowerCase();
@@ -223,15 +334,14 @@ export const AdminUsersPage = () => {
 
     const matchesStatus = 
       statusFilter === 'Real Members' ? (!isBot && userRole === 'Member') :
-      statusFilter === 'All (incl. Bots)' ? true :
-      statusFilter === 'System Bots' ? isBot :
+      statusFilter === 'System Bots' ? (isBot) :
+      statusFilter === 'All Users' ? true :
+      statusFilter === 'Verified Depositors' ? (!isBot && userRole === 'Member' && (u.deposit === 'Verified' || u.depositStatus === 'Verified')) :
+      statusFilter === 'Pending Deposit' ? (!isBot && userRole === 'Member' && u.deposit !== 'Verified' && u.depositStatus !== 'Verified') :
+      statusFilter === 'Email Verified' ? (!isBot && Boolean(u.emailVerified) && userRole === 'Member') :
+      statusFilter === 'Email Unverified' ? (!isBot && !u.emailVerified && userRole === 'Member') :
       statusFilter === 'Admins' ? userRole !== 'Member' :
-      statusFilter === 'Active' ? (userStatus === 'Active' && !isBot && userRole === 'Member') :
-      statusFilter === 'Email Verified' ? (Boolean(u.emailVerified) && !isBot && userRole === 'Member') :
-      statusFilter === 'Email Unverified' ? (!u.emailVerified && !isBot && userRole === 'Member') :
-      statusFilter === 'Pending Verification' ? (userStatus === 'Pending Verification' && !isBot && userRole === 'Member') :
-      statusFilter === 'Deactivated' ? (userStatus === 'Deactivated' && !isBot && userRole === 'Member') :
-      (!isBot && userStatus === statusFilter);
+      (!isBot && userRole === 'Member');
 
     const matchesSearch = 
       !search.trim() ||
@@ -276,7 +386,7 @@ export const AdminUsersPage = () => {
     }, 1200);
   };
 
-  const handleDownloadAllUsersCSV = () => {
+  const handleDownloadAllUsersExcel = () => {
     const listToExport = filteredUsers.length > 0 ? filteredUsers : (usersList || []);
     if (listToExport.length === 0) {
       alert('No user records available to download.');
@@ -284,28 +394,31 @@ export const AdminUsersPage = () => {
     }
 
     const rows = listToExport.map((u) => {
-      const name = u.name || u.fullName || 'Member';
+      const rawName = u.name || u.fullName || 'Member';
+      const cleanName = rawName.replace(/\s*\(BOT\)/gi, '');
       const memberId = u.memberId || u.id || 'MB-0000';
-      const rawMobile = String(u.mobile || u.phone || '7639130497').trim();
-      const maskedContact = rawMobile.length > 3 
-        ? rawMobile.slice(0, -3) + '***' 
-        : rawMobile + '***';
+      const rawMobile = String(u.mobile || u.phone || '').trim();
+      const maskedContact = rawMobile ? (rawMobile.length > 3 ? rawMobile.slice(0, -3) + '***' : rawMobile) : '—';
+      const email = u.email || '—';
+      const role = u.role || 'Member';
+      const status = u.status || u.accountStatus || 'Active';
+      const depositStatus = u.deposit || u.depositStatus || 'Pending';
 
-      return { name, memberId, maskedContact };
+      return {
+        'Member ID': memberId,
+        'Member Name': cleanName,
+        'Contact Info': maskedContact,
+        'Email Address': email,
+        'Role': role,
+        'Account Status': status,
+        'Deposit Requirement': depositStatus === 'Verified' ? '₹10,000 Verified' : depositStatus
+      };
     });
 
-    const csvHeader = 'Name,Member ID,Contact Info\n';
-    const csvLines = rows.map(r => `"${r.name.replace(/"/g, '""')}","${r.memberId}","${r.maskedContact}"`).join('\n');
-    const csvBlob = new Blob([csvHeader + csvLines], { type: 'text/csv;charset=utf-8;' });
-    const blobUrl = URL.createObjectURL(csvBlob);
-    
-    const downloadLink = document.createElement('a');
-    downloadLink.href = blobUrl;
-    downloadLink.download = `Master_Users_Roster.csv`;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    URL.revokeObjectURL(blobUrl);
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Master Users');
+    XLSX.writeFile(workbook, `Master_Users_Roster.xlsx`);
   };
 
   // If a specific user is selected (e.g. /user/:id view), render ONLY the Dedicated Full-Page View
@@ -391,16 +504,30 @@ export const AdminUsersPage = () => {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                onClick={() => openEditModal(selectedUserModal)}
+                className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold px-4 py-3 rounded-2xl text-xs flex items-center space-x-1.5 transition-all shadow-md cursor-pointer"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>Edit Profile</span>
+              </button>
+              <button
+                onClick={() => handleConfirmDeleteUser(selectedUserModal)}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-4 py-3 rounded-2xl text-xs flex items-center space-x-1.5 transition-all shadow-md cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete User</span>
+              </button>
               {selectedUserModal.idDocumentUrl && (
                 <a 
                   href={selectedUserModal.idDocumentUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="bg-[#00C2B8] hover:bg-[#00a8a0] text-[#081E26] font-black px-6 py-4 rounded-2xl text-xs flex items-center space-x-2 transition-all shadow-lg cursor-pointer"
+                  className="bg-[#00C2B8] hover:bg-[#00a8a0] text-[#081E26] font-black px-4 py-3 rounded-2xl text-xs flex items-center space-x-1.5 transition-all shadow-lg cursor-pointer"
                 >
-                  <ExternalLink className="w-4.5 h-4.5" />
-                  <span>Inspect Full Size Image</span>
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Inspect Image</span>
                 </a>
               )}
             </div>
@@ -724,12 +851,12 @@ export const AdminUsersPage = () => {
 
         <div className="flex flex-wrap items-center gap-3 shrink-0 relative z-10">
           <button
-            onClick={handleDownloadAllUsersCSV}
+            onClick={handleDownloadAllUsersExcel}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-5 rounded-2xl shadow-xl text-xs uppercase tracking-wider flex items-center space-x-2 cursor-pointer transition-all hover:scale-105 border border-emerald-400/40"
-            title="Download Users List (Format: Name, Member ID, Contact Info ***)"
+            title="Download Master Users List as Excel (.xlsx) Spreadsheet"
           >
             <Download className="w-4 h-4 text-white" />
-            <span>Download Users CSV</span>
+            <span>Download Users Excel</span>
           </button>
 
           {/* Create New User / Sub-Admin Button */}
@@ -746,31 +873,46 @@ export const AdminUsersPage = () => {
       {/* Corporate KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
         
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs space-y-2">
+        <div 
+          onClick={() => setStatusFilter('Real Members')}
+          className={`bg-white p-6 rounded-3xl border transition-all cursor-pointer hover:scale-[1.02] space-y-2 ${
+            statusFilter === 'Real Members' ? 'border-[#0B1E39] ring-2 ring-[#0B1E39]/20 shadow-md' : 'border-slate-200/90 shadow-xs'
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <span className="text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">Total Real Members</span>
+            <span className="text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">Real Members</span>
             <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Real Users</span>
           </div>
           <p className="text-3xl font-black text-[#0B1E39] font-mono">
-            {(usersList || []).filter(u => (u.role || 'Member') === 'Member' && !u.isSimulated).length} Real Members
+            {(usersList || []).filter(u => (u.role || 'Member') === 'Member' && !isBotUser(u)).length} Real Users
           </p>
           <p className="text-slate-400 text-[11px] font-medium">
-            {(usersList || []).filter(u => Boolean(u.isSimulated)).length} system bots filtered
+            {(usersList || []).filter(u => isBotUser(u)).length} system bots filtered
           </p>
         </div>
 
-        <div className="bg-emerald-50/80 p-6 rounded-3xl border border-emerald-200/90 space-y-2">
+        <div 
+          onClick={() => setStatusFilter('Verified Depositors')}
+          className={`bg-emerald-50/80 p-6 rounded-3xl border transition-all cursor-pointer hover:scale-[1.02] space-y-2 ${
+            statusFilter === 'Verified Depositors' ? 'border-emerald-600 ring-2 ring-emerald-500/20 shadow-md' : 'border-emerald-200/90 shadow-xs'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <span className="text-emerald-900 font-extrabold uppercase tracking-wider text-[10px]">Verified Depositors</span>
             <span className="bg-emerald-200/80 text-emerald-900 text-[9px] font-black px-2 py-0.5 rounded-full">₹10k Paid</span>
           </div>
           <p className="text-3xl font-black text-emerald-700 font-mono">
-            {(usersList || []).filter(u => (u.deposit === 'Verified' || u.depositStatus === 'Verified') && (u.role || 'Member') === 'Member' && !u.isSimulated).length} Members
+            {(usersList || []).filter(u => !isBotUser(u) && (u.deposit === 'Verified' || u.depositStatus === 'Verified') && (u.role || 'Member') === 'Member').length} Members
           </p>
-          <span className="text-emerald-800 font-extrabold">₹10,000 Scheme Verified (Real)</span>
+          <span className="text-emerald-800 font-extrabold">₹10,000 Scheme Verified</span>
         </div>
 
-        <div className="bg-amber-50/80 p-6 rounded-3xl border border-amber-200/90 space-y-2">
+        <div 
+          onClick={() => setStatusFilter('Admins')}
+          className={`bg-amber-50/80 p-6 rounded-3xl border transition-all cursor-pointer hover:scale-[1.02] space-y-2 ${
+            statusFilter === 'Admins' ? 'border-amber-600 ring-2 ring-amber-500/20 shadow-md' : 'border-amber-200/90 shadow-xs'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <span className="text-amber-900 font-extrabold uppercase tracking-wider text-[10px]">Sub-Admins & Roles</span>
             <span className="bg-amber-200/80 text-amber-950 text-[9px] font-black px-2 py-0.5 rounded-full">Admin Staff</span>
@@ -779,15 +921,20 @@ export const AdminUsersPage = () => {
           <span className="text-amber-900 font-bold">Super Admin • Operations • Reviewer</span>
         </div>
 
-        <div className="bg-blue-50/80 p-6 rounded-3xl border border-blue-200/90 space-y-2">
+        <div 
+          onClick={() => setStatusFilter('System Bots')}
+          className={`bg-purple-50/80 p-6 rounded-3xl border transition-all cursor-pointer hover:scale-[1.02] space-y-2 ${
+            statusFilter === 'System Bots' ? 'border-purple-600 ring-2 ring-purple-500/20 shadow-md' : 'border-purple-200/90 shadow-xs'
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <span className="text-blue-900 font-extrabold uppercase tracking-wider text-[10px]">Pending Verification</span>
-            <span className="bg-blue-200/80 text-blue-900 text-[9px] font-black px-2 py-0.5 rounded-full">Queue</span>
+            <span className="text-purple-950 font-extrabold uppercase tracking-wider text-[10px]">System Bots</span>
+            <span className="bg-purple-200 text-purple-900 text-[9px] font-black px-2 py-0.5 rounded-full">Auto-Fill</span>
           </div>
-          <p className="text-3xl font-black text-[#2F6FED] font-mono">
-            {(usersList || []).filter(u => (u.status === 'Pending Verification' || u.accountStatus === 'Pending Verification') && !u.isSimulated).length} In Queue
+          <p className="text-3xl font-black text-purple-700 font-mono">
+            {(usersList || []).filter(u => isBotUser(u)).length} System Bots
           </p>
-          <span className="text-blue-900 font-bold">Awaiting Bank UTR Review</span>
+          <span className="text-purple-900 font-bold">Auto-filled database users</span>
         </div>
 
       </div>
@@ -796,14 +943,12 @@ export const AdminUsersPage = () => {
       <div className="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col lg:flex-row items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-1.5 bg-slate-100/90 p-1.5 rounded-2xl w-full lg:w-auto text-xs font-extrabold">
           {[
-            { id: 'Real Members', label: 'Real Members', count: (usersList || []).filter(u => (u.role || 'Member') === 'Member' && !u.isSimulated).length, badgeClass: 'bg-emerald-500 text-white' },
-            { id: 'Active', label: 'Active', count: (usersList || []).filter(u => (u.status === 'Active' || u.accountStatus === 'Active') && !u.isSimulated && (u.role || 'Member') === 'Member').length },
-            { id: 'Email Verified', label: 'Email Verified', count: (usersList || []).filter(u => Boolean(u.emailVerified) && !u.isSimulated && (u.role || 'Member') === 'Member').length },
-            { id: 'Pending Verification', label: 'Pending Queue', count: (usersList || []).filter(u => (u.status === 'Pending Verification' || u.accountStatus === 'Pending Verification') && !u.isSimulated).length },
+            { id: 'Real Members', label: '👤 Real Members', count: (usersList || []).filter(u => (u.role || 'Member') === 'Member' && !isBotUser(u)).length, badgeClass: 'bg-emerald-600 text-white' },
+            { id: 'System Bots', label: '🤖 System Bots', count: (usersList || []).filter(u => isBotUser(u)).length, badgeClass: 'bg-purple-600 text-white' },
+            { id: 'All Users', label: 'All Users (incl. Bots)', count: (usersList || []).length, badgeClass: 'bg-slate-700 text-white' },
+            { id: 'Verified Depositors', label: 'Verified Depositors', count: (usersList || []).filter(u => (u.role || 'Member') === 'Member' && !isBotUser(u) && (u.deposit === 'Verified' || u.depositStatus === 'Verified')).length, badgeClass: 'bg-emerald-500 text-white' },
+            { id: 'Pending Deposit', label: 'Pending Deposit', count: (usersList || []).filter(u => (u.role || 'Member') === 'Member' && !isBotUser(u) && u.deposit !== 'Verified' && u.depositStatus !== 'Verified').length, badgeClass: 'bg-amber-500 text-white' },
             { id: 'Admins', label: 'Admins', count: (usersList || []).filter(u => u.role && u.role !== 'Member').length },
-            { id: 'Email Unverified', label: 'Email Unverified', count: (usersList || []).filter(u => !u.emailVerified && !u.isSimulated && (u.role || 'Member') === 'Member').length },
-            { id: 'System Bots', label: '🤖 System Bots', count: (usersList || []).filter(u => Boolean(u.isSimulated)).length, badgeClass: 'bg-purple-600 text-white' },
-            { id: 'All (incl. Bots)', label: 'All (incl. Bots)', count: (usersList || []).length }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -830,7 +975,7 @@ export const AdminUsersPage = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search Real Member ID, name, email, or mobile..."
+            placeholder="Search Member ID, name, email, or mobile..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-2.5 rounded-2xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#2F6FED]"
@@ -865,9 +1010,7 @@ export const AdminUsersPage = () => {
                       </div>
                       <p className="text-sm font-bold text-slate-700">No users found under &quot;{statusFilter}&quot;</p>
                       <p className="text-xs text-slate-400 max-w-sm">
-                        {statusFilter === 'Real Members' 
-                          ? 'No real users registered yet or matching search. System bots are filtered out.'
-                          : 'Try switching filters or clearing your search query.'}
+                        Try switching filters or clearing your search query.
                       </p>
                     </div>
                   </td>
@@ -903,7 +1046,7 @@ export const AdminUsersPage = () => {
                         </div>
                         <div>
                           <p className="font-extrabold text-[#0B1E39] text-xs group-hover:text-[#2F6FED] transition-colors">
-                            {u.name}
+                            {(u.name || '').replace(/\s*\(BOT\)/gi, '')}
                           </p>
                           <p className="text-[10px] text-slate-400 font-medium">
                             Joined {u.regDate}
@@ -996,16 +1139,30 @@ export const AdminUsersPage = () => {
                     </td>
 
                     <td className="p-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openUserDetail(u);
-                        }}
-                        className="text-xs font-bold text-[#2F6FED] hover:underline inline-flex items-center space-x-1 cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Audit Profile</span>
-                      </button>
+                      <div className="flex items-center justify-end space-x-1.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(u);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60 transition-colors inline-flex items-center space-x-1 text-xs font-bold cursor-pointer"
+                          title="Edit User Details"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleConfirmDeleteUser(u);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/60 transition-colors inline-flex items-center space-x-1 text-xs font-bold cursor-pointer"
+                          title="Delete User"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -1197,6 +1354,236 @@ export const AdminUsersPage = () => {
                 </button>
 
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ✏️ EDIT USER MODAL */}
+      <AnimatePresence>
+        {showEditModal && editingUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white max-w-xl w-full rounded-[2.5rem] p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-6 relative text-left"
+            >
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingUser(null);
+                }}
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 rounded-full cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
+                  <Edit3 className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-amber-800 bg-amber-100 border border-amber-300 px-3 py-0.5 rounded-full uppercase tracking-wider">
+                    Member ID: {editingUser.memberId}
+                  </span>
+                  <h3 className="text-xl font-black text-[#0B1E39] mt-1">Edit User Profile & Settings</h3>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveEditUser} className="space-y-4 text-xs font-medium">
+                {/* Full Name */}
+                <div>
+                  <label className="block text-[#0B1E39] font-extrabold mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
+                  />
+                </div>
+
+                {/* Email & Mobile */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#0B1E39] font-extrabold mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={editFormData.email}
+                      onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[#0B1E39] font-extrabold mb-1">Mobile Number</label>
+                    <input
+                      type="text"
+                      value={editFormData.mobile}
+                      onChange={(e) => setEditFormData({ ...editFormData, mobile: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
+                    />
+                  </div>
+                </div>
+
+                {/* Role & Assigned Group */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#0B1E39] font-extrabold mb-1">Role & Access Level</label>
+                    <select
+                      value={editFormData.role}
+                      onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
+                    >
+                      <option value="Member">Member User</option>
+                      <option value="Super Admin">👑 Super Admin</option>
+                      <option value="Operations">⚙️ Operations Lead</option>
+                      <option value="Reviewer">🔍 Reviewer Agent</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[#0B1E39] font-extrabold mb-1">Assigned Group</label>
+                    <select
+                      value={editFormData.group}
+                      onChange={(e) => setEditFormData({ ...editFormData, group: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
+                    >
+                      <option value="GROUP-001">Group 1 (GROUP-001)</option>
+                      <option value="GROUP-002">Group 2 (GROUP-002)</option>
+                      <option value="GROUP-003">Group 3 (GROUP-003)</option>
+                      <option value="Not Assigned Yet">Unassigned / Queue</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Account Status & Deposit Requirement */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#0B1E39] font-extrabold mb-1">Account Status</label>
+                    <select
+                      value={editFormData.status}
+                      onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
+                    >
+                      <option value="Active">🟢 Active</option>
+                      <option value="Suspended">🔴 Suspended</option>
+                      <option value="Pending">🟡 Pending Verification</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[#0B1E39] font-extrabold mb-1">Deposit Requirement (₹10k)</label>
+                    <select
+                      value={editFormData.deposit}
+                      onChange={(e) => setEditFormData({ ...editFormData, deposit: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3.5 rounded-2xl font-bold focus:outline-none focus:border-[#2F6FED]"
+                    >
+                      <option value="Verified">✅ Verified (₹10,000 Paid)</option>
+                      <option value="Pending">⏳ Pending Payment</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end space-x-3 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingUser(null);
+                    }}
+                    className="px-5 py-3 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-3 rounded-2xl bg-[#0B1E39] hover:bg-[#152D50] text-white font-extrabold shadow-lg transition-all cursor-pointer flex items-center space-x-2"
+                  >
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🗑️ DELETE USER CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {showDeleteConfirm && deletingUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white max-w-md w-full rounded-[2.5rem] p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-6 relative text-left"
+            >
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeletingUser(null);
+                }}
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 rounded-full cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200">
+                  <Trash2 className="w-6 h-6 text-rose-600" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-rose-800 bg-rose-100 border border-rose-300 px-3 py-0.5 rounded-full uppercase tracking-wider">
+                    Confirm Deletion
+                  </span>
+                  <h3 className="text-xl font-black text-[#0B1E39] mt-1">Delete User Account?</h3>
+                </div>
+              </div>
+
+              <div className="bg-rose-50/60 p-4 rounded-2xl border border-rose-200 space-y-2">
+                <p className="text-xs text-rose-950 font-bold">
+                  Are you sure you want to permanently delete user <strong className="text-rose-900">{deletingUser.name || deletingUser.memberId}</strong> ({deletingUser.memberId})?
+                </p>
+                <p className="text-[11px] text-rose-700">
+                  Email: {deletingUser.email}<br />
+                  This action will remove the user record from the system database.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeletingUser(null);
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteUser}
+                  className="px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold shadow-lg transition-all cursor-pointer flex items-center space-x-2"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-100" />
+                  <span>Yes, Delete User</span>
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

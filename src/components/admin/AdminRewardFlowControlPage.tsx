@@ -82,7 +82,7 @@ export const AdminRewardFlowControlPage = () => {
   const [inputTargetMemberId, setInputTargetMemberId] = useState('');
   const [selectionMode, setSelectionMode] = useState<'select' | 'input'>('select');
   const [searchTerm, setSearchTerm] = useState('');
-  const [memberTypeFilter, setMemberTypeFilter] = useState<'all' | 'real' | 'bots'>('all');
+  const [memberTypeFilter, setMemberTypeFilter] = useState<'all' | 'real' | 'bots'>('real');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -720,69 +720,13 @@ export const AdminRewardFlowControlPage = () => {
               {/* Mode 1: Dropdown & Search Filter with Real vs Bot Tabs */}
               {selectionMode === 'select' && (
                 <div className="space-y-2.5">
-                  {/* REAL VS BOT FILTER TABS */}
+                  {/* ALL POOL CANDIDATES HEADER */}
                   <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMemberTypeFilter('all');
-                          const match = activePoolMembers.find(m => m.slotNumber === manualTargetSlot);
-                          if (!match && activePoolMembers.length > 0) {
-                            setManualTargetSlot(activePoolMembers[0].slotNumber);
-                          }
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer border flex items-center space-x-1 ${
-                          memberTypeFilter === 'all'
-                            ? 'bg-[#00C2B8] text-[#081E26] border-[#00C2B8] font-black shadow-xs'
-                            : 'bg-[#081E26] text-slate-300 border-slate-700 hover:text-white'
-                        }`}
-                      >
-                        <span>All Pool</span>
+                      <div className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-[#00C2B8] text-[#081E26] border border-[#00C2B8] font-black shadow-xs flex items-center space-x-1">
+                        <span>Active Pool</span>
                         <span className="bg-black/20 px-1 py-0.2 rounded text-[9px]">{activePoolMembers.length}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMemberTypeFilter('real');
-                          const realOnes = activePoolMembers.filter(m => !isBotMember(m));
-                          if (!realOnes.some(m => m.slotNumber === manualTargetSlot) && realOnes.length > 0) {
-                            setManualTargetSlot(realOnes[0].slotNumber);
-                          }
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer border flex items-center space-x-1 ${
-                          memberTypeFilter === 'real'
-                            ? 'bg-emerald-500 text-[#081E26] border-emerald-400 font-black shadow-xs'
-                            : 'bg-[#081E26] text-emerald-300 border-emerald-500/30 hover:border-emerald-400'
-                        }`}
-                      >
-                        <span>👤 Real Members</span>
-                        <span className={`px-1 py-0.2 rounded text-[9px] ${memberTypeFilter === 'real' ? 'bg-[#081E26]/20 text-[#081E26]' : 'bg-emerald-500/20 text-emerald-300'}`}>
-                          {realMembersCount}
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMemberTypeFilter('bots');
-                          const botOnes = activePoolMembers.filter(m => isBotMember(m));
-                          if (!botOnes.some(m => m.slotNumber === manualTargetSlot) && botOnes.length > 0) {
-                            setManualTargetSlot(botOnes[0].slotNumber);
-                          }
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer border flex items-center space-x-1 ${
-                          memberTypeFilter === 'bots'
-                            ? 'bg-purple-500 text-white border-purple-400 font-black shadow-xs'
-                            : 'bg-[#081E26] text-purple-300 border-purple-500/30 hover:border-purple-400'
-                        }`}
-                      >
-                        <span>🤖 Bot Users</span>
-                        <span className={`px-1 py-0.2 rounded text-[9px] ${memberTypeFilter === 'bots' ? 'bg-black/20 text-white' : 'bg-purple-500/20 text-purple-300'}`}>
-                          {botMembersCount}
-                        </span>
-                      </button>
+                      </div>
                     </div>
 
                     <span className="text-[10px] text-slate-400 font-mono">
@@ -857,12 +801,12 @@ export const AdminRewardFlowControlPage = () => {
                           {filteredActiveMembers.length === 0 ? (
                             <div className="p-4 text-center text-slate-400 text-xs">
                               <p className="font-medium">No matching pool members found.</p>
-                              <p className="text-[10px] text-slate-500 mt-0.5">Try clearing the search or switching the Real/Bot filter tab.</p>
+                              <p className="text-[10px] text-slate-500 mt-0.5">Try adjusting your search query.</p>
                             </div>
                           ) : (
                             filteredActiveMembers.map((m) => {
-                              const isBot = isBotMember(m);
                               const isSelected = manualTargetSlot === m.slotNumber;
+                              const cleanName = (m.memberName || `Member #${m.slotNumber}`).replace(/\s*\(BOT\)/gi, '');
                               return (
                                 <button
                                   key={m.slotNumber}
@@ -889,7 +833,7 @@ export const AdminRewardFlowControlPage = () => {
                                     <div className="min-w-0">
                                       <div className="flex items-center space-x-1.5">
                                         <span className={`text-xs font-bold truncate ${isSelected ? 'text-[#F2C868]' : 'text-white'}`}>
-                                          {m.memberName || `Member #${m.slotNumber}`}
+                                          {cleanName}
                                         </span>
                                       </div>
                                       <span className="text-[10px] font-mono text-slate-400">
@@ -911,7 +855,7 @@ export const AdminRewardFlowControlPage = () => {
 
                         {/* Quick Footer */}
                         <div className="px-3 py-1.5 bg-[#06181f] border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                          <span>Filter: {memberTypeFilter === 'all' ? 'All Members' : memberTypeFilter === 'real' ? '👤 Real Only' : '🤖 Bots Only'}</span>
+                          <span>Candidates Pool</span>
                           <span className="text-[#00C2B8] font-bold">Total: {filteredActiveMembers.length}</span>
                         </div>
                       </div>
@@ -958,17 +902,8 @@ export const AdminRewardFlowControlPage = () => {
                     <div>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-xs font-serif font-black text-white">
-                          {targetWinnerSlotObj.memberName || `Member #${targetWinnerSlotObj.slotNumber}`}
+                          {(targetWinnerSlotObj.memberName || `Member #${targetWinnerSlotObj.slotNumber}`).replace(/\s*\(BOT\)/gi, '')}
                         </span>
-                        {isBotMember(targetWinnerSlotObj) ? (
-                          <span className="bg-purple-500/20 text-purple-300 border border-purple-400/40 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
-                            BOT
-                          </span>
-                        ) : (
-                          <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
-                            REAL MEMBER
-                          </span>
-                        )}
                         <span className="bg-[#00C2B8]/20 text-[#00C2B8] text-[9px] font-mono font-bold px-1.5 py-0.2 rounded">
                           {targetWinnerSlotObj.memberId || `LOP-${String(targetWinnerSlotObj.slotNumber).padStart(6, '0')}`}
                         </span>
@@ -1608,7 +1543,7 @@ export const AdminRewardFlowControlPage = () => {
                 <div className="border-b border-slate-200 pb-2 space-y-1 font-mono">
                   <p className="text-slate-500"><strong>From:</strong> InfinityGram Live &lt;onboarding@resend.dev&gt;</p>
                   <p className="text-slate-500">
-                    <strong>Recipients:</strong> {emailBroadcastResult?.totalRealMembers || 'All'} Verified Real Members in {group.groupName} (Bot Users Excluded)
+                    <strong>Recipients:</strong> {emailBroadcastResult?.totalRealMembers || 'All'} Verified Members in {group.groupName}
                   </p>
                   <p className="text-[#0B1E39] font-black font-sans text-sm pt-1">
                     Subject: ⏰ Live 1 Gram Gold Panai Selection Starts at {scheduledTime} {scheduledAmPm}! [{group.groupName}]

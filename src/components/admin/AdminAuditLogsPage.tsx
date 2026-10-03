@@ -1,11 +1,34 @@
 'use client';
 
 import React from 'react';
+import * as XLSX from 'xlsx';
 import { useApp } from '../../context/AppContext';
 import { FileCheck2, Download } from 'lucide-react';
 
 export const AdminAuditLogsPage = () => {
   const { auditLogs } = useApp();
+
+  const handleExportAuditLogsExcel = () => {
+    if (!auditLogs || auditLogs.length === 0) {
+      alert('No audit log records available to export.');
+      return;
+    }
+
+    const rows = auditLogs.map(log => ({
+      'Log Timestamp': log.timestamp,
+      'Actor': log.actor || 'System',
+      'Role': log.role || 'Admin',
+      'Action Code': log.action,
+      'Module': log.module || 'System',
+      'State Transition': `${log.previousStatus || ''} -> ${log.newStatus || ''}`,
+      'IP Address': log.ipAddress || '127.0.0.1'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Audit Logs');
+    XLSX.writeFile(workbook, `Enterprise_Audit_Logs.xlsx`);
+  };
 
   return (
     <div className="space-y-6 font-sans">
@@ -19,9 +42,12 @@ export const AdminAuditLogsPage = () => {
           <p className="text-xs text-slate-500 font-medium mt-1">Cryptographic audit log trail recording all admin actions, deposit approvals, and daily gold selection events.</p>
         </div>
 
-        <button className="bg-[#0B1E39] hover:bg-[#152D50] text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-xs flex items-center space-x-2 cursor-pointer transition-all">
+        <button 
+          onClick={handleExportAuditLogsExcel}
+          className="bg-[#0B1E39] hover:bg-[#152D50] text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-xs flex items-center space-x-2 cursor-pointer transition-all"
+        >
           <Download className="w-4 h-4" />
-          <span>Export Audit Log (CSV)</span>
+          <span>Export Audit Log (Excel)</span>
         </button>
       </div>
 

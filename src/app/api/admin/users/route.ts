@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../../../lib/firebase';
-import { collection, getDocs, doc, getDoc, setDoc, updateDoc, query, where, arrayUnion, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, query, where, arrayUnion, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function GET() {
   try {
@@ -173,6 +173,39 @@ export async function POST(request: Request) {
     }
 
     const userDocRef = doc(db, 'users', docIdToUpdate);
+
+    if (action === 'delete_user' || action === 'delete') {
+      if (docIdToUpdate) {
+        await deleteDoc(userDocRef);
+      }
+      return NextResponse.json({
+        success: true,
+        message: 'User deleted successfully.',
+      }, { status: 200 });
+    }
+
+    if (action === 'update_user' || action === 'edit_user') {
+      if (docIdToUpdate) {
+        const updateData: any = {};
+        if (body.name || body.fullName) {
+          updateData.fullName = body.name || body.fullName;
+          updateData.name = body.name || body.fullName;
+        }
+        if (body.email) updateData.email = body.email.trim().toLowerCase();
+        if (body.mobile) updateData.mobile = body.mobile.trim();
+        if (body.role) updateData.role = body.role;
+        if (body.status || body.accountStatus) updateData.accountStatus = body.status || body.accountStatus;
+        if (body.deposit || body.depositStatus) updateData.depositStatus = body.deposit || body.depositStatus;
+        if (body.group) updateData.group = body.group;
+        if (body.slotNumber !== undefined) updateData.slotNumber = Number(body.slotNumber);
+
+        await updateDoc(userDocRef, updateData);
+      }
+      return NextResponse.json({
+        success: true,
+        message: 'User details updated successfully.',
+      }, { status: 200 });
+    }
 
     if (action === 'verify_email' || emailVerified === true) {
       await updateDoc(userDocRef, { emailVerified: true });

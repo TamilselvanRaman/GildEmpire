@@ -540,24 +540,24 @@ export function getPreDrawEmailHtml(params: SendPreDrawParams): string {
       <div class="wrapper">
         <div class="container">
           <div class="header">
-            <div class="badge">🔴 10-Minute Pre-Selection Alert</div>
+            <div class="badge">🔴 Event Reminder & Live Selection Alert</div>
             <h1>Live 1g Gold Selection Starting Soon!</h1>
             <p>${batchName} (${batchId})</p>
           </div>
           <div class="content">
             <div class="greeting">Vanakkam & Greetings, ${recipientName}!</div>
             <p class="text">
-              This is an official automated notification that today's <strong>Daily 1 Gram 916 BIS Hallmark Gold Coin</strong> lucky draw for <strong>${batchName}</strong> will commence in <strong>10 minutes</strong>.
+              This is an official automated reminder that the <strong>Daily 1 Gram 916 BIS Hallmark Gold Coin</strong> lucky draw for <strong>${batchName}</strong> is starting soon at <strong>${scheduledTime}</strong>.
             </p>
             
             <div class="highlight-box">
-              <div style="font-size: 12px; font-weight: 800; color: #00C2B8; text-transform: uppercase;">Live Selection Scheduled At:</div>
+              <div style="font-size: 12px; font-weight: 800; color: #00C2B8; text-transform: uppercase;">Live Event Draw Schedule:</div>
               <div class="time-text">${scheduledTime}</div>
               <div style="font-size: 12px; color: #94a3b8;">50 Folded Paper Chits Inside 3D Traditional Panai Glass Bottle</div>
             </div>
 
             <p class="text">
-              Click the direct button below to immediately access the live broadcast room, watch the crystal bottle shaking in real-time, and verify today's winning member chit:
+              Click the button below to open your member rewards portal, watch the 3D glass bottle live selection in real-time, and check today's winning member chit:
             </p>
 
             <div class="button-wrapper">
@@ -606,7 +606,7 @@ export async function sendPreDrawNotificationEmail(params: SendPreDrawParams) {
     const response = await resend.emails.send({
       from: fromAddress,
       to: [email],
-      subject: `⏰ Live 1 Gram Gold Panai Selection Starts in 10 Minutes! [${params.batchName}]`,
+      subject: `⏰ Reminder: Live 1 Gram Gold Selection Starts Soon! [${params.batchName}]`,
       html,
     });
 

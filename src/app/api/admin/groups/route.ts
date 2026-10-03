@@ -9,6 +9,7 @@ import {
   updateDoc, 
   deleteDoc,
 } from 'firebase/firestore';
+import { sendPreDrawNotificationEmail, getAppBaseUrl } from '../../../../lib/resend';
 
 // Helper to remove any undefined fields before saving to Firestore
 function sanitizeForFirestore(obj: any): any {
@@ -385,10 +386,46 @@ export async function POST(request: Request) {
       // Auto-create next batch if all batches are now full/active
       await ensureRecruitingBatchExists();
 
+      // Dispatch Event Start Reminder Email to all group members
+      let dispatchedEmailCount = 0;
+      try {
+        const groupData = groupDoc.data() || {};
+        const batchName = groupData.groupName || `InfinityGram 50 Gold Club - ${targetGroupId}`;
+        const scheduledTimeStr = scheduledTime || groupData.scheduledTime || '07:00 AM IST';
+        const origin = getAppBaseUrl();
+        const directRewardUrl = `${origin}/rewards?batch=${encodeURIComponent(targetGroupId)}`;
+
+        const usersSnap = await getDocs(collection(db, 'users'));
+        for (const uDoc of usersSnap.docs) {
+          const u = uDoc.data();
+          if (u.isSimulated === true || u.userType === 'simulated') continue;
+          if (typeof u.email === 'string' && u.email.endsWith('@infinitygram.net')) continue;
+          if (!u.email || !u.email.includes('@')) continue;
+
+          const isMemberOfGroup = (u.groupId === targetGroupId || u.group === targetGroupId) ||
+            (Array.isArray(u.allocatedSlots) && u.allocatedSlots.some((s: any) => s.groupId === targetGroupId || s.group === targetGroupId));
+
+          if (isMemberOfGroup) {
+            const res = await sendPreDrawNotificationEmail({
+              email: u.email,
+              name: u.fullName || u.name || 'Member',
+              batchName,
+              batchId: targetGroupId,
+              scheduledTime: scheduledTimeStr,
+              directRewardUrl,
+            });
+            if (res.success) dispatchedEmailCount++;
+          }
+        }
+      } catch (emailErr) {
+        console.warn('[Event Start Email Notice] Warning while dispatching reminder emails:', emailErr);
+      }
+
       return NextResponse.json({
         success: true,
-        message: `🎉 50-Day Event cycle successfully started for ${targetGroupId}! Status is now LIVE (Day 1/50).`,
+        message: `🎉 50-Day Event cycle successfully started for ${targetGroupId}! Status is now LIVE (Day 1/50). ${dispatchedEmailCount > 0 ? `Reminder emails sent to ${dispatchedEmailCount} members.` : ''}`,
         updatedFields: updates,
+        dispatchedEmailCount,
       }, { status: 200 });
     }
 

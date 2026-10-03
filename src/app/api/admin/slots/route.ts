@@ -110,9 +110,9 @@ export async function POST(request: Request) {
             botDocId = b.id;
           } else {
             const rawName = simulatedNames[(i) % simulatedNames.length];
-            botName = `${rawName} (BOT)`;
+            botName = rawName;
             botMemberId = `LOP-${Math.floor(100000 + Math.random() * 900000)}`;
-            botEmail = `${botName.toLowerCase().replace(/[^a-z0-9]/g, '')}${Math.floor(10 + Math.random() * 90)}@gmail.com`;
+            botEmail = `${rawName.toLowerCase().replace(/[^a-z0-9]/g, '')}${Math.floor(10 + Math.random() * 90)}@gmail.com`;
             botMobile = `+91 ${Math.floor(60000 + Math.random() * 39999)} ${Math.floor(10000 + Math.random() * 89999)}`;
             
             const newBotRef = doc(collection(db, 'users'));
