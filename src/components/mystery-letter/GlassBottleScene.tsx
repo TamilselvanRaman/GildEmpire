@@ -343,7 +343,8 @@ export const GlassBottleScene: React.FC<GlassBowlSceneProps> = ({
     container.addEventListener('mousemove', handleMouseMove);
     container.addEventListener('click', handleClick);
 
-    const clock = new THREE.Clock();
+    let lastTime = performance.now();
+    const startTime = performance.now();
     let animId: number;
 
     let selectedIdx = -1;
@@ -352,8 +353,10 @@ export const GlassBottleScene: React.FC<GlassBowlSceneProps> = ({
     // --- ANIMATION LOOP ---
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      const time = clock.getElapsedTime();
+      const now = performance.now();
+      const delta = Math.min((now - lastTime) / 1000, 0.1);
+      const time = (now - startTime) / 1000;
+      lastTime = now;
       stateTimeRef.current += delta;
       const sTime = stateTimeRef.current;
       const cState = stateRef.current;
